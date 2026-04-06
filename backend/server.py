@@ -4819,6 +4819,222 @@ async def simulate_international(req: IntlSimRequest):
 
 # ============ END INTERNATIONAL TOURNAMENT ============
 
+# ============ CAREER HISTORY & ELO STATS ============
+
+@api_router.get("/career/elo-history")
+async def get_career_elo_history():
+    """
+    Get full ELO evolution history for a specific team across all splits.
+    Returns ELO values and match results for each split.
+    """
+    if not GAME_STATE["initialized"]:
+        raise HTTPException(status_code=400, detail="Game not initialized")
+
+    user_team_id = GAME_STATE.get("user_team")
+    if not user_team_id:
+        return {"history": [], "current_team": None}
+
+    user_team = GAME_STATE["teams"].get(user_team_id)
+    if not user_team:
+        return {"history": [], "current_team": None}
+
+    history = []
+
+    # Add current split stats
+    current_elo = user_team.get("elo", initial_elo(user_team.get("rating", 80)))
+    history.append({
+        "split_key": "current",
+        "split_label": f"{GAME_STATE.get('league', 'LEC')} {'Spring' if GAME_STATE['current_split'] == 1 else 'Summer'} {GAME_STATE['season']}",
+        "season": GAME_STATE.get("season", 2026),
+        "split_number": GAME_STATE.get("current_split", 1),
+        "elo": current_elo,
+        "elo_games": user_team.get("elo_games", 0),
+        "wins": user_team.get("wins", 0),
+        "losses": user_team.get("losses", 0),
+        "is_current": True,
+    })
+
+    # Add historical splits
+    for entry in GAME_STATE.get("history", []):
+        history_entry = {
+            "split_key": f"split_{entry.get('season', 2026)}_{entry.get('split_number', 1)}",
+            "split_label": entry.get("split_label", f"Split {entry.get('split_number', 1)}"),
+            "season": entry.get("season", 2026),
+            "split_number": entry.get("split_number", 1),
+            "final_rank": entry.get("final_rank", 10),
+            "is_champion": entry.get("is_champion", False),
+            "champion": entry.get("champion"),
+            "wins": entry.get("wins", 0),
+            "losses": entry.get("losses", 0),
+            "budget": entry.get("budget", 0),
+            "prestige": entry.get("prestige", 0),
+            "elo_games": entry.get("total_games_played", 0),  # Approximation
+            "is_current": False,
+        }
+        history.append(history_entry)
+
+    return {
+        "history": history,
+        "current_team": {
+            "id": user_team_id,
+            "name": user_team.get("name", ""),
+            "abbr": user_team.get("abbr", ""),
+            "elo": current_elo,
+            "elo_games": user_team.get("elo_games", 0),
+        }
+    }
+
+
+@api_router.get("/career/head-to-head/{team1_id}/{team2_id}")
+async def get_head_to_head(team1_id: str, team2_id: str):
+    """
+    Get head-to-head record between two teams.
+    Includes all matches played and ELO comparison.
+    """
+    if not GAME_STATE["initialized"]:
+        raise HTTPException(status_code=400, detail="Game not initialized")
+
+    teams = GAME_STATE.get("teams", {})
+    team1 = teams.get(team1_id)
+    team2 = teams.get(team2_id)
+
+    if not team1 or not team2:
+        raise HTTPException(status_code=404, detail="One or both teams not found")
+
+    # Get all matches between these teams
+    schedule = GAME_STATE.get("schedule", [])
+    matches = []
+
+    for match in schedule:
+        if (match.get("team1") == team1_id and match.get("team2") == team2_id) or \
+           (match.get("team1") == team2_id and match.get("team2") == team1_id):
+            matches.append({
+                "id": match.get("id"),
+                "week": match.get("week"),
+                "played": match.get("played", False),
+                "winner": match.get("winner"),
+                "score1": match.get("score1"),
+                "score2": match.get("score2"),
+                "team1_id": match.get("team1"),
+                "team2_id": match.get("team2"),
+            })
+
+    # Count head-to-head results
+    t1_wins = sum(1 for m in matches if m.get("winner") == team1_id)
+    t2_wins = sum(1 for m in matches if m.get("winner") == team2_id)
+    draws = len(matches) - t1_wins - t2_wins
+
+    # Get ELO comparison (current or from history)
+    t1_elo = team1.get("elo", initial_elo(team1.get("rating", 80)))
+    t2_elo = team2.get("elo", initial_elo(team2.get("rating", 80)))
+
+    from elo_system import win_probability
+    t1_win_prob = round(win_probability(t1_elo, t2_elo) * 100, 1)
+    t2_win_prob = round(win_probability(t2_elo, t1_elo) * 100, 1)
+
+    return {
+        "team1": {
+            "id": team1_id,
+            "name": team1.get("name", ""),
+            "abbr": team1.get("abbr", ""),
+            "rating": team1.get("rating"),
+            "elo": t1_elo,
+            "wins": team1.get("wins", 0),
+            "losses": team1.get("losses", 0),
+        },
+        "team2": {
+            "id": team2_id,
+            "name": team2.get("name", ""),
+            "abbr": team2.get("abbr", ""),
+            "rating": team2.get("rating"),
+            "elo": t2_elo,
+            "wins": team2.get("wins", 0),
+            "losses": team2.get("losses", 0),
+        },
+        "matches": matches,
+        "record": {
+            "total_matches": len(matches),
+            "team1_wins": t1_wins,
+            "team2_wins": t2_wins,
+            "draws": draws,
+            "win_probability": {
+                "team1": t1_win_prob,
+                "team2": t2_win_prob,
+            }
+        }
+    }
+
+
+@api_router.get("/career/split-stats")
+async def get_split_stats(split: str = "current"):
+    """
+    Get detailed stats for a specific split (current or historical).
+    Includes team performance, ELO changes, and match details.
+    """
+    if not GAME_STATE["initialized"]:
+        raise HTTPException(status_code=400, detail="Game not initialized")
+
+    user_team_id = GAME_STATE.get("user_team")
+
+    if split == "current":
+        # Current split stats
+        user_team = GAME_STATE["teams"].get(user_team_id, {}) if user_team_id else {}
+
+        # Get all played matches for user team
+        schedule = GAME_STATE.get("schedule", [])
+        user_matches = [m for m in schedule if m.get("played") and
+                       (m.get("team1") == user_team_id or m.get("team2") == user_team_id)]
+
+        return {
+            "split_key": "current",
+            "split_label": f"{GAME_STATE.get('league', 'LEC')} {'Spring' if GAME_STATE['current_split'] == 1 else 'Summer'} {GAME_STATE['season']}",
+            "season": GAME_STATE.get("season", 2026),
+            "split_number": GAME_STATE.get("current_split", 1),
+            "user_team": {
+                "id": user_team_id,
+                "name": user_team.get("name", ""),
+                "abbr": user_team.get("abbr", ""),
+                "rating": user_team.get("rating"),
+                "elo": user_team.get("elo", initial_elo(user_team.get("rating", 80))),
+                "wins": user_team.get("wins", 0),
+                "losses": user_team.get("losses", 0),
+            },
+            "matches": user_matches,
+            "match_count": len(user_matches),
+            "champion_stats": dict(GAME_STATE.get("champion_stats", {})),
+        }
+    else:
+        # Historical split
+        try:
+            split_idx = int(split)
+            history = GAME_STATE.get("history", [])
+            entry = history[split_idx] if split_idx < len(history) else history[-1]
+        except (ValueError, IndexError):
+            history = GAME_STATE.get("history", [])
+            entry = history[-1] if history else {}
+
+        return {
+            "split_key": f"split_{entry.get('season', 2026)}_{entry.get('split_number', 1)}",
+            "split_label": entry.get("split_label", "Split"),
+            "season": entry.get("season", 2026),
+            "split_number": entry.get("split_number", 1),
+            "user_team": {
+                "id": user_team_id,
+                "name": entry.get("team_name", ""),
+                "abbr": entry.get("team_abbr", ""),
+                "final_rank": entry.get("final_rank", 10),
+                "is_champion": entry.get("is_champion", False),
+                "champion": entry.get("champion"),
+                "wins": entry.get("wins", 0),
+                "losses": entry.get("losses", 0),
+                "budget": entry.get("budget", 0),
+                "prestige": entry.get("prestige", 0),
+            },
+            "champion_stats": entry.get("champion_stats", {}),
+            "match_count": entry.get("total_games_played", 0),
+        }
+
+
 # Include router
 app.include_router(api_router)
 
