@@ -3130,6 +3130,11 @@ def _draft_apply(draft: dict, actor: str, action_type: str, champion: str, posit
         entry = {"champion": champion, "position": position}
         draft["user_picks" if actor == "user" else "enemy_picks"].append(entry)
         draft["picked_champions"].append(champion)
+        # Track per-team picks for proper availability check (avoid enemy picks)
+        if actor == "user":
+            draft["user_picked_champions"].append(champion)
+        else:
+            draft["enemy_picked_champions"].append(champion)
 
 
 def _needed_positions(draft: dict, actor: str) -> list:

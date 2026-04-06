@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ChartLine, Trophy, Headphones, ArrowRight, Calendar } from "@phosphor-icons/react";
 import axios from "axios";
+import TeamLogo from "./TeamLogo";
 import { API } from "../shared";
 
 // History Page - ELO evolution, split stats, head-to-head
@@ -442,6 +443,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
                 <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ textAlign: "center", marginBottom: 8 }}>
+                       <TeamLogo teamId={headToHead.team1.id} abbr={headToHead.team1.abbr} size={28} />
                       <div style={{ fontSize: 24, fontWeight: 700 }}>{headToHead.team1.name}</div>
                       <div style={{ color: "var(--text-secondary)", fontSize: 12 }}>{headToHead.team1.abbr}</div>
                     </div>
@@ -459,6 +461,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
 
                   <div style={{ flex: 1 }}>
                     <div style={{ textAlign: "center", marginBottom: 8 }}>
+                      <TeamLogo teamId={headToHead.team1.id} abbr={headToHead.team1.abbr} size={28} />
                       <div style={{ fontSize: 24, fontWeight: 700 }}>{headToHead.team2.name}</div>
                       <div style={{ color: "var(--text-secondary)", fontSize: 12 }}>{headToHead.team2.abbr}</div>
                     </div>
