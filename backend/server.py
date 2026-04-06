@@ -3002,7 +3002,7 @@ async def make_offer(offer: NegotiationOffer):
         old_team["budget"] += offer.offered_amount
         
         player["team_id"] = GAME_STATE["user_team"]
-        player["salary"] = int(offer.offered_amount * 0.15)  # 15% of transfer as salary
+        player["salary"] = int(offer.offered_amount * TRANSFER_SALARY_PCT)
         player["contract_years"] = offer.contract_years
         
         user_team["roster"].append(player["id"])
