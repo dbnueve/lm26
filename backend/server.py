@@ -4073,10 +4073,13 @@ def generate_next_split_label(current_split_id: str) -> dict:
     """Generate label/metadata for splits beyond the hardcoded 3"""
     # Determine what comes after spring_2026
     # Pattern: summer_2026 → spring_2027 → summer_2027...
-    last = LEC_SPLITS.get(current_split_id, LEC_SPLITS["spring_2026"])
+    active_league = GAME_STATE.get("league", "LEC")
+    league_splits_key = f"{active_league}_SPLITS"
+    league_splits = globals().get(league_splits_key, LEC_SPLITS)
+    last = league_splits.get(current_split_id, league_splits.get("spring_2026", LEC_SPLITS["spring_2026"]))
     season = last["season"]
     split_num = last["split_number"]
-    user_league = GAME_STATE.get("league", "LEC")
+    user_league = active_league
 
     if split_num == 1:
         return {"label": f"{user_league} Summer {season}", "season": season, "split_number": 2}
