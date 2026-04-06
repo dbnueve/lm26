@@ -4133,10 +4133,14 @@ async def get_split_status():
     if not GAME_STATE["initialized"]:
         ensure_initialized()
 
+    active_league = GAME_STATE.get("league", "LEC")
+    league_splits_key = f"{active_league}_SPLITS"
+    league_splits = globals().get(league_splits_key, LEC_SPLITS)
+
     current_id = get_current_split_id()
-    current_data = LEC_SPLITS.get(current_id, {})
+    current_data = league_splits.get(current_id, {})
     next_id = get_next_split_id()
-    next_data = LEC_SPLITS.get(next_id) if next_id else None
+    next_data = league_splits.get(next_id) if next_id else None
 
     # Build next split label even if procedural
     if not next_data:
