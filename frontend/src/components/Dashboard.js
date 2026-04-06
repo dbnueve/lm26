@@ -16,23 +16,31 @@ const Dashboard = ({ userTeam, schedule, standings, onPlayMatch, onPlayPlayoffMa
     axios.get(API + "/playoffs").then(r => setPlayoffsData(r.data)).catch(() => {});
   }, []);
 
-  const nextRegularMatch = schedule.find(m =>
-    !m.played && (m.team1 === userTeam.id || m.team2 === userTeam.id)
+  const nextRegularMatch = useMemo(() =>
+    schedule.find(m => !m.played && (m.team1 === userTeam.id || m.team2 === userTeam.id)),
+    [schedule, userTeam.id]
   );
 
-  const activeRounds = playoffsData?.active_rounds || [];
-  const nextPlayoffMatch = !nextRegularMatch && playoffsData?.active
-    ? playoffsData.matches?.find(m =>
-        !m.completed &&
-        activeRounds.includes(m.round) &&
-        (m.team1 === userTeam.id || m.team2 === userTeam.id)
-      )
-    : null;
+  const nextPlayoffMatch = useMemo(() => {
+    if (nextRegularMatch || !playoffsData?.active) return null;
+    const activeRounds = playoffsData?.active_rounds || [];
+    return playoffsData.matches?.find(m =>
+      !m.completed &&
+      activeRounds.includes(m.round) &&
+      (m.team1 === userTeam.id || m.team2 === userTeam.id)
+    ) ?? null;
+  }, [nextRegularMatch, playoffsData, userTeam.id]);
 
   const nextMatch = nextRegularMatch || null;
 
-  const teamStanding = standings.find(t => t.id === userTeam.id);
-  const starters = userTeam.players?.filter(p => p.is_starter) || [];
+  const teamStanding = useMemo(() =>
+    standings.find(t => t.id === userTeam.id),
+    [standings, userTeam.id]
+  );
+  const starters = useMemo(() =>
+    userTeam.players?.filter(p => p.is_starter) || [],
+    [userTeam.players]
+  );
 
   return (
     <div className="animate-slide-up">
