@@ -1301,7 +1301,20 @@ def initialize_game(league: str = "LEC"):
     GAME_STATE["playoffs_bracket"] = None
     GAME_STATE["history"] = []
     GAME_STATE["negotiations"] = []
-    GAME_STATE["draft_state"] = None
+    GAME_STATE["draft_state"] = {
+        "step": 0,
+        "phase": "ban1",
+        "current_turn": "user",
+        "user_bans": [],
+        "enemy_bans": [],
+        "user_picks": [],
+        "enemy_picks": [],
+        "banned_champions": [],
+        "picked_champions": [],
+        "user_picked_champions": [],
+        "enemy_picked_champions": [],
+        "fearless_excluded": [],
+    }
     GAME_STATE["champion_stats"] = {}
     GAME_STATE["total_games_played"] = 0
     GAME_STATE["schedule"] = []
@@ -2873,7 +2886,20 @@ async def simulate_match(request: SimulateMatchRequest):
         if GAME_STATE["current_week"] > 9 and GAME_STATE["phase"] == "regular":
             start_playoffs()
 
-    GAME_STATE["draft_state"] = None  # B5: clear draft state after match completion
+    GAME_STATE["draft_state"] = {
+        "step": 0,
+        "phase": "ban1",
+        "current_turn": "user",
+        "user_bans": [],
+        "enemy_bans": [],
+        "user_picks": [],
+        "enemy_picks": [],
+        "banned_champions": [],
+        "picked_champions": [],
+        "user_picked_champions": [],
+        "enemy_picked_champions": [],
+        "fearless_excluded": [],
+    }  # B5: clear draft state after match completion
     save_state()
     return {**match, "other_results": other_results, "week_complete": not week_incomplete, "current_week": GAME_STATE["current_week"], "phase": GAME_STATE["phase"]}
 
@@ -4323,7 +4349,20 @@ async def advance_to_next_split():
     GAME_STATE["phase"] = "regular"
     GAME_STATE["playoffs_bracket"] = None
     GAME_STATE["current_week"] = 1
-    GAME_STATE["draft_state"] = None
+    GAME_STATE["draft_state"] = {
+        "step": 0,
+        "phase": "ban1",
+        "current_turn": "user",
+        "user_bans": [],
+        "enemy_bans": [],
+        "user_picks": [],
+        "enemy_picks": [],
+        "banned_champions": [],
+        "picked_champions": [],
+        "user_picked_champions": [],
+        "enemy_picked_champions": [],
+        "fearless_excluded": [],
+    }
     
     # Rebuild teams and AI rosters
     GAME_STATE["teams"] = {}
