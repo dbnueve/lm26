@@ -144,10 +144,13 @@ function App() {
     }
   }, []);
 
+  const getSlotStorageKey = (league) => `esports_manager_active_slot_${league || "LEC"}`;
+
   const loadSlot = async (slot) => {
     const res = await axios.post(API + `/saves/${slot}/load`);
-    localStorage.setItem("lec_active_slot", slot);
-    setGameState({ initialized: res.data.initialized, userTeam: res.data.user_team, league: res.data.league || "LEC" });
+    const league = res.data.league || "LEC";
+    localStorage.setItem(getSlotStorageKey(league), slot);
+    setGameState({ initialized: res.data.initialized, userTeam: res.data.user_team, league });
     if (res.data.user_team) await loadUserTeam(res.data.user_team);
     await loadGameData();
     await loadSplitStatus(res.data.user_team);
@@ -156,27 +159,39 @@ function App() {
 
   const startNewSlot = async (slot, league = "LEC") => {
     await axios.post(API + `/saves/${slot}/new`, { league });
-    localStorage.setItem("lec_active_slot", slot);
+    localStorage.setItem(getSlotStorageKey(league), slot);
     setGameState({ initialized: true, userTeam: null, league });
     await loadGameData();
     setShowSaveSelection(false);
   };
 
   const goToSaveSelection = () => {
-    localStorage.removeItem("lec_active_slot");
+    // Clear all possible slot keys
+    ["LEC", "LCK", "LCS", "CBLOL", "LPL"].forEach(l => {
+      localStorage.removeItem(getSlotStorageKey(l));
+    });
     setShowSaveSelection(true);
   };
 
   useEffect(() => {
     const initGame = async () => {
-      const savedSlot = localStorage.getItem("lec_active_slot");
-      if (savedSlot) {
+      // Try to find any saved slot from any league
+      let foundSlot = null;
+      let foundLeague = "LEC";
+      ["LEC", "LCK", "LCS", "CBLOL", "LPL"].forEach(l => {
+        const slot = localStorage.getItem(getSlotStorageKey(l));
+        if (slot && !foundSlot) {
+          foundSlot = slot;
+          foundLeague = l;
+        }
+      });
+      if (foundSlot) {
         try {
-          await loadSlot(parseInt(savedSlot, 10));
+          await loadSlot(parseInt(foundSlot, 10));
           return;
         } catch (e) {
           // Save not found or corrupted — show selection
-          localStorage.removeItem("lec_active_slot");
+          localStorage.removeItem(getSlotStorageKey(foundLeague));
         }
       }
       setShowSaveSelection(true);
