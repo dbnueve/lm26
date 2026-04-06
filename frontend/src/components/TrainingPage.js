@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Sword, ChartBar, Fire, ClockCounterClockwise, Check } from "@phosphor-icons/react";
 
