@@ -89,6 +89,7 @@ const PlayerCard = memo(({ player, onSelect, showActions = false, onSwap }) => {
       )}
     </motion.div>
   );
-};
+});
 
+PlayerCard.displayName = "PlayerCard";
 export default PlayerCard;
