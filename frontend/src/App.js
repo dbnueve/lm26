@@ -16,6 +16,7 @@ import StandingsPage from "./components/StandingsPage";
 import PlayoffsPage from "./components/PlayoffsPage";
 import StatsPage from "./components/StatsPage";
 import ScoutingPage from "./components/ScoutingPage";
+import HistoryPage from "./components/HistoryPage";
 import MatchSimulation from "./components/MatchSimulation";
 import DraftSystem from "./components/DraftSystem";
 import PlayoffSeriesModal from "./components/PlayoffSeriesModal";
