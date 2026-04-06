@@ -1,3 +1,52 @@
-/.claude
-/.continue
-/CLAUDE.md
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dépendances
+node_modules/
+/.pnp
+.pnp.js
+# Production / Build
+build/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+.venv/
+env/
+.pytest_cache/
+
+# Environnement (Secrets)
+.env
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Coverage / Tests générés
+coverage/
+.coverage
+htmlcov/
+test_reports/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.idea/
+# .vscode/  ← décommenter si tu ne veux pas partager la config VS Code
+
+# Claude / Emergent
+.claude/
+.emergent/
+.continue/
+# Données de jeu et état local
+game_save_*.json
+active_slot.txt
