@@ -46,6 +46,21 @@ TRANSFER_ERL_MULT_MAX = 15_000
 
 GOLD_PER_MATCH_MIN = 8_000
 GOLD_PER_MATCH_MAX = 18_000
+
+# Poids des attributs pour le calcul de puissance en simulation
+SKILL_W_MECHANICS   = 0.30
+SKILL_W_GAME_SENSE  = 0.30
+SKILL_W_RATING      = 0.20
+SKILL_W_TEAMWORK    = 0.10
+SKILL_W_CONSISTENCY = 0.10
+
+# Ratios offre/valeur pour l'acceptation des transferts
+TRANSFER_ACCEPT_BASE       = 0.3
+TRANSFER_ACCEPT_RATIO_HIGH = 1.5   # → 90 %
+TRANSFER_ACCEPT_RATIO_MID  = 1.2   # → 70 %
+TRANSFER_ACCEPT_RATIO_FAIR = 1.0   # → 50 %
+TRANSFER_ACCEPT_RATIO_LOW  = 0.8   # → 20 %
+TRANSFER_SALARY_PCT        = 0.15  # salaire = 15 % du montant du transfert
 # ─────────────────────────────────────────────────────────
 
 ROOT_DIR = Path(__file__).parent
