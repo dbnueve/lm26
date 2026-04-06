@@ -2977,14 +2977,14 @@ async def make_offer(offer: NegotiationOffer):
     offer_ratio = offer.offered_amount / base_value
     
     # Factors affecting acceptance
-    acceptance_chance = 0.3  # Base chance
-    if offer_ratio >= 1.5:
+    acceptance_chance = TRANSFER_ACCEPT_BASE
+    if offer_ratio >= TRANSFER_ACCEPT_RATIO_HIGH:
         acceptance_chance = 0.9
-    elif offer_ratio >= 1.2:
+    elif offer_ratio >= TRANSFER_ACCEPT_RATIO_MID:
         acceptance_chance = 0.7
-    elif offer_ratio >= 1.0:
+    elif offer_ratio >= TRANSFER_ACCEPT_RATIO_FAIR:
         acceptance_chance = 0.5
-    elif offer_ratio >= 0.8:
+    elif offer_ratio >= TRANSFER_ACCEPT_RATIO_LOW:
         acceptance_chance = 0.2
     
     # Player importance affects willingness to sell
