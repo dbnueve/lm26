@@ -4268,19 +4268,24 @@ async def advance_to_next_split():
     GAME_STATE["history"].append(history_entry)
     
     # 2 — Determine next split metadata
+    active_league = GAME_STATE.get("league", "LEC")
     next_id = get_next_split_id()
-    next_data = LEC_SPLITS.get(next_id) if next_id else None
-    
+
+    # Get split data from the active league (fallback to LEC_SPLITS for backward compat)
+    league_splits_key = f"{active_league}_SPLITS"
+    league_splits = globals().get(league_splits_key, LEC_SPLITS)
+    next_data = league_splits.get(next_id) if next_id else None
+
     if next_data:
         new_season = next_data["season"]
         new_split_num = next_data["split_number"]
         new_teams_list = next_data["teams"]
     else:
-        # Procedural: increment
+        # Procedural: increment — keep same teams from current split
         meta = generate_next_split_label(get_current_split_id())
         new_season = meta["season"]
         new_split_num = meta["split_number"]
-        new_teams_list = list(GAME_STATE["teams"].keys())  # same teams
+        new_teams_list = list(GAME_STATE["teams"].keys())
     
     # 3 — Save current user roster BEFORE reinit (must survive the reset)
     saved_user_roster_ids = list(user_team.get("roster", []))
