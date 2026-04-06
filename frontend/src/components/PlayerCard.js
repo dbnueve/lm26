@@ -1,17 +1,17 @@
-import React from "react";
+import React, { useContext, memo } from "react";
 import { motion } from "framer-motion";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import { PlayerImagesContext } from "../shared";
 
-const PlayerCard = ({ player, onSelect, showActions = false, onSwap }) => {
-  const playerImages = React.useContext(PlayerImagesContext);
-  const imageUrl = playerImages[player.name.toLowerCase()];
+const getRatingColor = (rating) => {
+  if (rating >= 85) return "var(--success)";
+  if (rating >= 75) return "var(--secondary)";
+  return "var(--danger)";
+};
 
-  const getRatingColor = (rating) => {
-    if (rating >= 85) return "var(--success)";
-    if (rating >= 75) return "var(--secondary)";
-    return "var(--danger)";
-  };
+const PlayerCard = memo(({ player, onSelect, showActions = false, onSwap }) => {
+  const playerImages = useContext(PlayerImagesContext);
+  const imageUrl = playerImages[player.name.toLowerCase()];
 
   return (
     <motion.div
