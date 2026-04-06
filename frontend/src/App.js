@@ -380,6 +380,8 @@ function App() {
 
         {currentPage === "stats" && <StatsPage />}
 
+        {currentPage === "history" && <HistoryPage userTeam={userTeamData} showToast={showToast} />}
+
         {currentPage === "scouting" && userTeamData && (
           <ScoutingPage
             userTeam={userTeamData}
