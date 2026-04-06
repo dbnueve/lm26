@@ -13,14 +13,17 @@ const TeamLogo = ({ teamId, abbr, size = 32, style = {}, noClick = false }) => {
   const clickStyle = (!noClick && teamId) ? { cursor: "pointer" } : {};
   if (!url) return <span style={{ ...clickStyle, ...style }} onClick={handleClick}>{abbr}</span>;
   return (
-    <img
-      src={url}
-      alt={abbr}
-      title={abbr}
-      onClick={handleClick}
-      style={{ width: size, height: size, objectFit: "contain", ...clickStyle, ...style }}
-      onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.insertAdjacentText("afterend", abbr); }}
-    />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", ...clickStyle }}>
+      <img
+        src={url}
+        alt={abbr}
+        title={abbr}
+        onClick={handleClick}
+        style={{ width: size, height: size, objectFit: "contain", marginBottom: 4, ...clickStyle, ...style }}
+        onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.insertAdjacentText("afterend", abbr); }}
+      />
+      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", marginTop: 2 }}>{abbr}</span>
+    </div>
   );
 };
 
