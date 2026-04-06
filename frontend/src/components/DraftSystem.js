@@ -79,8 +79,15 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
 
   const isUnavailable = (champion) => {
     if (!draftState) return false;
-    return draftState.banned_champions.includes(champion) ||
-           draftState.picked_champions.includes(champion);
+    // Banned by anyone
+    if (draftState.banned_champions.includes(champion)) return true;
+    // Cannot pick from enemy team (their picks are now owned)
+    const myTeamPicks = draftState.current_turn === "user"
+      ? draftState.user_picked_champions
+      : draftState.enemy_picked_champions;
+    // Cannot pick my own team (already picked)
+    if (myTeamPicks.includes(champion)) return true;
+    return false;
   };
 
   const isFearless = (champion) => {
