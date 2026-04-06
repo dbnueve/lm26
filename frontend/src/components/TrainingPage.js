@@ -7,22 +7,25 @@ const TrainingPage = ({ userTeam, onApplyTraining }) => {
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
 
-  const trainingOptions = [
+  const trainingOptions = useMemo(() => [
     { id: "scrims", name: "Scrims", icon: Sword, cost: 50000, description: "Matchs d entrainement", effects: "+2 Mécanique, +3 Teamwork, +15 Fatigue" },
     { id: "vod_review", name: "VOD Review", icon: ChartBar, cost: 20000, description: "Analyse de parties", effects: "+3 Game Sense, +2 Consistance" },
     { id: "bootcamp", name: "Bootcamp", icon: Fire, cost: 100000, description: "Entrainement intensif", effects: "+4 Mécanique, +3 Clutch, +25 Fatigue" },
     { id: "rest", name: "Repos", icon: ClockCounterClockwise, cost: 0, description: "Récupération", effects: "-30 Fatigue, +15 Moral" }
-  ];
+  ], []);
 
-  const starters = userTeam.players?.filter(p => p.is_starter) || [];
+  const starters = useMemo(() =>
+    userTeam.players?.filter(p => p.is_starter) || [],
+    [userTeam.players]
+  );
 
-  const handleApply = async () => {
+  const handleApply = useCallback(async () => {
     if (selectedTraining && selectedPlayer) {
       await onApplyTraining(selectedPlayer.id, selectedTraining.id);
       setSelectedTraining(null);
       setSelectedPlayer(null);
     }
-  };
+  }, [selectedTraining, selectedPlayer, onApplyTraining]);
 
   return (
     <div className="animate-slide-up">
