@@ -1420,8 +1420,11 @@ def calculate_team_power(team_id: str, draft_advantage: float = 0) -> float:
         w = POS_WEIGHT.get(pos, 1.0)
 
         # Base skill composite (mechanics + game_sense outweigh raw rating)
-        skill = p["mechanics"] * 0.30 + p["game_sense"] * 0.30 + p["rating"] * 0.20 + \
-                p["teamwork"] * 0.10 + p["consistency"] * 0.10
+        skill = (p["mechanics"]   * SKILL_W_MECHANICS
+               + p["game_sense"]  * SKILL_W_GAME_SENSE
+               + p["rating"]      * SKILL_W_RATING
+               + p["teamwork"]    * SKILL_W_TEAMWORK
+               + p["consistency"] * SKILL_W_CONSISTENCY)
 
         # Form modifier: moral boosts, fatigue penalises — non-linear
         form = 1.0 + (p["moral"] - 65) / 350.0 - (p["fatigue"] / 200.0)
