@@ -3168,7 +3168,9 @@ async def start_draft(request: DraftStartRequest = None):
         "user_picks": [],
         "enemy_picks": [],
         "banned_champions": [],
-        "picked_champions": [],
+        "picked_champions": [],  # Global pick tracking (legacy)
+        "user_picked_champions": [],  # Track user's own picks (avoid enemy picks)
+        "enemy_picked_champions": [],  # Track enemy's picks (avoid user picks)
         "fearless_excluded": fearless,  # fearless rule: cannot be picked by either team
     }
     return GAME_STATE["draft_state"]
