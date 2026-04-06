@@ -47,6 +47,7 @@ Thumbs.db
 .claude/
 .emergent/
 .continue/
+CLAUDE.md
 # Données de jeu et état local
 game_save_*.json
 active_slot.txt
