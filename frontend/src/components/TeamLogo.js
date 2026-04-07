@@ -22,7 +22,7 @@ const TeamLogo = ({ teamId, abbr, size = 32, style = {}, noClick = false }) => {
         style={{ width: size, height: size, objectFit: "contain", marginBottom: 4, ...clickStyle, ...style }}
         onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.insertAdjacentText("afterend", abbr); }}
       />
-      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", marginTop: 2 }}>{abbr}</span>
+     
     </div>
   );
 };
