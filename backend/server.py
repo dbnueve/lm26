@@ -4563,12 +4563,12 @@ def _intl_set_slot(match: dict, slot: int, team: dict):
         match["locked"] = False
 
 
-def _intl_sim(t1: dict, t2: dict, best_of: int) -> dict:
+def _intl_sim(t1: dict, t2: dict, best_of: int, t1_boost: float = 0, t2_boost: float = 0) -> dict:
     wn = (best_of + 1) // 2
     w1 = w2 = 0
     games = []
     while w1 < wn and w2 < wn:
-        r = simulate_match_phases(t1["rating"], t2["rating"])
+        r = simulate_match_phases(t1["rating"] + t1_boost, t2["rating"] + t2_boost)
         if r["winner"] == 1: w1 += 1
         else: w2 += 1
         games.append({"winner": t1["id"] if r["winner"] == 1 else t2["id"], "duration": r["duration"]})
