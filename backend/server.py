@@ -2550,10 +2550,11 @@ async def play_playoffs_game(request: PlayoffsGameRequest):
         draft_picks=user_draft_picks if is_t1_user else enemy_draft_picks,
         excluded=fearless_used,
     )
+    t1_champs = {s["champion"] for s in pg_t1 if s.get("champion")}
     pg_t2 = generate_player_stats(
         match["team2"], result["winner"] == 2, result["duration"], k2, k1,
         draft_picks=user_draft_picks if not is_t1_user else enemy_draft_picks,
-        excluded=fearless_used,
+        excluded=fearless_used | t1_champs,
     )
     game_winner = match["team1"] if result["winner"] == 1 else match["team2"]
     game_result = {
