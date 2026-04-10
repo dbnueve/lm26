@@ -118,7 +118,7 @@ if (isDevServer) {
         createProxyMiddleware(
           (pathname) => pathname.startsWith("/api"),
           {
-            target: "http://localhost:8002",
+            target: "http://localhost:8000",
             changeOrigin: true,
             secure: false,
             logLevel: "silent",

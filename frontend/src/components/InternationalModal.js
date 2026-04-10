@@ -15,9 +15,13 @@ const InternationalModal = ({ userTeam, onComplete }) => {
       try {
         const res = await axios.get(API + "/international");
         setIntl(res.data);
-      } catch {
-        const res = await axios.post(API + "/international/start");
-        setIntl(res.data);
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          const res = await axios.post(API + "/international/start");
+          setIntl(res.data);
+        }
+        // For any other error (network, 500, etc.), leave intl as null
+        // so the loading spinner does not become a silent new-tournament creation
       }
       setLoading(false);
     })();

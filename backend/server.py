@@ -149,7 +149,7 @@ def _sync_state_if_stale():
 _LEAGUE_TO_SCOUTING_FOR = {
     # Curated European sub-leagues
     "LFL": "LEC", "PRM": "LEC", "NLC": "LEC", "LVP SL": "LEC",
-    "TCL": "LEC", "EBL": "LEC", "LCK CL": "LEC",
+    "TCL": "LEC", "EBL": "LEC", "LCK CL": "LCK",
     # CSV-derived leagues
     "LCKC": "LCK",
     "NACL": "LCS",
@@ -438,7 +438,6 @@ def get_meta_champions():
 def _rebuild_meta_lookup():
     """Rebuild META_LOOKUP from the current league baseline meta."""
     base = _get_league_baseline_meta()
-    total = len(set())  # placeholder; presence computed from picks+bans ratio
     all_picks = sum(c["picks"] + c["bans"] for champs in base.values() for c in champs)
     META_LOOKUP.clear()
     for pos, champs in base.items():
@@ -2104,7 +2103,7 @@ def _build_champ_stats_response(raw: dict, total: int, split_label: str = "Split
             "pick_rate":  round(picks / total * 100, 1) if total > 0 else 0,
             "ban_rate":   round(bans  / total * 100, 1) if total > 0 else 0,
             "win_rate":   round(wins  / picks * 100, 1) if picks > 0 else 0,
-            "presence":   round((picks + bans) / total * 100, 1) if total > 0 else 0,
+            "presence":   min(100.0, round((picks + bans) / total * 100, 1)) if total > 0 else 0,
         })
     result.sort(key=lambda x: -(x["picks"] + x["bans"]))
     return {"total_games": total, "split_label": split_label, "champions": result}
@@ -2625,16 +2624,19 @@ async def simulate_playoffs_match(request: PlayoffsGameRequest):
         t2p = calculate_team_power(match["team2"])
         result = simulate_match_phases(t1p, t2p)
         k1, k2 = generate_kill_totals(result["duration"], result["winner"] == 1)
+        # Generate bans first so picked champions never overlap with banned ones
+        game_bans = generate_auto_bans()
+        excluded_set = fearless_used | set(game_bans)
         game_result = {
             "game_number": len(match["games"]) + 1,
             "winner":      match["team1"] if result["winner"] == 1 else match["team2"],
             "duration":    result["duration"],
-            "team1_stats": generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], k1, k2, excluded=fearless_used),
-            "team2_stats": generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, excluded=fearless_used),
+            "team1_stats": generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], k1, k2, excluded=excluded_set),
+            "team2_stats": generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, excluded=excluded_set),
             "phases": result["phases"],
             "events": result["events"],
         }
-        update_champ_stats(game_result["team1_stats"], game_result["team2_stats"], game_result["winner"], match["team1"], generate_auto_bans())
+        update_champ_stats(game_result["team1_stats"], game_result["team2_stats"], game_result["winner"], match["team1"], game_bans)
         match["games"].append(game_result)
         pg_winner_id = game_result["winner"]
         pg_loser_id  = match["team2"] if pg_winner_id == match["team1"] else match["team1"]
@@ -2691,10 +2693,12 @@ async def simulate_full_season():
         loser_id  = match["team2"] if winner_id == match["team1"] else match["team1"]
         GAME_STATE["teams"][winner_id]["wins"]   += 1
         GAME_STATE["teams"][loser_id]["losses"]  += 1
-        st1 = generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], k1, k2)
-        st2 = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1)
+        auto_bans = generate_auto_bans()
+        bans_set = set(auto_bans)
+        st1 = generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], k1, k2, excluded=bans_set)
+        st2 = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, excluded=bans_set)
         match["match_details"] = {**result, "team1_stats": st1, "team2_stats": st2}
-        update_champ_stats(st1, st2, match["winner"], match["team1"], generate_auto_bans())
+        update_champ_stats(st1, st2, match["winner"], match["team1"], auto_bans)
         sw_stats = st1 if winner_id == match["team1"] else st2
         sl_stats = st2 if winner_id == match["team1"] else st1
         apply_match_result_updates(winner_id, loser_id, result, sw_stats, sl_stats)
@@ -2796,10 +2800,12 @@ async def simulate_match(request: SimulateMatchRequest):
         GAME_STATE["teams"][w_id]["wins"] += 1
         GAME_STATE["teams"][l_id]["losses"] += 1
         ok1, ok2 = generate_kill_totals(other_result["duration"], other_result["winner"] == 1)
-        ot1_stats = generate_player_stats(other_match["team1"], other_result["winner"] == 1, other_result["duration"], ok1, ok2)
-        ot2_stats = generate_player_stats(other_match["team2"], other_result["winner"] == 2, other_result["duration"], ok2, ok1)
+        other_bans = generate_auto_bans()
+        other_bans_set = set(other_bans)
+        ot1_stats = generate_player_stats(other_match["team1"], other_result["winner"] == 1, other_result["duration"], ok1, ok2, excluded=other_bans_set)
+        ot2_stats = generate_player_stats(other_match["team2"], other_result["winner"] == 2, other_result["duration"], ok2, ok1, excluded=other_bans_set)
         other_match["match_details"] = {**other_result, "team1_stats": ot1_stats, "team2_stats": ot2_stats}
-        update_champ_stats(ot1_stats, ot2_stats, other_match["winner"], other_match["team1"], generate_auto_bans())
+        update_champ_stats(ot1_stats, ot2_stats, other_match["winner"], other_match["team1"], other_bans)
         ow_stats = ot1_stats if w_id == other_match["team1"] else ot2_stats
         ol_stats = ot2_stats if w_id == other_match["team1"] else ot1_stats
         apply_match_result_updates(w_id, l_id, other_result, ow_stats, ol_stats)
@@ -2859,10 +2865,12 @@ async def simulate_week():
         GAME_STATE["teams"][loser_id]["losses"] += 1
 
         wk1, wk2 = generate_kill_totals(result["duration"], result["winner"] == 1)
-        wt1_stats = generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], wk1, wk2)
-        wt2_stats = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], wk2, wk1)
+        week_bans = generate_auto_bans()
+        week_bans_set = set(week_bans)
+        wt1_stats = generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], wk1, wk2, excluded=week_bans_set)
+        wt2_stats = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], wk2, wk1, excluded=week_bans_set)
         match["match_details"] = {**result, "team1_stats": wt1_stats, "team2_stats": wt2_stats}
-        update_champ_stats(wt1_stats, wt2_stats, match["winner"], match["team1"], generate_auto_bans())
+        update_champ_stats(wt1_stats, wt2_stats, match["winner"], match["team1"], week_bans)
         ww_stats = wt1_stats if winner_id == match["team1"] else wt2_stats
         wl_stats = wt2_stats if winner_id == match["team1"] else wt1_stats
         apply_match_result_updates(winner_id, loser_id, result, ww_stats, wl_stats)
@@ -2887,6 +2895,7 @@ class NegotiationOffer(BaseModel):
     offered_amount: int = Field(ge=0, le=50_000_000)
     contract_years: int = Field(default=2, ge=1, le=5)
     clauses: Optional[List[str]] = []
+    player_to_swap_id: Optional[str] = None  # joueur user remplacé par le nouveau
 
 @api_router.get("/negotiations/available")
 async def get_available_players():
@@ -2949,21 +2958,48 @@ async def make_offer(offer: NegotiationOffer):
     
     if accepted:
         # Transfer the player
-        old_team = GAME_STATE["teams"][player["team_id"]]
+        old_team_id = player["team_id"]
+        old_team = GAME_STATE["teams"][old_team_id]
         old_team["roster"].remove(player["id"])
         old_team["budget"] += offer.offered_amount
-        
+
         player["team_id"] = GAME_STATE["user_team"]
         player["salary"] = int(offer.offered_amount * TRANSFER_SALARY_PCT)
         player["contract_years"] = offer.contract_years
-        
+        player["is_starter"] = True  # le joueur acheté devient titulaire
+
         user_team["roster"].append(player["id"])
         user_team["budget"] -= offer.offered_amount
+
+        # Si un joueur existant est désigné pour céder sa place, le passer en sub
+        swapped_out_name = None
+        if offer.player_to_swap_id:
+            swap_target = GAME_STATE["players"].get(offer.player_to_swap_id)
+            if swap_target and swap_target["team_id"] == GAME_STATE["user_team"]:
+                swap_target["is_starter"] = False
+                swapped_out_name = swap_target.get("name")
+
+        # Générer un remplaçant ERL pour l'équipe vendeuse afin qu'elle reste à 5 titulaires
+        sold_position = player.get("position", "MID")
+        active_league = GAME_STATE.get("league", "LEC")
+        replacement_data = generate_newgen(active_league)
+        replacement_data["position"] = sold_position
+        replacement_data["team_id"] = old_team_id
+        replacement_data["scouting_for"] = active_league
+        replacement = generate_erl_player(replacement_data)
+        replacement["team_id"] = old_team_id
+        replacement["is_starter"] = True
+        GAME_STATE["players"][replacement["id"]] = replacement
+        old_team["roster"].append(replacement["id"])
+
         save_state()
+        msg = f"{player['name']} a rejoint votre équipe !"
+        if swapped_out_name:
+            msg += f" {swapped_out_name} passe remplaçant."
         return {
             "success": True,
             "accepted": True,
-            "message": f"{player['name']} has joined your team!",
+            "message": msg,
             "player": player,
             "new_budget": user_team["budget"]
         }
@@ -3916,9 +3952,9 @@ async def apply_training(request: TrainingRequest):
         if stat in player:
             player[stat] = max(0, min(100, player[stat] + change))
     
-    # Update rating based on key stats
-    player["rating"] = int((player["mechanics"] * 0.3 + player["game_sense"] * 0.3 + 
-                           player["teamwork"] * 0.2 + player["consistency"] * 0.2))
+    # Update rating based on key stats — weights aligned with SKILL_W_* constants
+    player["rating"] = int((player["mechanics"] * 0.4 + player["game_sense"] * 0.4 +
+                           player["teamwork"] * 0.1 + player["consistency"] * 0.1))
     
     save_state()
     return {"success": True, "player": player, "effects": effect}
@@ -4230,6 +4266,8 @@ async def advance_to_next_split():
         "prestige": user_team.get("prestige", 0),
         "champion_stats": dict(GAME_STATE.get("champion_stats", {})),
         "total_games_played": GAME_STATE.get("total_games_played", 0),
+        # Snapshot ELO à la fin du split pour le graphe de carrière
+        "elo_snapshot": user_team.get("elo", initial_elo(user_team.get("rating", 80))),
     }
     GAME_STATE["history"].append(history_entry)
     
@@ -4838,7 +4876,7 @@ async def get_career_elo_history():
         "is_current": True,
     })
 
-    # Add historical splits
+    # Add historical splits (most recent first in GAME_STATE["history"], so reverse for chronological)
     for entry in GAME_STATE.get("history", []):
         history_entry = {
             "split_key": f"split_{entry.get('season', 2026)}_{entry.get('split_number', 1)}",
@@ -4852,7 +4890,9 @@ async def get_career_elo_history():
             "losses": entry.get("losses", 0),
             "budget": entry.get("budget", 0),
             "prestige": entry.get("prestige", 0),
-            "elo_games": entry.get("total_games_played", 0),  # Approximation
+            "elo_games": entry.get("total_games_played", 0),
+            # ELO snapshot enregistré à la fin du split
+            "elo": entry.get("elo_snapshot"),
             "is_current": False,
         }
         history.append(history_entry)
