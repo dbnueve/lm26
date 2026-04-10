@@ -4780,7 +4780,7 @@ async def start_international():
     if GAME_STATE.get("international") and not GAME_STATE["international"].get("completed"):
         return GAME_STATE["international"]
     user_league   = GAME_STATE.get("league", "LEC")
-    user_champ_id = (GAME_STATE.get("playoffs_bracket") or {}).get("champion")
+    user_champ_id = GAME_STATE.get("user_team")
     split_num     = GAME_STATE.get("current_split", 1)
     GAME_STATE["international"] = _create_msi(user_league, user_champ_id) if split_num == 1 else _create_worlds(user_league, user_champ_id)
     return GAME_STATE["international"]
