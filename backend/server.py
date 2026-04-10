@@ -2873,7 +2873,7 @@ async def simulate_week():
         week_bans = generate_auto_bans()
         week_bans_set = set(week_bans)
         wt1_stats = generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], wk1, wk2, excluded=week_bans_set)
-        wt2_stats = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], wk2, wk1, excluded=week_bans_set)
+        wt2_stats = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], wk2, wk1, excluded=week_bans_set | {s["champion"] for s in wt1_stats if s.get("champion")})
         match["match_details"] = {**result, "team1_stats": wt1_stats, "team2_stats": wt2_stats}
         update_champ_stats(wt1_stats, wt2_stats, match["winner"], match["team1"], week_bans)
         ww_stats = wt1_stats if winner_id == match["team1"] else wt2_stats
