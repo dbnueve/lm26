@@ -2701,7 +2701,7 @@ async def simulate_full_season():
         auto_bans = generate_auto_bans()
         bans_set = set(auto_bans)
         st1 = generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], k1, k2, excluded=bans_set)
-        st2 = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, excluded=bans_set)
+        st2 = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, excluded=bans_set | {s["champion"] for s in st1 if s.get("champion")})
         match["match_details"] = {**result, "team1_stats": st1, "team2_stats": st2}
         update_champ_stats(st1, st2, match["winner"], match["team1"], auto_bans)
         sw_stats = st1 if winner_id == match["team1"] else st2
