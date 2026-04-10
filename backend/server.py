@@ -2808,7 +2808,7 @@ async def simulate_match(request: SimulateMatchRequest):
         other_bans = generate_auto_bans()
         other_bans_set = set(other_bans)
         ot1_stats = generate_player_stats(other_match["team1"], other_result["winner"] == 1, other_result["duration"], ok1, ok2, excluded=other_bans_set)
-        ot2_stats = generate_player_stats(other_match["team2"], other_result["winner"] == 2, other_result["duration"], ok2, ok1, excluded=other_bans_set)
+        ot2_stats = generate_player_stats(other_match["team2"], other_result["winner"] == 2, other_result["duration"], ok2, ok1, excluded=other_bans_set | {s["champion"] for s in ot1_stats if s.get("champion")})
         other_match["match_details"] = {**other_result, "team1_stats": ot1_stats, "team2_stats": ot2_stats}
         update_champ_stats(ot1_stats, ot2_stats, other_match["winner"], other_match["team1"], other_bans)
         ow_stats = ot1_stats if w_id == other_match["team1"] else ot2_stats
