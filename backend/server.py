@@ -4803,24 +4803,39 @@ async def simulate_international(req: IntlSimRequest):
     if not intl: raise HTTPException(404, "Not started")
     if intl.get("completed"): raise HTTPException(400, "Tournament completed")
     mid = req.match_id
+    uc = intl.get("user_champ_id")
+
+    def _boost(m, t1, t2):
+        """Return (t1_boost, t2_boost) from user draft when applicable."""
+        if not req.user_draft or not uc: return 0, 0
+        is_user_t1 = t1.get("id") == uc
+        is_user_t2 = t2.get("id") == uc
+        if not is_user_t1 and not is_user_t2: return 0, 0
+        opp = t2 if is_user_t1 else t1
+        adv = calculate_draft_advantage(req.user_draft, uc, opp.get("id", ""))
+        return (adv, 0) if is_user_t1 else (0, adv)
+
     if intl["type"] == "msi":
         pi_ms = intl["play_in"]["matches"]; bk_ms = intl["bracket"]["matches"]
         if mid in pi_ms:
             m = pi_ms[mid]
             if m.get("winner_id"): raise HTTPException(400, "Already played")
             if m.get("locked"):    raise HTTPException(400, "Not ready")
-            _msi_update_play_in(intl, mid, _intl_sim(m["team1"], m["team2"], m["best_of"]))
+            b1, b2 = _boost(m, m["team1"], m["team2"])
+            _msi_update_play_in(intl, mid, _intl_sim(m["team1"], m["team2"], m["best_of"], b1, b2))
         elif mid in bk_ms:
             m = bk_ms[mid]
             if m.get("winner_id"): raise HTTPException(400, "Already played")
             if m.get("locked"):    raise HTTPException(400, "Not ready")
-            _msi_update_bracket(intl, mid, _intl_sim(m["team1"], m["team2"], m["best_of"]))
+            b1, b2 = _boost(m, m["team1"], m["team2"])
+            _msi_update_bracket(intl, mid, _intl_sim(m["team1"], m["team2"], m["best_of"], b1, b2))
         else: raise HTTPException(404, "Match not found")
     else:
         if mid == "pi_main":
             m = intl["play_in"]["match"]
             if m.get("winner_id"): raise HTTPException(400, "Already played")
-            res = _intl_sim(m["team1"], m["team2"], 5)
+            b1, b2 = _boost(m, m["team1"], m["team2"])
+            res = _intl_sim(m["team1"], m["team2"], 5, b1, b2)
             m.update(winner_id=res["winner_id"], score1=res["score1"], score2=res["score2"], games=res["games"])
             intl["play_in"]["qualified"] = res["winner_id"]; intl["play_in"]["completed"] = True
             q_team = next((t for t in intl["play_in"]["teams"] if t["id"] == res["winner_id"]), None)
@@ -4835,14 +4850,16 @@ async def simulate_international(req: IntlSimRequest):
             if mid not in cur["matches"]: raise HTTPException(404, "Match not found")
             m = cur["matches"][mid]
             if m.get("winner_id"): raise HTTPException(400, "Already played")
-            _worlds_update_swiss(intl, mid, _intl_sim(m["team1"], m["team2"], m["best_of"]))
+            b1, b2 = _boost(m, m["team1"], m["team2"])
+            _worlds_update_swiss(intl, mid, _intl_sim(m["team1"], m["team2"], m["best_of"], b1, b2))
         else:
             km = intl["knockout"]["matches"]
             if mid not in km: raise HTTPException(404, "Match not found")
             m = km[mid]
             if m.get("winner_id"): raise HTTPException(400, "Already played")
             if m.get("locked"):    raise HTTPException(400, "Not ready")
-            _worlds_update_knockout(intl, mid, _intl_sim(m["team1"], m["team2"], 5))
+            b1, b2 = _boost(m, m["team1"], m["team2"])
+            _worlds_update_knockout(intl, mid, _intl_sim(m["team1"], m["team2"], 5, b1, b2))
     return intl
 
 # ============ END INTERNATIONAL TOURNAMENT ============
