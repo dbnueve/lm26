@@ -4794,6 +4794,7 @@ async def get_international():
 
 class IntlSimRequest(BaseModel):
     match_id: str
+    user_draft: Optional[dict] = None
 
 
 @api_router.post("/international/simulate")
