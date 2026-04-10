@@ -15,6 +15,9 @@ const InternationalModal = ({ userTeam, onComplete }) => {
   const [simming, setSimming] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
   const [simAllActive, setSimAllActive] = useState(false);
+  const [showDraft, setShowDraft] = useState(false);
+  const [draftMatchId, setDraftMatchId] = useState(null);
+  const [pendingDraft, setPendingDraft] = useState(null); // draft complété, en attente de lancer
 
   const fetchIntl = useCallback(async () => {
     setError(null);
