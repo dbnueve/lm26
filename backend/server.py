@@ -2630,12 +2630,14 @@ async def simulate_playoffs_match(request: PlayoffsGameRequest):
         # Generate bans first so picked champions never overlap with banned ones
         game_bans = generate_auto_bans()
         excluded_set = fearless_used | set(game_bans)
+        t1_stats = generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], k1, k2, excluded=excluded_set)
+        t1_champs_fs = {s["champion"] for s in t1_stats if s.get("champion")}
         game_result = {
             "game_number": len(match["games"]) + 1,
             "winner":      match["team1"] if result["winner"] == 1 else match["team2"],
             "duration":    result["duration"],
-            "team1_stats": generate_player_stats(match["team1"], result["winner"] == 1, result["duration"], k1, k2, excluded=excluded_set),
-            "team2_stats": generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, excluded=excluded_set),
+            "team1_stats": t1_stats,
+            "team2_stats": generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, excluded=excluded_set | t1_champs_fs),
             "phases": result["phases"],
             "events": result["events"],
         }
