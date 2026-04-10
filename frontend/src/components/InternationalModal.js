@@ -55,10 +55,14 @@ const InternationalModal = ({ userTeam, onComplete }) => {
     setActiveTab(map[intl.stage] || "playin");
   }, [intl?.stage, intl?.type]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const simulate = useCallback(async (matchId) => {
+  const simulate = useCallback(async (matchId, userDraft = null) => {
     setSimming(matchId);
+    setPendingDraft(null);
+    setDraftMatchId(null);
     try {
-      const res = await axios.post(API + "/international/simulate", { match_id: matchId });
+      const payload = { match_id: matchId };
+      if (userDraft) payload.user_draft = userDraft;
+      const res = await axios.post(API + "/international/simulate", payload);
       setIntl(res.data);
     } catch {
       const ref = await axios.get(API + "/international").catch(() => null);
