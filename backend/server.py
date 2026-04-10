@@ -1782,8 +1782,9 @@ def generate_player_stats(team_id: str, won: bool, game_duration: int,
         else:
             cs = int(game_duration * random.uniform(7.5, 10.5))
 
-        info = player_by_position.get(pos, {"name": f"Player ({pos})", "pool": []})
+        info = player_by_position.get(pos, {"name": f"Player ({pos})", "pool": [], "rating": 75})
         player_name = info["name"]
+        player_rating = info.get("rating", 75)
 
         # Champion assignment: draft pick > player pool > meta pool
         champion = picks_by_position.get(pos)
