@@ -147,7 +147,7 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
         </span>
         <span className="font-stats" style={{ textAlign: "center" }}>{(p.cs / Math.max(1, duration)).toFixed(1)}</span>
         <span className="font-stats" style={{ textAlign: "right", color: "var(--secondary)" }}>{(p.damage / 1000).toFixed(1)}k</span>
-        <span className="font-stats" style={{ textAlign: "right", color: p.rating >= 90 ? "var(--secondary)" : p.rating >= 80 ? "var(--primary)" : "var(--text-secondary)", fontWeight: 700 }}>{p.rating ?? "—"}</span>
+        <span className="font-stats" style={{ textAlign: "right", fontWeight: 700, color: p.perf_score >= 8 ? "var(--secondary)" : p.perf_score >= 6 ? "var(--success)" : p.perf_score >= 4 ? "var(--text-primary)" : "var(--danger)" }}>{p.perf_score != null ? p.perf_score.toFixed(1) : "—"}</span>
       </div>
     );
 
