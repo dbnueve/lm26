@@ -941,83 +941,9 @@ ERL_LEAGUES = ["LFL", "PRM", "LVP SL", "NLC", "TCL", "EBL", "LCK CL",
                "LCKC", "NACL", "EM", "CD", "LRS", "DCup"]
 
 # Hand-curated ERL players (LEC scouting pool) with scouting_for field
-_CURATED_ERL_PLAYERS = [
-    # Solary (LFL)
-    {"name": "Kryze", "position": "TOP", "nationality": "FR", "age": 24, "rating": 76, "potential": 82, "league": "LFL", "team": "Solary", "scouting_for": "LEC"},
-    {"name": "Zicssi", "position": "JUNGLE", "nationality": "FR", "age": 21, "rating": 73, "potential": 84, "league": "LFL", "team": "Solary", "scouting_for": "LEC"},
-    {"name": "Jool", "position": "MID", "nationality": "FR", "age": 20, "rating": 74, "potential": 86, "league": "LFL", "team": "Solary", "scouting_for": "LEC"},
-    {"name": "Aetinoth", "position": "ADC", "nationality": "FR", "age": 19, "rating": 72, "potential": 85, "league": "LFL", "team": "Solary", "scouting_for": "LEC"},
-    {"name": "Piero", "position": "SUPPORT", "nationality": "FR", "age": 22, "rating": 74, "potential": 83, "league": "LFL", "team": "Solary", "scouting_for": "LEC"},
-    # Misa Esports (LFL)
-    {"name": "Ragner", "position": "TOP", "nationality": "FR", "age": 22, "rating": 75, "potential": 84, "league": "LFL", "team": "Misa Esports", "scouting_for": "LEC"},
-    {"name": "113", "position": "JUNGLE", "nationality": "KR", "age": 24, "rating": 80, "potential": 85, "league": "LFL", "team": "Misa Esports", "scouting_for": "LEC"},
-    {"name": "SlowQ", "position": "MID", "nationality": "FR", "age": 21, "rating": 74, "potential": 85, "league": "LFL", "team": "Misa Esports", "scouting_for": "LEC"},
-    {"name": "Hype", "position": "ADC", "nationality": "FR", "age": 20, "rating": 73, "potential": 86, "league": "LFL", "team": "Misa Esports", "scouting_for": "LEC"},
-    {"name": "Stend", "position": "SUPPORT", "nationality": "DE", "age": 23, "rating": 78, "potential": 85, "league": "LFL", "team": "Misa Esports", "scouting_for": "LEC"},
-    # Movistar KOI Fenix (LVP SL)
-    {"name": "NightSlayer", "position": "TOP", "nationality": "ES", "age": 20, "rating": 72, "potential": 86, "league": "LVP SL", "team": "Movistar KOI Fenix", "scouting_for": "LEC"},
-    {"name": "Time", "position": "JUNGLE", "nationality": "ES", "age": 21, "rating": 73, "potential": 84, "league": "LVP SL", "team": "Movistar KOI Fenix", "scouting_for": "LEC"},
-    {"name": "Fresskowy", "position": "MID", "nationality": "PL", "age": 22, "rating": 76, "potential": 84, "league": "LVP SL", "team": "Movistar KOI Fenix", "scouting_for": "LEC"},
-    {"name": "13", "position": "ADC", "nationality": "ES", "age": 19, "rating": 71, "potential": 87, "league": "LVP SL", "team": "Movistar KOI Fenix", "scouting_for": "LEC"},
-    {"name": "Myrtus", "position": "SUPPORT", "nationality": "ES", "age": 20, "rating": 72, "potential": 85, "league": "LVP SL", "team": "Movistar KOI Fenix", "scouting_for": "LEC"},
-    # Verdant (NLC)
-    {"name": "bobista", "position": "TOP", "nationality": "SE", "age": 21, "rating": 73, "potential": 83, "league": "NLC", "team": "Verdant", "scouting_for": "LEC"},
-    {"name": "Mafro", "position": "JUNGLE", "nationality": "UK", "age": 22, "rating": 74, "potential": 82, "league": "NLC", "team": "Verdant", "scouting_for": "LEC"},
-    {"name": "Furuy", "position": "MID", "nationality": "DK", "age": 20, "rating": 72, "potential": 86, "league": "NLC", "team": "Verdant", "scouting_for": "LEC"},
-    {"name": "Mishi", "position": "ADC", "nationality": "FI", "age": 21, "rating": 74, "potential": 84, "league": "NLC", "team": "Verdant", "scouting_for": "LEC"},
-    {"name": "Guggu", "position": "SUPPORT", "nationality": "FI", "age": 23, "rating": 75, "potential": 82, "league": "NLC", "team": "Verdant", "scouting_for": "LEC"},
-    # French Flair (LFL)
-    {"name": "Adam", "position": "TOP", "nationality": "FR", "age": 23, "rating": 82, "potential": 86, "league": "LFL", "team": "French Flair", "scouting_for": "LEC"},
-    {"name": "NattyNatt", "position": "JUNGLE", "nationality": "FR", "age": 21, "rating": 74, "potential": 85, "league": "LFL", "team": "French Flair", "scouting_for": "LEC"},
-    {"name": "SAKEN", "position": "MID", "nationality": "FR", "age": 26, "rating": 78, "potential": 80, "league": "LFL", "team": "French Flair", "scouting_for": "LEC"},
-    {"name": "3XA", "position": "ADC", "nationality": "FR", "age": 20, "rating": 73, "potential": 86, "league": "LFL", "team": "French Flair", "scouting_for": "LEC"},
-    {"name": "Targamas", "position": "SUPPORT", "nationality": "BE", "age": 25, "rating": 82, "potential": 84, "league": "LFL", "team": "French Flair", "scouting_for": "LEC"},
-    # G2 NORD (NLC)
-    {"name": "Shelfmade", "position": "TOP", "nationality": "PL", "age": 24, "rating": 77, "potential": 82, "league": "NLC", "team": "G2 NORD", "scouting_for": "LEC"},
-    {"name": "Markoon", "position": "JUNGLE", "nationality": "NL", "age": 25, "rating": 79, "potential": 83, "league": "NLC", "team": "G2 NORD", "scouting_for": "LEC"},
-    {"name": "Toasty", "position": "MID", "nationality": "UK", "age": 20, "rating": 73, "potential": 87, "league": "NLC", "team": "G2 NORD", "scouting_for": "LEC"},
-    {"name": "Rin", "position": "ADC", "nationality": "SE", "age": 19, "rating": 71, "potential": 88, "league": "NLC", "team": "G2 NORD", "scouting_for": "LEC"},
-    {"name": "Tockimo", "position": "SUPPORT", "nationality": "NO", "age": 21, "rating": 72, "potential": 84, "league": "NLC", "team": "G2 NORD", "scouting_for": "LEC"},
-    # BIG (PRM)
-    {"name": "Irrelevant", "position": "TOP", "nationality": "EE", "age": 23, "rating": 80, "potential": 85, "league": "PRM", "team": "BIG", "scouting_for": "LEC"},
-    {"name": "Habubu", "position": "JUNGLE", "nationality": "DE", "age": 20, "rating": 72, "potential": 86, "league": "PRM", "team": "BIG", "scouting_for": "LEC"},
-    {"name": "Reeker", "position": "MID", "nationality": "DE", "age": 22, "rating": 76, "potential": 84, "league": "PRM", "team": "BIG", "scouting_for": "LEC"},
-    {"name": "Fun K3y", "position": "ADC", "nationality": "DE", "age": 21, "rating": 74, "potential": 85, "league": "PRM", "team": "BIG", "scouting_for": "LEC"},
-    {"name": "Kaiser", "position": "SUPPORT", "nationality": "DE", "age": 25, "rating": 83, "potential": 85, "league": "PRM", "team": "BIG", "scouting_for": "LEC"},
-    # Karmine Corp Blue (LFL)
-    {"name": "Tao", "position": "TOP", "nationality": "KR", "age": 20, "rating": 74, "potential": 89, "league": "LFL", "team": "KC Blue", "scouting_for": "LEC"},
-    {"name": "Yukino", "position": "JUNGLE", "nationality": "FR", "age": 19, "rating": 71, "potential": 88, "league": "LFL", "team": "KC Blue", "scouting_for": "LEC"},
-    {"name": "Kamiloo", "position": "MID", "nationality": "PL", "age": 21, "rating": 78, "potential": 88, "league": "LFL", "team": "KC Blue", "scouting_for": "LEC"},
-    {"name": "Hazel", "position": "ADC", "nationality": "FR", "age": 18, "rating": 69, "potential": 90, "league": "LFL", "team": "KC Blue", "scouting_for": "LEC"},
-    {"name": "Prime", "position": "SUPPORT", "nationality": "FR", "age": 20, "rating": 72, "potential": 86, "league": "LFL", "team": "KC Blue", "scouting_for": "LEC"},
-    # Eintracht Spandau (PRM)
-    {"name": "JNX", "position": "TOP", "nationality": "DE", "age": 22, "rating": 75, "potential": 84, "league": "PRM", "team": "Eintracht Spandau", "scouting_for": "LEC"},
-    {"name": "Xagog", "position": "JUNGLE", "nationality": "DE", "age": 21, "rating": 73, "potential": 85, "league": "PRM", "team": "Eintracht Spandau", "scouting_for": "LEC"},
-    {"name": "PowerOfEvil", "position": "MID", "nationality": "DE", "age": 27, "rating": 80, "potential": 81, "league": "PRM", "team": "Eintracht Spandau", "scouting_for": "LEC"},
-    {"name": "Keduii", "position": "ADC", "nationality": "DE", "age": 23, "rating": 78, "potential": 84, "league": "PRM", "team": "Eintracht Spandau", "scouting_for": "LEC"},
-    {"name": "seaz", "position": "SUPPORT", "nationality": "DE", "age": 20, "rating": 71, "potential": 85, "league": "PRM", "team": "Eintracht Spandau", "scouting_for": "LEC"},
-    # Galions (LFL)
-    {"name": "Carlsen", "position": "TOP", "nationality": "DK", "age": 22, "rating": 79, "potential": 86, "league": "LFL", "team": "Galions", "scouting_for": "LEC"},
-    {"name": "Thayger", "position": "JUNGLE", "nationality": "ES", "age": 22, "rating": 77, "potential": 85, "league": "LFL", "team": "Galions", "scouting_for": "LEC"},
-    {"name": "OMON", "position": "MID", "nationality": "FR", "age": 20, "rating": 73, "potential": 87, "league": "LFL", "team": "Galions", "scouting_for": "LEC"},
-    {"name": "HARPOON", "position": "ADC", "nationality": "FR", "age": 21, "rating": 75, "potential": 86, "league": "LFL", "team": "Galions", "scouting_for": "LEC"},
-    {"name": "Zoelys", "position": "SUPPORT", "nationality": "FR", "age": 19, "rating": 70, "potential": 87, "league": "LFL", "team": "Galions", "scouting_for": "LEC"},
-    # Team Heretics Academy (LVP SL)
-    {"name": "Mihile", "position": "TOP", "nationality": "ES", "age": 19, "rating": 70, "potential": 87, "league": "LVP SL", "team": "TH Academy", "scouting_for": "LEC"},
-    {"name": "Daglas", "position": "JUNGLE", "nationality": "ES", "age": 20, "rating": 72, "potential": 86, "league": "LVP SL", "team": "TH Academy", "scouting_for": "LEC"},
-    {"name": "Mercy9", "position": "MID", "nationality": "ES", "age": 18, "rating": 68, "potential": 89, "league": "LVP SL", "team": "TH Academy", "scouting_for": "LEC"},
-    {"name": "Lure", "position": "ADC", "nationality": "ES", "age": 19, "rating": 71, "potential": 88, "league": "LVP SL", "team": "TH Academy", "scouting_for": "LEC"},
-    {"name": "Batuuu", "position": "SUPPORT", "nationality": "ES", "age": 20, "rating": 72, "potential": 85, "league": "LVP SL", "team": "TH Academy", "scouting_for": "LEC"},
-    # Unicorns of Love Sexy Edition (PRM)
-    {"name": "Fornoreason", "position": "TOP", "nationality": "DE", "age": 21, "rating": 73, "potential": 84, "league": "PRM", "team": "UOL SE", "scouting_for": "LEC"},
-    {"name": "White", "position": "JUNGLE", "nationality": "PL", "age": 22, "rating": 75, "potential": 83, "league": "PRM", "team": "UOL SE", "scouting_for": "LEC"},
-    {"name": "RoyalKanin", "position": "MID", "nationality": "DK", "age": 20, "rating": 72, "potential": 86, "league": "PRM", "team": "UOL SE", "scouting_for": "LEC"},
-    {"name": "DenVoksne", "position": "ADC", "nationality": "DK", "age": 21, "rating": 74, "potential": 85, "league": "PRM", "team": "UOL SE", "scouting_for": "LEC"},
-    {"name": "Twiizt", "position": "SUPPORT", "nationality": "SE", "age": 23, "rating": 76, "potential": 82, "league": "PRM", "team": "UOL SE", "scouting_for": "LEC"},
-]
 
 # Combined ERL pool: curated LEC players + CSV-derived data from all other leagues
-ERL_PLAYERS = _CURATED_ERL_PLAYERS + _CSV_SCOUTING_PLAYERS
+ERL_PLAYERS =  _CSV_SCOUTING_PLAYERS
 
 # Per-region newgen data: (nationality_code, [firstnames], [lastnames], [academy_teams])
 _NEWGEN_REGIONS = {
