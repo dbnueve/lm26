@@ -173,15 +173,47 @@ const InternationalModal = ({ userTeam, onComplete }) => {
           </div>
         </div>
         {canSim && (
-          <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
-            <button
-              className={isUser ? "btn-primary" : "btn-secondary"}
-              style={{ padding: "6px 16px", fontSize: 12 }}
-              disabled={!!simming || simAllActive}
-              onClick={() => simulate(m.id)}
-            >
-              {simming === m.id ? "..." : isUser ? "Jouer" : "Simuler"}
-            </button>
+          <div style={{ marginTop: 8, display: "flex", justifyContent: "center", gap: 8 }}>
+            {isUser ? (
+              draftMatchId === m.id && pendingDraft ? (
+                <button
+                  className="btn-primary"
+                  style={{ padding: "6px 16px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
+                  disabled={!!simming}
+                  onClick={() => simulate(m.id, pendingDraft)}
+                >
+                  <GameController size={14} /> Lancer le match
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn-secondary"
+                    style={{ padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
+                    disabled={!!simming || simAllActive}
+                    onClick={() => { setDraftMatchId(m.id); setPendingDraft(null); setShowDraft(true); }}
+                  >
+                    <Sword size={14} /> {draftMatchId === m.id ? "Redraft" : "Phase de Draft"}
+                  </button>
+                  <button
+                    className="btn-primary"
+                    style={{ padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
+                    disabled={!!simming || simAllActive}
+                    onClick={() => simulate(m.id)}
+                  >
+                    <GameController size={14} /> Simuler
+                  </button>
+                </>
+              )
+            ) : (
+              <button
+                className="btn-secondary"
+                style={{ padding: "6px 16px", fontSize: 12 }}
+                disabled={!!simming || simAllActive}
+                onClick={() => simulate(m.id)}
+              >
+                {simming === m.id ? "..." : "Simuler"}
+              </button>
+            )}
           </div>
         )}
       </div>
