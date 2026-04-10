@@ -1740,6 +1740,7 @@ def generate_player_stats(team_id: str, won: bool, game_duration: int,
             player_by_position[pos] = {
                 "name": player.get("name", f"Player ({pos})"),
                 "pool": player.get("champion_pool", []),
+                "rating": player.get("rating", 75),
             }
 
     # draft_picks: [{"champion": "Azir", "position": "MID"}, ...]
