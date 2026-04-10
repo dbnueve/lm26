@@ -1798,7 +1798,7 @@ def generate_player_stats(team_id: str, won: bool, game_duration: int,
                 champion = random.choice(pool)
                 used_champs.add(champion)
 
-        stats.append({
+        stat = {
             "position": pos,
             "player_name": player_name,
             "champion": champion,
@@ -1809,8 +1809,9 @@ def generate_player_stats(team_id: str, won: bool, game_duration: int,
             "gold": random.randint(8000, 18000),
             "damage": random.randint(10000, 35000) if pos != "SUPPORT" else random.randint(3000, 10000),
             "vision_score": random.randint(60, 120) if pos == "SUPPORT" else random.randint(30, 60),
-            "rating": player_rating,
-        })
+        }
+        stat["perf_score"] = _player_performance_score(stat, won, game_duration)
+        stats.append(stat)
 
     return stats
 
