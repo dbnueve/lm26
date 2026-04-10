@@ -8,7 +8,7 @@ import PlayerCard from "./PlayerCard";
 import PlayerDetailModal from "./PlayerDetailModal";
 
 // Dashboard Component
-const Dashboard = ({ userTeam, schedule, standings, onPlayMatch, onPlayPlayoffMatch }) => {
+const Dashboard = ({ userTeam, schedule, standings, splitStatus, onPlayMatch, onPlayPlayoffMatch }) => {
   const [playoffsData, setPlayoffsData] = useState(null);
   const [detailPlayer, setDetailPlayer] = useState(null);
 
@@ -68,7 +68,7 @@ const Dashboard = ({ userTeam, schedule, standings, onPlayMatch, onPlayPlayoffMa
             </div>
             <div>
               <div style={{ fontWeight: 600, fontSize: 18 }}>{userTeam.name}</div>
-              <div style={{ color: "var(--text-secondary)" }}>Saison 2026 - Split 1</div>
+              <div style={{ color: "var(--text-secondary)" }}>{splitStatus?.split_label || "Saison en cours"}</div>
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>

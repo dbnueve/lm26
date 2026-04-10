@@ -32,15 +32,28 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer }) => {
 
   const handleOffer = async () => {
     if (!selectedPlayer) return;
+// 1. Trouver le joueur de l'utilisateur qui occupe la même position
+  const playerToSwap = userTeam.players.find(
+    (p) => p.position === selectedPlayer.position
+  );
 
-    const result = await onMakeOffer(selectedPlayer.id, offerAmount, contractYears);
-    setNegotiationResult(result);
+  // 2. Envoyer l'offre avec l'ID du joueur à échanger (si nécessaire pour votre backend)
+  // On passe playerToSwap?.id pour que le backend sache quel joueur part
+  const result = await onMakeOffer(
+    selectedPlayer.id, 
+    offerAmount, 
+    contractYears, 
+    playerToSwap?.id 
+  );
+  
+  setNegotiationResult(result);
 
-    if (result.accepted) {
-      setSelectedPlayer(null);
-    }
+  if (result.accepted) {
+    // Optionnel : Vous pouvez ajouter un petit message de feedback ici
+    // "Transfert réussi : [Nouveau] remplace [Ancien]"
+    setSelectedPlayer(null);
   };
-
+  }
   const getTeamName = (teamId) => {
     const team = teams.find(t => t.id === teamId);
     return team ? team.abbr : "Unknown";
@@ -181,7 +194,13 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer }) => {
                     <div style={{ fontSize: 13 }}>{negotiationResult.message}</div>
                     {negotiationResult.counter_offer && (
                       <button className="btn-secondary" style={{ marginTop: 10, width: "100%" }}
-                        onClick={() => setOfferAmount(negotiationResult.counter_offer.amount)}>
+                        onClick={async () => {
+                          setOfferAmount(negotiationResult.counter_offer.amount);
+                          const playerToSwap = userTeam.players.find(p => p.position === selectedPlayer.position);
+                          const result = await onMakeOffer(selectedPlayer.id, negotiationResult.counter_offer.amount, contractYears, playerToSwap?.id);
+                          setNegotiationResult(result);
+                          if (result.accepted) setSelectedPlayer(null);
+                        }}>
                         Accepter contre-offre : {(negotiationResult.counter_offer.amount / 1000000).toFixed(2)}M EUR
                       </button>
                     )}

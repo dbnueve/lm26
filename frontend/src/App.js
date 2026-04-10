@@ -42,7 +42,6 @@ function App() {
   const [teamLogos, setTeamLogos] = useState({});
   const [globalTeamModal, setGlobalTeamModal] = useState(null); // {id, abbr}
   const openTeam = React.useCallback((teamId, abbr) => setGlobalTeamModal({ id: teamId, abbr }), []);
-  const currentPage_ref = React.useRef("dashboard");
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [activeMatch, setActiveMatch] = useState(null);
   const [activePlayoffMatch, setActivePlayoffMatch] = useState(null);
@@ -234,12 +233,13 @@ function App() {
     showToast("Match terminé!", "success");
   };
 
-  const handleMakeOffer = async (playerId, amount, years) => {
+  const handleMakeOffer = async (playerId, amount, years, playerToSwapId = null) => {
     try {
       const response = await axios.post(API + "/negotiations/offer", {
         player_id: playerId,
         offered_amount: amount,
-        contract_years: years
+        contract_years: years,
+        ...(playerToSwapId ? { player_to_swap_id: playerToSwapId } : {}),
       });
 
       if (response.data.accepted) {
@@ -338,6 +338,7 @@ function App() {
             userTeam={userTeamData}
             schedule={schedule}
             standings={standings}
+            splitStatus={splitStatus}
             onPlayMatch={handlePlayMatch}
             onPlayPlayoffMatch={(m) => setActivePlayoffMatch(m)}
           />

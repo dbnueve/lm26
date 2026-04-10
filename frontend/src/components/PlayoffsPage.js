@@ -145,9 +145,6 @@ const PlayoffsPage = ({ userTeam, onPlayPlayoffMatch, showToast, onSplitEnd, onS
     );
   };
 
-  const ubMatches = (rounds) => playoffsData.matches?.filter(m => rounds.includes(m.round)) || [];
-  const lbMatches = (rounds) => playoffsData.matches?.filter(m => rounds.includes(m.round)) || [];
-
   const Section = ({ title, rounds, color }) => {
     const ms = playoffsData.matches?.filter(m => rounds.includes(m.round)) || [];
     if (ms.length === 0) return null;

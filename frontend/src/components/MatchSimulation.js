@@ -66,9 +66,23 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
     let mvp = null;
     let maxScore = 0;
     allStats.forEach(p => {
-      const score = (p.kills * 3 + p.assists * 1.5 - p.deaths) + (p.damage / 5000);
-      if (score > maxScore) {
-        maxScore = score;
+     const pos = p.position || "MID";
+                const k = p.kills || 0;
+                const d = Math.max(p.deaths || 1, 1);
+                const a = p.assists || 0;
+                const cs = p.cs || 0;
+                const dur = Math.max(matchResult.match_details.duration || 1, 1);
+                const kda_raw = (k + a * 0.5) / d;
+                const kda_score = Math.min(5.0, kda_raw * 1.2);
+                const cs_expect = { "TOP": 9.0, "JUNGLE": 7.5, "MID": 9.0, "ADC": 9.5, "SUPPORT": 0.8 };
+                const cs_per_min = cs / dur;
+                const cs_ratio = cs_per_min / Math.max(cs_expect[pos] || 8.0, 0.1);
+                const cs_score = Math.min(3.0, cs_ratio * 3.0);
+                const win_bonus = matchResult.winner === userTeam.id ? 2.0 : 0.0;
+                const perf_score_raw = kda_score + cs_score + win_bonus;
+                const perf_score = Math.round(perf_score_raw * 10) / 10; 
+      if (perf_score > maxScore) {
+        maxScore = perf_score;
         mvp = p;
       }
     });
@@ -269,7 +283,9 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
                 const cs_ratio = cs_per_min / Math.max(cs_expect[pos] || 8.0, 0.1);
                 const cs_score = Math.min(3.0, cs_ratio * 3.0);
                 const win_bonus = matchResult.winner === userTeam.id ? 2.0 : 0.0;
-                const perf_score = round(kda_score + cs_score + win_bonus, 2);
+                const perf_score_raw = kda_score + cs_score + win_bonus;
+                const perf_score = Math.round(perf_score_raw * 10) / 10; 
+  
                 const is_good_perf = perf_score >= 7;
                 const is_bad_perf = perf_score <= 3;
 
@@ -298,8 +314,8 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
                       <span style={{ color: "var(--primary)" }}>{p.assists}</span>
                     </span>
                     <span className="font-stats" style={{ textAlign: "center", fontWeight: 700, color: is_good_perf ? "var(--success)" : is_bad_perf ? "var(--danger)" : "var(--primary)" }}>
-                      {perf_score}
-                    </span>
+        {perf_score.toFixed(1)}
+      </span>
                     <span className="font-stats" style={{ textAlign: "center" }}>{(cs / dur).toFixed(1)}</span>
                     <span className="font-stats" style={{ textAlign: "right", color: "var(--secondary)" }}>
                       {(p.damage / 1000).toFixed(1)}k
@@ -327,7 +343,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
             <div style={{ padding: 8 }}>
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "36px 1fr 80px 65px 70px",
+                gridTemplateColumns: "36px 1fr 80px 50px 65px 70px",
                 padding: "8px 12px",
                 fontSize: 11,
                 color: "var(--text-secondary)",
@@ -337,39 +353,74 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
                 <span></span>
                 <span>Joueur</span>
                 <span style={{ textAlign: "center" }}>K/D/A</span>
+                <span style={{ textAlign: "center" }}>Note</span>
                 <span style={{ textAlign: "center" }}>CS/M</span>
                 <span style={{ textAlign: "right" }}>DMG</span>
               </div>
-              {oppStats.map((p, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "36px 1fr 80px 65px 70px",
-                    padding: "6px 12px",
-                    borderTop: "1px solid var(--border-subtle)",
-                    alignItems: "center",
-                    gap: 4
-                  }}
-                >
-                  {p.champion
-                    ? <img loading="lazy" src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(p.champion)}.png`} alt={p.champion} title={p.champion} style={{ width: 28, height: 28, borderRadius: 3 }} onError={e => { e.currentTarget.style.display = "none"; }} />
-                    : <span />
-                  }
-                  <span style={{ fontWeight: 500, fontSize: 13 }}>{p.player_name || `Joueur ${i + 1}`}</span>
-                  <span className="font-stats" style={{ textAlign: "center", fontWeight: 700 }}>
-                    <span style={{ color: "var(--success)" }}>{p.kills}</span>
-                    <span style={{ color: "var(--text-secondary)" }}>/</span>
-                    <span style={{ color: "var(--danger)" }}>{p.deaths}</span>
-                    <span style={{ color: "var(--text-secondary)" }}>/</span>
-                    <span style={{ color: "var(--primary)" }}>{p.assists}</span>
-                  </span>
-                  <span className="font-stats" style={{ textAlign: "center" }}>{(p.cs / Math.max(1, matchResult.match_details.duration)).toFixed(1)}</span>
-                  <span className="font-stats" style={{ textAlign: "right", color: "var(--secondary)" }}>
-                    {(p.damage / 1000).toFixed(1)}k
-                  </span>
-                </div>
-              ))}
+              {oppStats.map((p, i) => {
+  // --- AJOUT DU CALCUL DE LA NOTE POUR L'ÉQUIPE ADVERSE ---
+  const pos = p.position || "MID";
+  const k = p.kills || 0;
+  const d = Math.max(p.deaths || 1, 1);
+  const a = p.assists || 0;
+  const cs = p.cs || 0;
+  const dur = Math.max(matchResult.match_details.duration || 1, 1);
+  const kda_raw = (k + a * 0.5) / d;
+  const kda_score = Math.min(5.0, kda_raw * 1.2);
+  const cs_expect = { "TOP": 9.0, "JUNGLE": 7.5, "MID": 9.0, "ADC": 9.5, "SUPPORT": 0.8 };
+  const cs_per_min = cs / dur;
+  const cs_ratio = cs_per_min / Math.max(cs_expect[pos] || 8.0, 0.1);
+  const cs_score = Math.min(3.0, cs_ratio * 3.0);
+  
+  // Attention: Le bonus de victoire doit vérifier si l'adversaire a gagné
+  const win_bonus = matchResult.winner !== userTeam.id ? 2.0 : 0.0; 
+  
+  // Petite correction JS: Math.round() ne prend pas de 2ème argument en JavaScript.
+  // Pour garder 1 ou 2 décimales, on utilise .toFixed(1) ou Math.round(valeur * 10) / 10
+  const perf_score_raw = kda_score + cs_score + win_bonus;
+  const perf_score = Math.round(perf_score_raw * 10) / 10; 
+  
+  const is_good_perf = perf_score >= 7;
+  const is_bad_perf = perf_score <= 3;
+  // --------------------------------------------------------
+
+  return (
+    <div
+      key={i}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "36px 1fr 80px 50px 65px 70px", // Attention: j'ai ajouté "50px" pour la colonne de la note qui manquait dans tes colonnes adverses
+        padding: "6px 12px",
+        borderTop: "1px solid var(--border-subtle)",
+        alignItems: "center",
+        gap: 4
+      }}
+    >
+      {p.champion
+        ? <img loading="lazy" src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(p.champion)}.png`} alt={p.champion} title={p.champion} style={{ width: 28, height: 28, borderRadius: 3 }} onError={e => { e.currentTarget.style.display = "none"; }} />
+        : <span />
+      }
+      <span style={{ fontWeight: 500, fontSize: 13 }}>{p.player_name || `Joueur ${i + 1}`}</span>
+      <span className="font-stats" style={{ textAlign: "center", fontWeight: 700 }}>
+        <span style={{ color: "var(--success)" }}>{p.kills}</span>
+        <span style={{ color: "var(--text-secondary)" }}>/</span>
+        <span style={{ color: "var(--danger)" }}>{p.deaths}</span>
+        <span style={{ color: "var(--text-secondary)" }}>/</span>
+        <span style={{ color: "var(--primary)" }}>{p.assists}</span>
+      </span>
+      
+      {/* Affichage de la note corrigé */}
+      <span className="font-stats" style={{ textAlign: "center", fontWeight: 700, color: is_good_perf ? "var(--success)" : is_bad_perf ? "var(--danger)" : "var(--primary)" }}>
+        {perf_score.toFixed(1)}
+      </span>
+
+      <span className="font-stats" style={{ textAlign: "center" }}>{(p.cs / Math.max(1, matchResult.match_details.duration)).toFixed(1)}</span>
+      <span className="font-stats" style={{ textAlign: "right", color: "var(--secondary)" }}>
+        {(p.damage / 1000).toFixed(1)}k
+      </span>
+    </div>
+  );
+})}
             </div>
           </div>
         </div>

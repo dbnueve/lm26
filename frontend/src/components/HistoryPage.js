@@ -75,12 +75,14 @@ const HistoryPage = ({ userTeam, showToast }) => {
 }, [eloHistory]);
 const eloChartData = useMemo(() => {
   if (!eloHistory?.history) return [];
-  // On s'assure d'avoir l'ordre chronologique (du plus ancien au plus récent)
-  // Si ton API envoie le plus récent en premier, utilise .reverse()
-  return [...eloHistory.history].sort((a, b) => a.id - b.id); 
+  // Ordre chronologique : tri par saison puis numéro de split
+  return [...eloHistory.history]
+    .filter(d => d.elo != null)  // ignorer les entrées sans snapshot ELO
+    .sort((a, b) => a.season !== b.season ? a.season - b.season : a.split_number - b.split_number);
 }, [eloHistory]);
-  const maxElo = Math.max(...eloChartData.map(d => d.elo), 1100) + 20;
-  const minElo = Math.min(...eloChartData.map(d => d.elo), 900) - 20;
+  const eloValues = eloChartData.map(d => d.elo).filter(v => v != null);
+  const maxElo = (eloValues.length > 0 ? Math.max(...eloValues) : 1100) + 20;
+  const minElo = (eloValues.length > 0 ? Math.min(...eloValues) : 900) - 20;
 
   const getEloColor = (elo) => {
     if (elo >= 1170) return "var(--success)";
@@ -90,7 +92,6 @@ const eloChartData = useMemo(() => {
   };
 
   if (loading) return <div style={{ textAlign: "center", padding: 60 }}><div className="spinner" /></div>;
-console.log("DEBUG HISTORY:", eloHistory?.history);
   return (
     <div className="animate-slide-up">
       <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 24, display: 'flex', alignItems: 'center' }}>
@@ -214,7 +215,7 @@ console.log("DEBUG HISTORY:", eloHistory?.history);
         <div className="card" style={{ padding: 24 }}>
             <h3 className="font-heading" style={{marginBottom: 20}}>Analyses par Split</h3>
             <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-                {eloHistory?.history.map(h => (
+                {eloHistory?.history?.map(h => (
                     <button 
                         key={h.split_key}
                         onClick={() => handleSplitChange(h.split_key)}

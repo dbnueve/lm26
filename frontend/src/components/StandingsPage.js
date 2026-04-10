@@ -10,7 +10,7 @@ const StandingsPage = ({ standings, userTeam }) => {
   return (
     <div className="animate-slide-up">
       <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 24 }}>
-        Classement LEC
+        Classement
       </h2>
 
       <div className="standings-table">
@@ -20,7 +20,7 @@ const StandingsPage = ({ standings, userTeam }) => {
           <span>V</span>
           <span>D</span>
           <span>Win Rate</span>
-          <span>Rating</span>
+          <span>Elo</span>
         </div>
         {standings.map((team, index) => (
           <div
@@ -50,7 +50,7 @@ const StandingsPage = ({ standings, userTeam }) => {
             <span className="font-stats" style={{ fontWeight: 700, color: "var(--success)" }}>{team.wins}</span>
             <span className="font-stats" style={{ fontWeight: 700, color: "var(--danger)" }}>{team.losses}</span>
             <span className="font-stats" style={{ fontWeight: 700 }}>{team.win_rate}%</span>
-            <span className="font-stats" style={{ fontWeight: 700, color: "var(--primary)" }}>{team.rating}</span>
+            <span className="font-stats" style={{ fontWeight: 700, color: "var(--primary)" }}>{team.elo}</span>
           </div>
         ))}
       </div>
