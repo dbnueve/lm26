@@ -132,7 +132,7 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
     const duration = gameResult.duration || 30;
 
     const renderPlayerRow = (p, i) => (
-      <div key={i} style={{ display: "grid", gridTemplateColumns: "36px 1fr 80px 65px 70px", padding: "6px 12px", borderTop: "1px solid var(--border-subtle)", alignItems: "center", gap: 4 }}>
+      <div key={i} style={{ display: "grid", gridTemplateColumns: "36px 1fr 80px 65px 70px 44px", padding: "6px 12px", borderTop: "1px solid var(--border-subtle)", alignItems: "center", gap: 4 }}>
         {p.champion
           ? <img loading="lazy" src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(p.champion)}.png`} alt={p.champion} style={{ width: 28, height: 28, borderRadius: 3 }} onError={e => { e.currentTarget.style.display = "none"; }} />
           : <span />
@@ -147,12 +147,13 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
         </span>
         <span className="font-stats" style={{ textAlign: "center" }}>{(p.cs / Math.max(1, duration)).toFixed(1)}</span>
         <span className="font-stats" style={{ textAlign: "right", color: "var(--secondary)" }}>{(p.damage / 1000).toFixed(1)}k</span>
+        <span className="font-stats" style={{ textAlign: "right", color: p.rating >= 90 ? "var(--secondary)" : p.rating >= 80 ? "var(--primary)" : "var(--text-secondary)", fontWeight: 700 }}>{p.rating ?? "—"}</span>
       </div>
     );
 
     const statsHeader = (
-      <div style={{ display: "grid", gridTemplateColumns: "36px 1fr 80px 65px 70px", padding: "8px 12px", fontSize: 11, color: "var(--text-secondary)", fontWeight: 600, textTransform: "uppercase" }}>
-        <span /><span>Joueur</span><span style={{ textAlign: "center" }}>K/D/A</span><span style={{ textAlign: "center" }}>CS/M</span><span style={{ textAlign: "right" }}>DMG</span>
+      <div style={{ display: "grid", gridTemplateColumns: "36px 1fr 80px 65px 70px 44px", padding: "8px 12px", fontSize: 11, color: "var(--text-secondary)", fontWeight: 600, textTransform: "uppercase" }}>
+        <span /><span>Joueur</span><span style={{ textAlign: "center" }}>K/D/A</span><span style={{ textAlign: "center" }}>CS/M</span><span style={{ textAlign: "right" }}>DMG</span><span style={{ textAlign: "right" }}>Note</span>
       </div>
     );
 
