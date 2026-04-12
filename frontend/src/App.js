@@ -395,6 +395,15 @@ function App() {
           />
         )}
 
+        {currentPage === "tactics" && userTeamData && (
+          <TacticsPage
+            userTeam={userTeamData}
+            players={null}
+            teams={teams}
+            nextMatch={schedule.find(m => !m.played && (m.team1 === userTeamData.id || m.team2 === userTeamData.id)) || null}
+          />
+        )}
+
         {currentPage === "stats" && <StatsPage />}
 
         {currentPage === "history" && <HistoryPage userTeam={userTeamData} showToast={showToast} />}
