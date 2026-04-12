@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, Users, ShoppingCart, Target, Calendar,
   ChartBar, ChartLine, Sword, MagnifyingGlass,
-  Coins, ArrowsClockwise, X, GameController, ClockCounterClockwise
+  Coins, ArrowsClockwise, X, GameController, ClockCounterClockwise,
+  Strategy
 } from "@phosphor-icons/react";
 import TeamLogo from "./TeamLogo";
 
