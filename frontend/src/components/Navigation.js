@@ -20,6 +20,7 @@ const Navigation = ({ currentPage, setCurrentPage, userTeam, onChangeSave }) => 
     { id: "schedule", label: "Calendrier", icon: Calendar },
     { id: "standings", label: "Classement", icon: Trophy },
     { id: "playoffs", label: "Playoffs", icon: Sword },
+    { id: "tactics", label: "Tactiques", icon: Strategy },
     { id: "stats", label: "Stats", icon: ChartLine },
     { id: "history", label: "Historique", icon: ClockCounterClockwise },
     { id: "scouting", label: "Scouting", icon: MagnifyingGlass },
