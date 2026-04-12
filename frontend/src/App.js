@@ -475,6 +475,7 @@ function App() {
         {showInternational && !activePlayoffMatch && (
           <InternationalModal
             userTeam={userTeamData}
+            champions={champions}
             onComplete={() => {
               setShowInternational(false);
               setShowSplitEnd(true);
