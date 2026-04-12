@@ -1338,7 +1338,7 @@ def generate_schedule():
 
     GAME_STATE["schedule"] = schedule
 
-def calculate_team_power(team_id: str, draft_advantage: float = 0) -> float:
+def calculate_team_power(team_id: str, draft_advantage: float = 0, apply_tactics: bool = False) -> float:
     """Calculate team power with position-weighted contributions and player form."""
     team = GAME_STATE["teams"][team_id]
     starters_by_pos = {}
