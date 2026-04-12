@@ -152,6 +152,7 @@ def load_state() -> bool:
         _WORKER_STATE_MTIME = path.stat().st_mtime
         _rebuild_meta_lookup()  # Rebuild META_LOOKUP for the loaded league
         _refresh_erl_pool_on_load()  # Rebuild erl_players with correct scouting_for
+        _refresh_champion_pools_on_load()  # Update champion pools from CSV data
         return True
     except Exception as e:
         logging.error(f"Failed to load slot {slot}: {e}")
