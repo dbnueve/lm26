@@ -2741,10 +2741,13 @@ async def simulate_match(request: SimulateMatchRequest):
         opponent_id = match["team2"] if match["team1"] == GAME_STATE["user_team"] else match["team1"]
         user_adv = calculate_draft_advantage(request.user_draft, GAME_STATE["user_team"], opponent_id)
 
+    user_team = GAME_STATE["user_team"]
     team1_power = calculate_team_power(match["team1"],
-                                       user_adv if match["team1"] == GAME_STATE["user_team"] else 0)
+                                       user_adv if match["team1"] == user_team else 0,
+                                       apply_tactics=match["team1"] == user_team)
     team2_power = calculate_team_power(match["team2"],
-                                       user_adv if match["team2"] == GAME_STATE["user_team"] else 0)
+                                       user_adv if match["team2"] == user_team else 0,
+                                       apply_tactics=match["team2"] == user_team)
 
     result = simulate_match_phases(team1_power, team2_power)
 
