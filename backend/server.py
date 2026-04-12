@@ -1212,6 +1212,7 @@ GAME_STATE = {
     "meta_champions": None, # Dynamic meta updated after each split; None = use static META_CHAMPIONS
     "total_games_played": 0,
     "league": "LEC",        # Active league: LEC/LCK/LPL/LCS/CBLOL
+    "tactics": None,        # User tactics (strategy, lanes, coherence)
 }
 
 def initialize_game(league: str = "LEC"):
