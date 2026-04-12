@@ -183,11 +183,13 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
   const [activeTab, setActiveTab] = useState("strategy");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fetchedPlayers, setFetchedPlayers] = useState({});
 
   // Gather starters for Impact Preview
+  const resolvePlayer = (id) => allPlayers?.[id] || fetchedPlayers[id];
   const starters = userTeam
     ? (userTeam.roster || [])
-        .map(id => allPlayers?.[id])
+        .map(id => resolvePlayer(id))
         .filter(p => p?.is_starter)
     : [];
 
