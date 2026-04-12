@@ -1100,11 +1100,15 @@ def generate_player(position: str, team_id: str, player_data: dict = None, is_st
         kda = real_stats.get("kda", round(random.uniform(2.5, 7.0), 2))
         _default_csm = round(random.uniform(0.5, 1.5), 1) if position == "SUPPORT" else round(random.uniform(7.5, 10.0), 1)
         cs_min = real_stats.get("csm", _default_csm)
-        # Build champion pool from meta - top picks for position
-        meta_pool = [c["name"] for c in get_meta_champions().get(position, []) if c["picks"] >= 3]
-        if len(meta_pool) < 3:
-            meta_pool = [c["name"] for c in get_meta_champions().get(position, [])]
-        champ_pool = random.sample(meta_pool, min(5, len(meta_pool)))
+        # Build champion pool: CSV data first, fallback to meta picks
+        csv_pool = CSV_CHAMPION_POOLS.get(player_data["name"].lower(), [])
+        if len(csv_pool) >= 3:
+            champ_pool = csv_pool[:6]
+        else:
+            meta_pool = [c["name"] for c in get_meta_champions().get(position, []) if c["picks"] >= 3]
+            if len(meta_pool) < 3:
+                meta_pool = [c["name"] for c in get_meta_champions().get(position, [])]
+            champ_pool = random.sample(meta_pool, min(5, len(meta_pool)))
         return {
             "id": str(uuid.uuid4()),
             "name": player_data["name"],
