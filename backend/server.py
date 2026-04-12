@@ -2540,8 +2540,8 @@ async def play_playoffs_game(request: PlayoffsGameRequest):
                 raise HTTPException(status_code=400, detail=f"{champ} est interdit par la règle Fearless")
         user_adv = calculate_draft_advantage(request.user_draft, GAME_STATE["user_team"], opponent_id)
 
-    t1p = calculate_team_power(match["team1"], user_adv if match["team1"] == GAME_STATE["user_team"] else 0)
-    t2p = calculate_team_power(match["team2"], user_adv if match["team2"] == GAME_STATE["user_team"] else 0)
+    t1p = calculate_team_power(match["team1"], user_adv if match["team1"] == GAME_STATE["user_team"] else 0, apply_tactics=match["team1"] == GAME_STATE["user_team"])
+    t2p = calculate_team_power(match["team2"], user_adv if match["team2"] == GAME_STATE["user_team"] else 0, apply_tactics=match["team2"] == GAME_STATE["user_team"])
     result = simulate_match_phases(t1p, t2p)
     k1, k2 = generate_kill_totals(result["duration"], result["winner"] == 1)
 
