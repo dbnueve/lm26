@@ -1,0 +1,397 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import {
+  Sword, Lightning, TreeStructure, ArrowsLeftRight,
+  Shield, Target, ArrowUp, ArrowDown, ArrowRight,
+  Crosshair, CurrencyDollar, Flag, Eye, MapTrifold,
+  Users, Robot, CheckCircle, XCircle, Spinner
+} from "@phosphor-icons/react";
+import axios from "axios";
+import { API } from "../shared";
+import TeamLogo from "./TeamLogo";
+import { _ddVersion, toDDragonKey } from "./ddHelpers";
+
+// ── Option card ──────────────────────────────────────────────────────────────
+const OptionCard = ({ label, icon: Icon, selected, onClick, disabled }) => (
+  <div
+    onClick={() => !disabled && onClick()}
+    style={{
+      background: selected ? "rgba(10,132,255,0.18)" : "var(--surface)",
+      border: `2px solid ${selected ? "var(--primary)" : "var(--border-subtle)"}`,
+      borderRadius: 6,
+      padding: "14px 10px",
+      textAlign: "center",
+      cursor: disabled ? "default" : "pointer",
+      opacity: disabled ? 0.5 : 1,
+      transition: "all 0.15s ease",
+      flex: 1,
+      minWidth: 90,
+    }}
+  >
+    {Icon && <Icon size={22} weight={selected ? "fill" : "regular"} style={{ color: selected ? "var(--primary)" : "var(--text-secondary)", marginBottom: 6 }} />}
+    <div style={{ fontSize: 12, fontWeight: selected ? 700 : 500, color: selected ? "var(--primary)" : "var(--text-primary)" }}>
+      {label}
+    </div>
+  </div>
+);
+
+// ── Section card ─────────────────────────────────────────────────────────────
+const Section = ({ icon: Icon, title, tag, children }) => (
+  <div style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+      {Icon && <Icon size={18} style={{ color: "var(--text-secondary)" }} />}
+      <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)" }}>{title}</span>
+      {tag && (
+        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 3, background: tag === "STRONG" ? "rgba(0,230,118,0.15)" : "rgba(255,51,102,0.15)", color: tag === "STRONG" ? "var(--success)" : "var(--danger)", letterSpacing: 1 }}>
+          {tag}
+        </span>
+      )}
+    </div>
+    {children}
+  </div>
+);
+
+// ── Coherence panel ──────────────────────────────────────────────────────────
+const CoherencePanel = ({ coherence, players }) => {
+  if (!coherence) return null;
+  const net = coherence.net ?? 0;
+  const netColor = net > 0 ? "var(--success)" : net < 0 ? "var(--danger)" : "var(--text-secondary)";
+  const checks = (coherence.checks || []).filter(c => c.passed);
+
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 20 }}>
+      {/* Players impact */}
+      {players && players.length > 0 && (
+        <>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 12 }}>Impact Preview</div>
+          {players.map((p, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "var(--text-secondary)", flexShrink: 0 }}>
+                {p.name?.charAt(0)}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+                <div style={{ fontSize: 10, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
+              </div>
+            </div>
+          ))}
+          <div style={{ height: 1, background: "var(--border-subtle)", margin: "14px 0" }} />
+        </>
+      )}
+
+      {/* Coherence */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)" }}>Cohérence</span>
+        <span style={{ fontSize: 18, fontWeight: 900, color: netColor }}>{net > 0 ? "+" : ""}{net.toFixed(1)}</span>
+      </div>
+      {checks.map((c, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6, fontSize: 11 }}>
+          {c.delta > 0
+            ? <CheckCircle size={13} weight="fill" style={{ color: "var(--success)", flexShrink: 0, marginTop: 1 }} />
+            : <XCircle size={13} weight="fill" style={{ color: "var(--danger)", flexShrink: 0, marginTop: 1 }} />
+          }
+          <span style={{ color: "var(--text-secondary)", lineHeight: 1.4 }}>{c.description}</span>
+          <span style={{ marginLeft: "auto", fontWeight: 700, color: c.delta > 0 ? "var(--success)" : "var(--danger)", flexShrink: 0 }}>
+            {c.delta > 0 ? "+" : ""}{c.delta.toFixed(1)}
+          </span>
+        </div>
+      ))}
+      {checks.length === 0 && (
+        <div style={{ fontSize: 11, color: "var(--text-secondary)", fontStyle: "italic" }}>Aucune synergie active</div>
+      )}
+
+      <div style={{ height: 1, background: "var(--border-subtle)", margin: "14px 0" }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)" }}>Net Modifier</span>
+        <span style={{ fontSize: 22, fontWeight: 900, color: netColor }}>{net > 0 ? "+" : ""}{(net * 1.5).toFixed(1)}</span>
+      </div>
+      <div style={{ fontSize: 10, color: "var(--text-secondary)", marginTop: 4 }}>Points de puissance ajoutés lors des simulations de matchs.</div>
+    </div>
+  );
+};
+
+// ── Lane sub-section ──────────────────────────────────────────────────────────
+const LaneSection = ({ pos, label, icon: Icon, tactics, onUpdate, tag }) => {
+  const lane = tactics?.lanes?.[pos] || {};
+  const laneStyleOptions = pos !== "SUPPORT"
+    ? [
+        { id: "economy",       label: "Economy",       icon: CurrencyDollar },
+        { id: "kill_pressure", label: "Kill Pressure", icon: Crosshair },
+        { id: "lane_priority", label: "Lane Priority", icon: Flag },
+      ]
+    : null;
+  const tpOptions = pos === "TOP" || pos === "MID"
+    ? [
+        { id: "safety",     label: "Safety",      icon: Shield },
+        { id: "objectives", label: "Objectives",  icon: Target },
+        { id: "split_push", label: "Split Push",  icon: ArrowsLeftRight },
+      ]
+    : null;
+  const roamOptions = pos === "SUPPORT"
+    ? [
+        { id: "play_lane",     label: "Play Lane",     icon: Shield },
+        { id: "roam_mid",      label: "Roam Mid",      icon: ArrowRight },
+        { id: "roam_top",      label: "Roam Top",      icon: ArrowUp },
+        { id: "jungle_invade", label: "Jungle Invade", icon: Sword },
+        { id: "objectives",    label: "Objectives",    icon: Target },
+      ]
+    : null;
+
+  return (
+    <Section icon={Icon} title={label} tag={tag}>
+      {laneStyleOptions && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 }}>Lane Style</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: tpOptions ? 16 : 0 }}>
+            {laneStyleOptions.map(o => (
+              <OptionCard key={o.id} label={o.label} icon={o.icon} selected={lane.lane_style === o.id}
+                onClick={() => onUpdate(pos, { lane_style: o.id })} />
+            ))}
+          </div>
+        </>
+      )}
+      {tpOptions && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 }}>TP Usage</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {tpOptions.map(o => (
+              <OptionCard key={o.id} label={o.label} icon={o.icon} selected={lane.tp_usage === o.id}
+                onClick={() => onUpdate(pos, { tp_usage: o.id })} />
+            ))}
+          </div>
+        </>
+      )}
+      {roamOptions && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 }}>Roaming</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {roamOptions.map(o => (
+              <OptionCard key={o.id} label={o.label} icon={o.icon} selected={lane.roaming === o.id}
+                onClick={() => onUpdate(pos, { roaming: o.id })} />
+            ))}
+          </div>
+        </>
+      )}
+    </Section>
+  );
+};
+
+// ── Main component ─────────────────────────────────────────────────────────
+const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
+  const [tactics, setTactics] = useState(null);
+  const [coherence, setCoherence] = useState(null);
+  const [activeTab, setActiveTab] = useState("strategy");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Gather starters for Impact Preview
+  const starters = userTeam
+    ? (userTeam.roster || [])
+        .map(id => allPlayers?.[id])
+        .filter(p => p?.is_starter)
+    : [];
+
+  const fetchTactics = useCallback(async () => {
+    try {
+      const res = await axios.get(API + "/tactics");
+      setTactics(res.data.tactics);
+      setCoherence(res.data.coherence);
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchTactics(); }, [fetchTactics]);
+
+  const update = useCallback(async (patch) => {
+    if (saving) return;
+    setSaving(true);
+    // Optimistic update
+    setTactics(prev => ({ ...prev, ...patch }));
+    try {
+      const res = await axios.post(API + "/tactics", patch);
+      setTactics(res.data.tactics);
+      setCoherence(res.data.coherence);
+    } catch { await fetchTactics(); }
+    setSaving(false);
+  }, [saving, fetchTactics]);
+
+  const updateLane = useCallback(async (pos, lanePatch) => {
+    if (saving) return;
+    setSaving(true);
+    setTactics(prev => ({
+      ...prev,
+      lanes: { ...prev?.lanes, [pos]: { ...prev?.lanes?.[pos], ...lanePatch } },
+    }));
+    try {
+      const res = await axios.post(API + "/tactics", { lanes: { [pos]: lanePatch } });
+      setTactics(res.data.tactics);
+      setCoherence(res.data.coherence);
+    } catch { await fetchTactics(); }
+    setSaving(false);
+  }, [saving, fetchTactics]);
+
+  // Next opponent info
+  const oppId = nextMatch ? (nextMatch.team1 === userTeam?.id ? nextMatch.team2 : nextMatch.team1) : null;
+  const oppTeam = oppId ? teams?.find(t => t.id === oppId) : null;
+
+  const tabs = [
+    { id: "strategy", label: "Stratégie" },
+    { id: "lanes",    label: "Lanes" },
+    { id: "matchprep", label: "Match Prep" },
+  ];
+
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-secondary)", gap: 10 }}>
+      <Spinner size={20} style={{ animation: "spin 1s linear infinite" }} /> Chargement des tactiques...
+    </div>
+  );
+
+  const renderStrategy = () => (
+    <div>
+      <Section icon={Sword} title="Strong Side">
+        <div style={{ display: "flex", gap: 8 }}>
+          {[{ id: "top", label: "Top Side" }, { id: "mid", label: "Mid Focus" }, { id: "bot", label: "Bot Side" }].map(o => (
+            <OptionCard key={o.id} label={o.label} selected={tactics?.strong_side === o.id}
+              onClick={() => update({ strong_side: o.id })} />
+          ))}
+        </div>
+      </Section>
+
+      <Section icon={Lightning} title="Game Timing">
+        <div style={{ display: "flex", gap: 8 }}>
+          {[{ id: "early", label: "Early Game" }, { id: "mid", label: "Mid Game" }, { id: "late", label: "Late Game" }].map(o => (
+            <OptionCard key={o.id} label={o.label} selected={tactics?.game_timing === o.id}
+              onClick={() => update({ game_timing: o.id })} />
+          ))}
+        </div>
+      </Section>
+
+      <Section icon={TreeStructure} title="Jungle Style">
+        <div style={{ display: "flex", gap: 8 }}>
+          {[{ id: "ganker", label: "Ganker" }, { id: "invader", label: "Invader" }, { id: "farmer", label: "Farmer" }, { id: "enabler", label: "Enabler" }].map(o => (
+            <OptionCard key={o.id} label={o.label} selected={tactics?.jungle_style === o.id}
+              onClick={() => update({ jungle_style: o.id })} />
+          ))}
+        </div>
+      </Section>
+
+      <Section icon={MapTrifold} title="Jungle Pathing">
+        <div style={{ display: "flex", gap: 8 }}>
+          {[{ id: "top_to_bot", label: "Top → Bot", icon: ArrowDown }, { id: "bot_to_top", label: "Bot → Top", icon: ArrowUp }].map(o => (
+            <OptionCard key={o.id} label={o.label} icon={o.icon} selected={tactics?.jungle_pathing === o.id}
+              onClick={() => update({ jungle_pathing: o.id })} />
+          ))}
+        </div>
+      </Section>
+    </div>
+  );
+
+  const renderLanes = () => {
+    const topTag = tactics?.strong_side === "top" ? "STRONG" : tactics?.strong_side === "bot" ? "WEAK" : null;
+    const botTag = tactics?.strong_side === "bot" ? "STRONG" : tactics?.strong_side === "top" ? "WEAK" : null;
+
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <LaneSection pos="TOP"     label="Top Lane"  icon={ArrowUp}   tactics={tactics} onUpdate={updateLane} tag={topTag} />
+        <LaneSection pos="MID"     label="Mid Lane"  icon={Crosshair} tactics={tactics} onUpdate={updateLane} />
+        <LaneSection pos="ADC"     label="Bot Lane"  icon={ArrowDown} tactics={tactics} onUpdate={updateLane} tag={botTag} />
+        <LaneSection pos="SUPPORT" label="Support"   icon={Shield}    tactics={tactics} onUpdate={updateLane} />
+      </div>
+    );
+  };
+
+  const renderMatchPrep = () => {
+    if (!oppTeam) return (
+      <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-secondary)" }}>
+        <Eye size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
+        <div>Aucun match programmé</div>
+      </div>
+    );
+
+    const oppPlayers = (oppTeam.roster || []).map(id => allPlayers?.[id]).filter(Boolean);
+
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, padding: 16, background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+          <TeamLogo teamId={oppTeam.id} abbr={oppTeam.abbr} size={48} noClick />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 20 }}>{oppTeam.name}</div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+              {nextMatch?.week ? `Semaine ${nextMatch.week}` : "Prochain match"} · {oppTeam.wins ?? 0}V – {oppTeam.losses ?? 0}D
+            </div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 12 }}>
+          Roster Adverse &amp; Signature Picks
+        </div>
+
+        {oppPlayers.map((p, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 6, marginBottom: 6 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+              {p.position?.charAt(0)}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(p.champion_pool || []).slice(0, 3).map((champ, ci) => (
+                <div key={ci} style={{ textAlign: "center" }}>
+                  <img
+                    src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(champ)}.png`}
+                    alt={champ}
+                    style={{ width: 32, height: 32, borderRadius: 4 }}
+                    onError={e => { e.currentTarget.style.display = "none"; }}
+                  />
+                  <div style={{ fontSize: 9, color: "var(--text-secondary)", marginTop: 2 }}>
+                    {ci === 0 ? "100%" : ci === 1 ? "60%" : "30%"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 20, height: "100%" }}>
+      {/* Left panel */}
+      <div style={{ minWidth: 0 }}>
+        {/* Tab bar */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 0 }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)}
+              style={{
+                padding: "8px 18px", fontSize: 13, fontWeight: 600,
+                background: "transparent", border: "none", cursor: "pointer", outline: "none",
+                borderBottom: activeTab === t.id ? "2px solid var(--primary)" : "2px solid transparent",
+                color: activeTab === t.id ? "var(--primary)" : "var(--text-secondary)",
+                marginBottom: -1, transition: "color .15s",
+              }}>
+              {t.label}
+            </button>
+          ))}
+          {saving && <div style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4, paddingBottom: 8 }}>
+            <Spinner size={12} /> Sauvegarde...
+          </div>}
+        </div>
+
+        <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }}>
+          {activeTab === "strategy"  && renderStrategy()}
+          {activeTab === "lanes"     && renderLanes()}
+          {activeTab === "matchprep" && renderMatchPrep()}
+        </motion.div>
+      </div>
+
+      {/* Right panel — coherence */}
+      <div style={{ position: "sticky", top: 0, alignSelf: "start" }}>
+        <CoherencePanel coherence={coherence} players={starters} />
+      </div>
+    </div>
+  );
+};
+
+export default TacticsPage;
