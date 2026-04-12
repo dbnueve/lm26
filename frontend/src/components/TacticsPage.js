@@ -11,19 +11,16 @@ import { API, PlayerImagesContext } from "../shared";
 import TeamLogo from "./TeamLogo";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 
-// ── Player avatar with photo + initials fallback ─────────────────────────────
-const AVATAR_COLORS = ["#1a6cf7","#e84057","#f7a21a","#22c55e","#a855f7","#06b6d4","#f97316","#ec4899"];
-const nameColor = (name) => AVATAR_COLORS[(name || "").charCodeAt(0) % AVATAR_COLORS.length];
-
+// ── Player avatar (même logique que PlayerCard) ───────────────────────────────
 const PlayerAvatar = ({ name, size = 40 }) => {
-  const [imgOk, setImgOk] = useState(true);
-  const slug = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const src = `https://am-a.akamaihd.net/image?resize=${size * 2}:&f=https://lolstatic-a.akamaihd.net/esports-assets/production/player/${slug}/image.png`;
-  const initials = (name || "?").slice(0, 2).toUpperCase();
+  const playerImages = React.useContext(PlayerImagesContext);
+  const imageUrl = playerImages[(name || "").toLowerCase()];
+  const initials = (name || "?").substring(0, 2).toUpperCase();
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: nameColor(name), display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 700, color: "#fff" }}>
-      {imgOk
-        ? <img src={src} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={() => setImgOk(false)} />
+    <div className="player-avatar hex-avatar" style={{ width: size, height: size, flexShrink: 0, overflow: "hidden", padding: 0 }}>
+      {imageUrl
+        ? <img loading="lazy" src={imageUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.parentNode.textContent = initials; }} />
         : initials}
     </div>
   );
