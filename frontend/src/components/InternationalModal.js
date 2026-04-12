@@ -534,6 +534,27 @@ const InternationalModal = ({ userTeam, onComplete }) => {
 
   if (!intl) return null;
 
+  if (showDraft) {
+    return (
+      <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <DraftSystem
+          champions={intl._champions || {}}
+          matchId={null}
+          onComplete={(completed) => {
+            setShowDraft(false);
+            setPendingDraft({
+              picks: completed.user_picks || [],
+              bans: completed.user_bans || [],
+              enemy_picks: completed.enemy_picks || [],
+              enemy_bans: completed.enemy_bans || [],
+            });
+          }}
+          onCancel={() => setShowDraft(false)}
+        />
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
