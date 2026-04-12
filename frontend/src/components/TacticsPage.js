@@ -236,6 +236,23 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
   const oppId = nextMatch ? (nextMatch.team1 === userTeam?.id ? nextMatch.team2 : nextMatch.team1) : null;
   const oppTeam = oppId ? teams?.find(t => t.id === oppId) : null;
 
+  // Fetch missing players (opponent roster + user starters)
+  useEffect(() => {
+    const ids = [
+      ...(oppTeam?.roster || []),
+      ...(userTeam?.roster || []),
+    ].filter(id => id && !allPlayers?.[id] && !fetchedPlayers[id]);
+    if (ids.length === 0) return;
+    const unique = [...new Set(ids)];
+    Promise.all(unique.map(id => axios.get(API + "/players/" + id).then(r => r.data).catch(() => null)))
+      .then(results => {
+        const map = {};
+        results.forEach(p => { if (p) map[p.id] = p; });
+        setFetchedPlayers(prev => ({ ...prev, ...map }));
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oppTeam?.id, userTeam?.id]);
+
   const tabs = [
     { id: "strategy", label: "Stratégie" },
     { id: "lanes",    label: "Lanes" },
