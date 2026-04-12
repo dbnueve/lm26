@@ -7,7 +7,7 @@ import {
   Users, Robot, CheckCircle, XCircle, Spinner
 } from "@phosphor-icons/react";
 import axios from "axios";
-import { API } from "../shared";
+import { API, PlayerImagesContext } from "../shared";
 import TeamLogo from "./TeamLogo";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 
