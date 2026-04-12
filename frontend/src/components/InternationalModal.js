@@ -8,7 +8,7 @@ import DraftSystem from "./DraftSystem";
 
 const LEAGUE_FLAG = { LEC: "🇪🇺", LCK: "🇰🇷", LPL: "🇨🇳", LCS: "🇺🇸", CBLOL: "🇧🇷" };
 
-const InternationalModal = ({ userTeam, onComplete }) => {
+const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
   const [intl, setIntl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
