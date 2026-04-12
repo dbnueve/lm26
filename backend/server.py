@@ -1386,7 +1386,11 @@ def calculate_team_power(team_id: str, draft_advantage: float = 0, apply_tactics
     team_elo = ensure_team_elo(GAME_STATE["teams"][team_id])
     elo_mod = elo_power_modifier(team_elo, league_avg)
 
-    power = base + draft_advantage + elo_mod
+    tactics_mod = 0.0
+    if apply_tactics and GAME_STATE.get("tactics"):
+        tactics_mod = calculate_tactics_modifier(GAME_STATE["tactics"])
+
+    power = base + draft_advantage + elo_mod + tactics_mod
 
     return max(30, min(100, power))
 
