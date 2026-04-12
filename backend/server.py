@@ -1218,7 +1218,7 @@ def generate_erl_player(erl_data: dict):
         "fatigue": random.randint(0, 20),
         "salary": random.randint(20000, 80000),
         "contract_years": random.randint(1, 2),
-        "champion_pool": random.sample(CHAMPIONS.get(erl_data["position"], ["Unknown"]), min(4, len(CHAMPIONS.get(erl_data["position"], ["Unknown"])))),
+        "champion_pool": CSV_CHAMPION_POOLS.get(erl_data["name"].lower(), [])[:6] or random.sample(CHAMPIONS.get(erl_data["position"], ["Unknown"]), min(4, len(CHAMPIONS.get(erl_data["position"], ["Unknown"])))),
         "is_starter": True,
         "transfer_value": int(erl_data["potential"] * random.randint(8000, 15000)),
         "league": erl_data["league"],
