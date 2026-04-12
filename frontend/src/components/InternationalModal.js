@@ -538,7 +538,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     return (
       <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <DraftSystem
-          champions={intl._champions || {}}
+          champions={champions}
           matchId={null}
           onComplete={(completed) => {
             setShowDraft(false);
