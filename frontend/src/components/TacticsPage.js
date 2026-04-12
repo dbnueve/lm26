@@ -327,7 +327,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
       </div>
     );
 
-    const oppPlayers = (oppTeam.roster || []).map(id => allPlayers?.[id]).filter(Boolean);
+    const oppPlayers = (oppTeam.roster || []).map(id => resolvePlayer(id)).filter(Boolean);
 
     return (
       <div>
