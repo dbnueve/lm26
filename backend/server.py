@@ -159,6 +159,18 @@ def load_state() -> bool:
         return False
 
 
+def _refresh_champion_pools_on_load():
+    """Overwrite champion pools for all loaded players using CSV data."""
+    for player in GAME_STATE.get("players", {}).values():
+        csv_pool = CSV_CHAMPION_POOLS.get((player.get("name") or "").lower(), [])
+        if csv_pool:
+            player["champion_pool"] = csv_pool[:6]
+    for player in GAME_STATE.get("erl_players", {}).values():
+        csv_pool = CSV_CHAMPION_POOLS.get((player.get("name") or "").lower(), [])
+        if csv_pool:
+            player["champion_pool"] = csv_pool[:6]
+
+
 def _sync_state_if_stale():
     """If the active save file was written by another worker, reload it."""
     global ACTIVE_SLOT
