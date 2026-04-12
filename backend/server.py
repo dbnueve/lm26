@@ -68,6 +68,34 @@ TRANSFER_SALARY_PCT        = 0.15  # salaire = 15 % du montant du transfert
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# ── Champion pools from Oracle's Elixir CSV data ──────────────────────────────
+def _build_csv_champion_pools() -> dict:
+    """Return {playername_lower: [champ1, champ2, ...]} sorted by play count."""
+    counts: dict = {}
+    csv_files = [
+        ROOT_DIR.parent / "2026_LoL_esports_match_data_from_OraclesElixir.csv",
+        ROOT_DIR.parent / "2025_LoL_esports_match_data_from_OraclesElixir.csv",
+    ]
+    for path in csv_files:
+        if not path.exists():
+            continue
+        try:
+            with open(path, encoding="utf-8", newline="") as f:
+                for row in _csv_module.DictReader(f):
+                    name = (row.get("playername") or "").strip().lower()
+                    champ = (row.get("champion") or "").strip()
+                    pos = (row.get("position") or "").strip()
+                    if not name or not champ or pos in ("", "team"):
+                        continue
+                    if name not in counts:
+                        counts[name] = _Counter()
+                    counts[name][champ] += 1
+        except Exception:
+            pass
+    return {name: [c for c, _ in ctr.most_common(6)] for name, ctr in counts.items()}
+
+CSV_CHAMPION_POOLS: dict = _build_csv_champion_pools()
+
 # ── Save slot system ──────────────────────────────────────────────────────────
 # 3 independent save slots stored as game_save_1/2/3.json
 # The active slot is remembered in active_slot.txt so backend restarts
