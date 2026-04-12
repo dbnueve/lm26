@@ -4864,6 +4864,131 @@ async def simulate_international(req: IntlSimRequest):
 
 # ============ END INTERNATIONAL TOURNAMENT ============
 
+# ============ TACTICS SYSTEM ============
+
+DEFAULT_TACTICS = {
+    "strong_side":    "bot",        # "top" | "mid" | "bot"
+    "game_timing":    "mid",        # "early" | "mid" | "late"
+    "jungle_style":   "ganker",     # "ganker" | "invader" | "farmer" | "enabler"
+    "jungle_pathing": "top_to_bot", # "top_to_bot" | "bot_to_top"
+    "lanes": {
+        "TOP":     {"lane_style": "economy",       "tp_usage": "safety"},
+        "MID":     {"lane_style": "lane_priority", "tp_usage": "objectives"},
+        "ADC":     {"lane_style": "economy"},
+        "SUPPORT": {"roaming": "play_lane"},
+    },
+}
+
+# Coherence rules: list of (description, condition_fn, delta)
+# condition_fn receives the full tactics dict and returns True if the rule applies.
+COHERENCE_RULES = [
+    ("Strong side bot avec lane style bot = Economy",
+     lambda t: t["strong_side"] == "bot" and t["lanes"]["ADC"]["lane_style"] == "economy",
+     -0.5),
+    ("Strong side top avec lane style top = Economy",
+     lambda t: t["strong_side"] == "top" and t["lanes"]["TOP"]["lane_style"] == "economy",
+     -0.5),
+    ("Economy sur le côté faible (top ≠ strong side)",
+     lambda t: t["strong_side"] != "top" and t["lanes"]["TOP"]["lane_style"] == "economy",
+     +0.5),
+    ("Economy sur le côté faible (bot ≠ strong side)",
+     lambda t: t["strong_side"] != "bot" and t["lanes"]["ADC"]["lane_style"] == "economy",
+     +0.5),
+    ("Support play lane + strong side bot",
+     lambda t: t["strong_side"] == "bot" and t["lanes"]["SUPPORT"]["roaming"] == "play_lane",
+     +0.5),
+    ("Early game + Jungle Ganker",
+     lambda t: t["game_timing"] == "early" and t["jungle_style"] == "ganker",
+     +0.5),
+    ("Late game + Jungle Farmer",
+     lambda t: t["game_timing"] == "late" and t["jungle_style"] == "farmer",
+     +0.5),
+    ("Mid game + Jungle Invader",
+     lambda t: t["game_timing"] == "mid" and t["jungle_style"] == "invader",
+     +0.3),
+    ("Mid lane priority + strong side mid",
+     lambda t: t["strong_side"] == "mid" and t["lanes"]["MID"]["lane_style"] == "lane_priority",
+     +0.4),
+    ("Support roam top + strong side top",
+     lambda t: t["strong_side"] == "top" and t["lanes"]["SUPPORT"]["roaming"] in ("roam_top", "roam_mid"),
+     +0.4),
+    ("Jungle pathing bot→top + strong side top",
+     lambda t: t["strong_side"] == "top" and t["jungle_pathing"] == "bot_to_top",
+     +0.3),
+    ("Jungle pathing top→bot + strong side bot",
+     lambda t: t["strong_side"] == "bot" and t["jungle_pathing"] == "top_to_bot",
+     +0.3),
+    ("Enabler jungle + Kill Pressure mid",
+     lambda t: t["jungle_style"] == "enabler" and t["lanes"]["MID"]["lane_style"] == "kill_pressure",
+     +0.4),
+    ("Invader jungle + TP Safety top",
+     lambda t: t["jungle_style"] == "invader" and t["lanes"]["TOP"]["tp_usage"] == "safety",
+     -0.3),
+]
+
+
+def get_user_tactics() -> dict:
+    """Return current user tactics, initializing to default if missing."""
+    if "tactics" not in GAME_STATE or not GAME_STATE["tactics"]:
+        GAME_STATE["tactics"] = {**DEFAULT_TACTICS, "lanes": {k: {**v} for k, v in DEFAULT_TACTICS["lanes"].items()}}
+    return GAME_STATE["tactics"]
+
+
+def evaluate_coherence(tactics: dict) -> dict:
+    """Evaluate all coherence rules and return checks + net modifier."""
+    checks = []
+    net = 0.0
+    for desc, condition, delta in COHERENCE_RULES:
+        try:
+            passed = condition(tactics)
+        except (KeyError, TypeError):
+            continue
+        if passed:
+            checks.append({"description": desc, "delta": delta, "passed": True})
+            net += delta
+    return {"checks": checks, "net": round(net, 2)}
+
+
+def calculate_tactics_modifier(tactics: dict) -> float:
+    """Convert coherence net modifier to a team power bonus (capped ±3)."""
+    coherence = evaluate_coherence(tactics)
+    raw = coherence["net"]
+    return max(-3.0, min(3.0, raw * 1.5))
+
+
+@api_router.get("/tactics")
+async def get_tactics():
+    if not GAME_STATE["initialized"]:
+        raise HTTPException(400, "Game not initialized")
+    tactics = get_user_tactics()
+    coherence = evaluate_coherence(tactics)
+    return {"tactics": tactics, "coherence": coherence}
+
+
+@api_router.post("/tactics")
+async def update_tactics(body: dict):
+    if not GAME_STATE["initialized"]:
+        raise HTTPException(400, "Game not initialized")
+    tactics = get_user_tactics()
+
+    # Top-level fields
+    for key in ("strong_side", "game_timing", "jungle_style", "jungle_pathing"):
+        if key in body:
+            tactics[key] = body[key]
+
+    # Lane-level fields
+    if "lanes" in body and isinstance(body["lanes"], dict):
+        for pos, lane_data in body["lanes"].items():
+            if pos in tactics["lanes"] and isinstance(lane_data, dict):
+                tactics["lanes"][pos].update(lane_data)
+
+    save_state()
+    coherence = evaluate_coherence(tactics)
+    return {"tactics": tactics, "coherence": coherence}
+
+
+# ============ END TACTICS SYSTEM ============
+
 # ============ CAREER HISTORY & ELO STATS ============
 
 @api_router.get("/career/elo-history")
