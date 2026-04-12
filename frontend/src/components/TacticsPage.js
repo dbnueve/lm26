@@ -347,9 +347,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
 
         {oppPlayers.map((p, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 6, marginBottom: 6 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
-              {p.position?.charAt(0)}
-            </div>
+            <PlayerAvatar name={p.name} size={40} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
               <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
