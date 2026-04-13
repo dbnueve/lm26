@@ -1761,6 +1761,7 @@ def apply_match_result_updates(
     winner_stats: list,
     loser_stats: list,
     is_playoffs: bool = False,
+    week: int = None,
 ) -> dict:
     """
     Central point for all post-match state updates:
