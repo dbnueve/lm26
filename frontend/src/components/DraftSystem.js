@@ -13,6 +13,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
   const [posFilter, setPosFilter] = useState("ALL");
   const [ddVersion, setDdVersionState] = useState("16.7.1");
   const [prevSplitStats, setPrevSplitStats] = useState({});  // {champName: {pick_rate, ban_rate, win_rate}}
+  const [apiSuggestions, setApiSuggestions] = useState([]);
 
   useEffect(() => {
     fetch("https://ddragon.leagueoflegends.com/api/versions.json")
