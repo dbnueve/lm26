@@ -4596,9 +4596,9 @@ async def advance_to_next_split():
     # 4 — Re-initialize game world (AI teams get fresh rosters)
     GAME_STATE["current_split"] = new_split_num
     GAME_STATE["season"] = new_season
-    GAME_STATE["phase"] = "regular"
+    GAME_STATE["phase"] = "preseason"
     GAME_STATE["playoffs_bracket"] = None
-    GAME_STATE["current_week"] = 1
+    GAME_STATE["current_week"] = 0
     GAME_STATE["draft_state"] = {
         "step": 0,
         "phase": "ban1",
