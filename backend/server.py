@@ -3209,6 +3209,8 @@ async def make_offer(offer: NegotiationOffer):
     """Make a transfer offer for a player"""
     if not GAME_STATE["user_team"]:
         raise HTTPException(status_code=400, detail="No team selected")
+    if GAME_STATE.get("phase") != "preseason":
+        raise HTTPException(status_code=403, detail="Negotiations are only open during preseason/offseason")
     
     player = GAME_STATE["players"].get(offer.player_id)
     if not player:
