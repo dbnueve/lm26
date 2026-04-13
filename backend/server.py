@@ -2956,7 +2956,7 @@ async def simulate_week():
         update_champ_stats(wt1_stats, wt2_stats, match["winner"], match["team1"], week_bans)
         ww_stats = wt1_stats if winner_id == match["team1"] else wt2_stats
         wl_stats = wt2_stats if winner_id == match["team1"] else wt1_stats
-        apply_match_result_updates(winner_id, loser_id, result, ww_stats, wl_stats)
+        apply_match_result_updates(winner_id, loser_id, result, ww_stats, wl_stats, week=match.get("week"))
         results.append(match)
     
     # Check if week is complete
