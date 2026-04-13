@@ -54,6 +54,7 @@ function App() {
   const [draftState, setDraftState] = useState(null);
   const [toast, setToast] = useState(null);
   const [showSaveSelection, setShowSaveSelection] = useState(false);
+  const [unreadInbox, setUnreadInbox] = useState(0);
   // Split continuity
   const [splitStatus, setSplitStatus] = useState(null);
   const [showSplitEnd, setShowSplitEnd] = useState(false);
