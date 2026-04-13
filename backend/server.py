@@ -2257,7 +2257,8 @@ async def select_team(team_id: str):
         raise HTTPException(status_code=404, detail="Team not found")
     
     GAME_STATE["user_team"] = team_id
-    GAME_STATE["current_week"] = 1
+    GAME_STATE["current_week"] = 0
+    GAME_STATE["phase"] = "preseason"
     save_state()
     return {"success": True, "team": GAME_STATE["teams"][team_id]}
 
