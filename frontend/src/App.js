@@ -37,6 +37,7 @@ function App() {
   const [teams, setTeams] = useState([]);
   const [userTeamData, setUserTeamData] = useState(null);
   const [schedule, setSchedule] = useState([]);
+  const [playoffBracket, setPlayoffBracket] = useState(null);
   const [standings, setStandings] = useState([]);
   const [champions, setChampions] = useState({});
   const [playerImages, setPlayerImages] = useState({});
