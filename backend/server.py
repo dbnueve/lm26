@@ -2891,7 +2891,7 @@ async def simulate_match(request: SimulateMatchRequest):
         update_champ_stats(ot1_stats, ot2_stats, other_match["winner"], other_match["team1"], other_bans)
         ow_stats = ot1_stats if w_id == other_match["team1"] else ot2_stats
         ol_stats = ot2_stats if w_id == other_match["team1"] else ot1_stats
-        apply_match_result_updates(w_id, l_id, other_result, ow_stats, ol_stats)
+        apply_match_result_updates(w_id, l_id, other_result, ow_stats, ol_stats, week=other_match.get("week"))
         other_results.append(other_match)
 
     # Advance week if all matches are now played
