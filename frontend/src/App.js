@@ -337,6 +337,7 @@ function App() {
         setCurrentPage={setCurrentPage}
         userTeam={userTeamData}
         onChangeSave={goToSaveSelection}
+        unreadInbox={unreadInbox}
       />
 
       <main className="main-content">
