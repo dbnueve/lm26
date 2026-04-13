@@ -122,42 +122,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
 
   const tierOrder = { "S": 0, "A": 1, "B": 2, "C": 3 };
 
-  // Compute contextual suggestions based on current phase
-  const suggestions = useMemo(() => {
-    if (!draftState || draftState.current_turn !== "user") return [];
-
-    const available = allChampionsDeduped.filter(c => !isUnavailable(c.name) && !isFearless(c.name));
-    const sorted = [...available].sort((a, b) =>
-      (tierOrder[a.tier] ?? 4) - (tierOrder[b.tier] ?? 4) || (b.picks || 0) - (a.picks || 0)
-    );
-
-    if (isBanPhase) {
-      // Suggest top S/A-tier champions to ban
-      return sorted.filter(c => c.tier === "S" || c.tier === "A").slice(0, 5);
-    }
-
-    // Pick phase: one best suggestion per unfilled position
-    const ALL_POSITIONS = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
-    const filledPositions = new Set((draftState.user_picks || []).map(p => p?.position).filter(Boolean));
-    const neededPositions = ALL_POSITIONS.filter(p => !filledPositions.has(p));
-
-    const suggestions = [];
-    for (const pos of neededPositions) {
-      const best = sorted.find(c => c.position === pos);
-      if (best) suggestions.push(best);
-    }
-    // Pad with best available if fewer than 3
-    if (suggestions.length < 3) {
-      for (const c of sorted) {
-        if (!suggestions.find(s => s.name === c.name)) {
-          suggestions.push(c);
-          if (suggestions.length >= 5) break;
-        }
-      }
-    }
-    return suggestions.slice(0, 5);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftState, allChampionsDeduped, isBanPhase]);
+  const suggestions = apiSuggestions;
 
   const filteredChampions = useMemo(() => {
     let list;
