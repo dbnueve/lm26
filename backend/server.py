@@ -3186,6 +3186,7 @@ class NegotiationOffer(BaseModel):
     contract_years: int = Field(default=2, ge=1, le=5)
     clauses: Optional[List[str]] = []
     player_to_swap_id: Optional[str] = None  # joueur user remplacé par le nouveau
+    is_counter_offer: bool = False  # si True, acceptation directe sans aléatoire
 
 @api_router.get("/negotiations/available")
 async def get_available_players():
