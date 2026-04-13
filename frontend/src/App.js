@@ -71,12 +71,13 @@ function App() {
   const loadGameData = useCallback(async () => {
     try {
       // allPlayers is no longer stored globally — NegotiationsPage fetches its own data
-     const [teamsRes, scheduleRes, standingsRes, championsRes] = await withTimeout(
+     const [teamsRes, scheduleRes, standingsRes, championsRes, playoffsRes] = await withTimeout(
         Promise.all([
           axios.get(API + "/teams"),
           axios.get(API + "/schedule"),
           axios.get(API + "/standings"),
-          axios.get(API + "/draft/champions")
+          axios.get(API + "/draft/champions"),
+          axios.get(API + "/playoffs").catch(() => ({ data: null })),
         ])
       );
 
@@ -84,6 +85,7 @@ function App() {
       setSchedule(scheduleRes.data);
       setStandings(standingsRes.data);
       setChampions(championsRes.data);
+      setPlayoffBracket(playoffsRes.data?.active ? playoffsRes.data : null);
     } catch (e) {
       console.error("Error loading game data:", e);
     }
