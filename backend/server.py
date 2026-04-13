@@ -1790,8 +1790,8 @@ def apply_match_result_updates(
     )
 
     # Player performance evolution
-    update_player_from_performance(winner_id, winner_stats, True,  duration)
-    update_player_from_performance(loser_id,  loser_stats,  False, duration)
+    update_player_from_performance(winner_id, winner_stats, True,  duration, opponent_id=loser_id,  week=week)
+    update_player_from_performance(loser_id,  loser_stats,  False, duration, opponent_id=winner_id, week=week)
 
     return elo_summary
 
