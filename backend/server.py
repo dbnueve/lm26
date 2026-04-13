@@ -2978,6 +2978,7 @@ async def simulate_match(request: SimulateMatchRequest):
     w_stats = team1_stats if winner_id == match["team1"] else team2_stats
     l_stats = team2_stats if winner_id == match["team1"] else team1_stats
     apply_match_result_updates(winner_id, loser_id, result, w_stats, l_stats, week=match.get("week"))
+    _generate_match_inbox_messages(winner_id, loser_id, result, week=match.get("week"))
 
     # Simulate other matches of the same week
     current_week = match["week"]
