@@ -4083,6 +4083,7 @@ def ai_select_ban(draft: dict) -> Optional[str]:
 
     opp_id   = _get_current_opponent_id()
     opp_pool = _get_team_champ_pool(opp_id) if opp_id else set()
+    opp_pool_by_pos = _get_team_champ_pool_by_pos(opp_id) if opp_id else {}
 
     # Positions the opponent (user) has already locked in
     opp_filled_positions = {p.get("position") for p in draft["user_picks"] if p.get("position")}
@@ -4097,10 +4098,12 @@ def ai_select_ban(draft: dict) -> Optional[str]:
         if name in unavailable:
             continue
 
-        tier      = meta.get("tier", "C")
-        presence  = meta.get("presence", 0.0)
-        wr        = meta.get("winrate", 50.0)
-        champ_pos = meta.get("position", "")
+        tier     = meta.get("tier", "C")
+        presence = meta.get("presence", 0.0)
+        wr       = meta.get("winrate", 50.0)
+        # Use actual player position from pool, not meta position
+        pool_pos = next((pos for pos, champs in opp_pool_by_pos.items() if name in champs), None)
+        champ_pos = pool_pos or meta.get("position", "")
 
         # Base ban priority: raw meta value
         weight = presence * 0.4 + wr * 0.2
