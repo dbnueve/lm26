@@ -49,9 +49,15 @@ const Navigation = ({ currentPage, setCurrentPage, userTeam, onChangeSave, unrea
               className={"nav-link " + (currentPage === item.id ? "active" : "")}
               onClick={() => setCurrentPage(item.id)}
               data-testid={"nav-" + item.id}
+              style={{ position: "relative" }}
             >
               <item.icon size={16} style={{ marginRight: 6 }} />
               {item.label}
+              {item.id === "inbox" && unreadInbox > 0 && (
+                <span style={{ position: "absolute", top: 2, right: 2, background: "var(--danger)", color: "#fff", borderRadius: 8, fontSize: 9, fontWeight: 800, padding: "1px 4px", lineHeight: 1.4 }}>
+                  {unreadInbox}
+                </span>
+              )}
             </div>
           ))}
         </nav>
