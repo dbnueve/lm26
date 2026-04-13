@@ -3208,6 +3208,64 @@ async def get_available_players():
     
     return available
 
+
+def _find_coherent_replacement(sold_player: dict, team_id: str) -> dict:
+    """Find a coherent replacement for a sold player.
+
+    Priority order:
+    1. ERL pool player — same position, rating within ±12 of sold player
+    2. Any ERL pool player — same position, closest rating
+    3. Generated newgen — same position, rating capped near sold player's level
+    """
+    pos = sold_player.get("position", "MID")
+    sold_rating = sold_player.get("rating", 75)
+    active_league = GAME_STATE.get("league", "LEC")
+
+    erl_candidates = [
+        p for p in GAME_STATE.get("erl_players", {}).values()
+        if p.get("position") == pos
+    ]
+
+    def proximity_score(p):
+        rating_diff = abs(p.get("rating", 70) - sold_rating)
+        pot_bonus = -2 if p.get("potential", 0) >= 80 else 0  # slight prefer high potential
+        return rating_diff + pot_bonus
+
+    if erl_candidates:
+        # Sort by how close their rating is to the sold player
+        erl_candidates.sort(key=proximity_score)
+        best = erl_candidates[0]
+
+        new_pid = str(uuid.uuid4())
+        replacement = {
+            **best,
+            "id": new_pid,
+            "team_id": team_id,
+            "is_starter": True,
+            "avg_perf": None,
+            "match_history": [],
+        }
+        # Remove from ERL pool so they're not available again
+        if best["id"] in GAME_STATE["erl_players"]:
+            del GAME_STATE["erl_players"][best["id"]]
+        return replacement
+
+    # Fallback: generate a newgen whose rating is close to the sold player
+    replacement_data = generate_newgen(active_league)
+    replacement_data["position"] = pos
+    # Bias the rating toward the sold player's level (±10)
+    target_rating = max(55, min(92, sold_rating + random.randint(-10, 5)))
+    replacement_data["rating"] = target_rating
+    replacement_data["potential"] = max(target_rating, target_rating + random.randint(0, 10))
+    replacement_data["scouting_for"] = active_league
+    replacement = generate_erl_player(replacement_data)
+    replacement["team_id"] = team_id
+    replacement["is_starter"] = True
+    replacement["avg_perf"] = None
+    replacement["match_history"] = []
+    return replacement
+
+
 @api_router.post("/negotiations/offer")
 async def make_offer(offer: NegotiationOffer):
     """Make a transfer offer for a player"""
