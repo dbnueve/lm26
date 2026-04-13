@@ -24,6 +24,7 @@ const Navigation = ({ currentPage, setCurrentPage, userTeam, onChangeSave }) => 
     { id: "stats", label: "Stats", icon: ChartLine },
     { id: "history", label: "Historique", icon: ClockCounterClockwise },
     { id: "scouting", label: "Scouting", icon: MagnifyingGlass },
+    { id: "inbox",    label: "Boîte mail", icon: Envelope },
   ];
 
   const handleNavClick = (id) => {
