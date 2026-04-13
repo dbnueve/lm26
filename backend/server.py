@@ -5404,6 +5404,39 @@ async def get_split_stats(split: str = "current"):
         }
 
 
+# ── Inbox endpoints ───────────────────────────────────────────────────────────
+
+@api_router.get("/inbox")
+async def get_inbox():
+    if not GAME_STATE["initialized"]:
+        ensure_initialized()
+    msgs = GAME_STATE.get("inbox", [])
+    return {
+        "messages": list(reversed(msgs)),
+        "unread_board": sum(1 for m in msgs if not m["read"] and m["type"] == "board"),
+        "unread_soloq": sum(1 for m in msgs if not m["read"] and m["type"] == "soloq"),
+        "unread_total": sum(1 for m in msgs if not m["read"]),
+    }
+
+
+@api_router.post("/inbox/read-all")
+async def inbox_read_all():
+    for msg in GAME_STATE.get("inbox", []):
+        msg["read"] = True
+    save_state()
+    return {"ok": True}
+
+
+@api_router.post("/inbox/{msg_id}/read")
+async def inbox_read_one(msg_id: str):
+    for msg in GAME_STATE.get("inbox", []):
+        if msg["id"] == msg_id:
+            msg["read"] = True
+            break
+    save_state()
+    return {"ok": True}
+
+
 # Include router
 app.include_router(api_router)
 
