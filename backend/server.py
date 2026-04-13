@@ -2202,7 +2202,53 @@ async def get_team(team_id: str):
     
     team = GAME_STATE["teams"][team_id]
     roster = [GAME_STATE["players"][pid] for pid in team["roster"]]
-    return {**team, "players": roster}
+
+    # Compute per-team champion stats from match history
+    pick_map = {}  # {champ: {picks, wins}}
+    ban_map  = {}  # {champ: {blue, red}}  blue = team was team1, red = team was team2
+
+    for match in GAME_STATE.get("schedule", []):
+        if not match.get("played"):
+            continue
+        details = match.get("match_details") or {}
+        is_t1 = match["team1"] == team_id
+        is_t2 = match["team2"] == team_id
+        if not is_t1 and not is_t2:
+            continue
+        won = match.get("winner") == team_id
+        my_stats = details.get("team1_stats", []) if is_t1 else details.get("team2_stats", [])
+        for p in my_stats:
+            champ = p.get("champion")
+            if champ:
+                e = pick_map.setdefault(champ, {"picks": 0, "wins": 0})
+                e["picks"] += 1
+                if won:
+                    e["wins"] += 1
+        bans = details.get("bans") or []
+        # Convention: first 5 bans = blue side (team1), last 5 = red side (team2)
+        blue_bans = set(bans[:5])
+        red_bans  = set(bans[5:])
+        if is_t1:
+            for champ in blue_bans:
+                ban_map.setdefault(champ, {"blue": 0, "red": 0})["blue"] += 1
+        else:
+            for champ in red_bans:
+                ban_map.setdefault(champ, {"blue": 0, "red": 0})["red"] += 1
+
+    picks_list = sorted(
+        [{"name": k, "picks": v["picks"], "wins": v["wins"],
+          "wr": round(v["wins"] / v["picks"] * 100) if v["picks"] else 0}
+         for k, v in pick_map.items()],
+        key=lambda x: x["picks"], reverse=True
+    )[:12]
+
+    bans_list = sorted(
+        [{"name": k, "blue": v["blue"], "red": v["red"], "total": v["blue"] + v["red"]}
+         for k, v in ban_map.items()],
+        key=lambda x: x["total"], reverse=True
+    )[:10]
+
+    return {**team, "players": roster, "champion_stats": {"picks": picks_list, "bans": bans_list}}
 
 @api_router.post("/teams/select/{team_id}")
 async def select_team(team_id: str):
