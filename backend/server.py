@@ -3273,16 +3273,8 @@ async def make_offer(offer: NegotiationOffer):
                 swap_target["is_starter"] = False
                 swapped_out_name = swap_target.get("name")
 
-        # Générer un remplaçant ERL pour l'équipe vendeuse afin qu'elle reste à 5 titulaires
-        sold_position = player.get("position", "MID")
-        active_league = GAME_STATE.get("league", "LEC")
-        replacement_data = generate_newgen(active_league)
-        replacement_data["position"] = sold_position
-        replacement_data["team_id"] = old_team_id
-        replacement_data["scouting_for"] = active_league
-        replacement = generate_erl_player(replacement_data)
-        replacement["team_id"] = old_team_id
-        replacement["is_starter"] = True
+        # Remplaçant cohérent pour l'équipe vendeuse
+        replacement = _find_coherent_replacement(player, old_team_id)
         GAME_STATE["players"][replacement["id"]] = replacement
         old_team["roster"].append(replacement["id"])
 
