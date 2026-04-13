@@ -198,81 +198,68 @@ const TeamDetailModal = ({ team, onClose }) => {
               {/* Picks */}
               {teamData.champion_stats.picks?.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 10 }}>
-                    Picks
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)" }}>Picks</div>
+                    <div style={{ display: "flex", gap: 24 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>WR</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>Games</span>
+                    </div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "0 12px", alignItems: "center" }}>
-                    {/* Header */}
-                    <div style={{ fontSize: 10, color: "var(--text-secondary)", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }} />
-                    {["WR", "Games"].map(h => (
-                      <div key={h} style={{ fontSize: 10, color: "var(--text-secondary)", textAlign: "right", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)", fontWeight: 700 }}>{h}</div>
-                    ))}
-                    <div style={{ borderBottom: "1px solid var(--border-subtle)", paddingBottom: 6 }} />
-                    {/* Rows */}
-                    {teamData.champion_stats.picks.map((c, i) => {
-                      const key = toDDragonKey(c.name);
-                      const maxPicks = teamData.champion_stats.picks[0]?.picks || 1;
-                      const barPct = Math.round((c.picks / maxPicks) * 100);
-                      const wrColor = c.wr >= 55 ? "var(--success)" : c.wr <= 45 ? "var(--danger)" : "var(--text-primary)";
-                      return (
-                        <React.Fragment key={i}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0" }}>
-                            <img
-                              src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${key}.png`}
-                              alt={c.name}
-                              style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0 }}
-                              onError={e => { e.currentTarget.style.opacity = "0"; }}
-                            />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
-                              <div style={{ height: 4, background: "var(--border-subtle)", borderRadius: 2, marginTop: 3 }}>
-                                <div style={{ width: `${barPct}%`, height: "100%", background: "var(--primary)", borderRadius: 2 }} />
-                              </div>
-                            </div>
+                  {teamData.champion_stats.picks.map((c, i) => {
+                    const key = toDDragonKey(c.name);
+                    const maxPicks = teamData.champion_stats.picks[0]?.picks || 1;
+                    const barPct = Math.round((c.picks / maxPicks) * 100);
+                    const wrColor = c.wr >= 55 ? "var(--success)" : c.wr <= 45 ? "var(--danger)" : "var(--text-primary)";
+                    return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <img
+                          src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${key}.png`}
+                          alt={c.name}
+                          style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0 }}
+                          onError={e => { e.currentTarget.style.opacity = "0"; }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
+                          <div style={{ height: 3, background: "var(--border-subtle)", borderRadius: 2, marginTop: 4 }}>
+                            <div style={{ width: `${barPct}%`, height: "100%", background: "var(--primary)", borderRadius: 2 }} />
                           </div>
-                          <div style={{ textAlign: "right", fontWeight: 700, fontSize: 13, color: wrColor }}>{c.wr}%</div>
-                          <div style={{ textAlign: "right", fontSize: 13, color: "var(--text-secondary)" }}>{c.picks}</div>
-                          <div style={{ display: "none" }} />
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: wrColor, minWidth: 40, textAlign: "right" }}>{c.wr}%</div>
+                        <div style={{ fontSize: 13, color: "var(--text-secondary)", minWidth: 24, textAlign: "right" }}>{c.picks}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
               {/* Bans */}
               {teamData.champion_stats.bans?.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 10 }}>
-                    Bans
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)" }}>Bans</div>
+                    <div style={{ display: "flex", gap: 24 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#60a5fa" }}>Blue</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#f87171" }}>Red</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>Total</span>
+                    </div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "0 12px", alignItems: "center" }}>
-                    {/* Header */}
-                    <div style={{ fontSize: 10, color: "var(--text-secondary)", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }} />
-                    {[{ label: "Blue", color: "#60a5fa" }, { label: "Red", color: "#f87171" }, { label: "Total", color: "var(--text-secondary)" }].map(h => (
-                      <div key={h.label} style={{ fontSize: 10, color: h.color, textAlign: "right", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)", fontWeight: 700 }}>{h.label}</div>
-                    ))}
-                    {/* Rows */}
-                    {teamData.champion_stats.bans.map((c, i) => {
-                      const key = toDDragonKey(c.name);
-                      return (
-                        <React.Fragment key={i}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0" }}>
-                            <img
-                              src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${key}.png`}
-                              alt={c.name}
-                              style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0, filter: "grayscale(60%)" }}
-                              onError={e => { e.currentTarget.style.opacity = "0"; }}
-                            />
-                            <span style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</span>
-                          </div>
-                          <div style={{ textAlign: "right", fontSize: 13, color: "#60a5fa", fontWeight: 600 }}>{c.blue}</div>
-                          <div style={{ textAlign: "right", fontSize: 13, color: "#f87171", fontWeight: 600 }}>{c.red}</div>
-                          <div style={{ textAlign: "right", fontSize: 13, fontWeight: 700 }}>{c.total}</div>
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
+                  {teamData.champion_stats.bans.map((c, i) => {
+                    const key = toDDragonKey(c.name);
+                    return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <img
+                          src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${key}.png`}
+                          alt={c.name}
+                          style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0, filter: "grayscale(50%)" }}
+                          onError={e => { e.currentTarget.style.opacity = "0"; }}
+                        />
+                        <div style={{ flex: 1, fontWeight: 600, fontSize: 13 }}>{c.name}</div>
+                        <div style={{ fontSize: 13, color: "#60a5fa", fontWeight: 600, minWidth: 28, textAlign: "right" }}>{c.blue}</div>
+                        <div style={{ fontSize: 13, color: "#f87171", fontWeight: 600, minWidth: 28, textAlign: "right" }}>{c.red}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, minWidth: 28, textAlign: "right" }}>{c.total}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
