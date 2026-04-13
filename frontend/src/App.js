@@ -365,6 +365,10 @@ function App() {
             userTeam={userTeamData}
             teams={teams}
             onMakeOffer={handleMakeOffer}
+            onSeasonStart={async () => {
+              await loadGameData();
+              if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
+            }}
           />
         )}
 
