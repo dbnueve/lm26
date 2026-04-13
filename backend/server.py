@@ -1260,6 +1260,7 @@ GAME_STATE = {
     "total_games_played": 0,
     "league": "LEC",        # Active league: LEC/LCK/LPL/LCS/CBLOL
     "tactics": None,        # User tactics (strategy, lanes, coherence)
+    "inbox": [],            # In-game messages (board + soloq)
 }
 
 def initialize_game(league: str = "LEC"):
