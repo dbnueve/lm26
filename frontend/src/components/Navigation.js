@@ -9,7 +9,7 @@ import {
 import TeamLogo from "./TeamLogo";
 
 // Navigation Component
-const Navigation = ({ currentPage, setCurrentPage, userTeam, onChangeSave }) => {
+const Navigation = ({ currentPage, setCurrentPage, userTeam, onChangeSave, unreadInbox = 0 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
