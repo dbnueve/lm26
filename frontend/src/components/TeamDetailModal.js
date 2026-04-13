@@ -101,8 +101,8 @@ const TeamDetailModal = ({ team, onClose }) => {
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {positions.map(pos => {
         const player = (teamData?.players || []).find(p => p.position === pos);
-        const imageUrl = playerImages[player.name.toLowerCase()];
         if (!player) return null;
+        const imageUrl = playerImages[player.name.toLowerCase()];
         return (
           <div
             key={pos}
