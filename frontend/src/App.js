@@ -18,6 +18,7 @@ import StatsPage from "./components/StatsPage";
 import ScoutingPage from "./components/ScoutingPage";
 import HistoryPage from "./components/HistoryPage";
 import TacticsPage from "./components/TacticsPage";
+import InboxPage from "./components/InboxPage";
 import MatchSimulation from "./components/MatchSimulation";
 import DraftSystem from "./components/DraftSystem";
 import PlayoffSeriesModal from "./components/PlayoffSeriesModal";
