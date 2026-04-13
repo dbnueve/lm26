@@ -429,6 +429,10 @@ function App() {
             }}
           />
         )}
+
+        {currentPage === "inbox" && (
+          <InboxPage onUnreadChange={setUnreadInbox} />
+        )}
         </ErrorBoundary>
       </main>
 
