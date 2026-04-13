@@ -88,6 +88,8 @@ function App() {
       setStandings(standingsRes.data);
       setChampions(championsRes.data);
       setPlayoffBracket(playoffsRes.data?.active ? playoffsRes.data : null);
+      // Refresh unread inbox count
+      axios.get(API + "/inbox").then(r => setUnreadInbox(r.data.unread_total || 0)).catch(() => {});
     } catch (e) {
       console.error("Error loading game data:", e);
     }
