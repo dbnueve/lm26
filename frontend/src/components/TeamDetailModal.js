@@ -4,6 +4,7 @@ import axios from "axios";
 import { API,PlayerImagesContext } from "../shared";
 import TeamLogo from "./TeamLogo";
 import PlayerDetailModal from "./PlayerDetailModal";
+import { _ddVersion, toDDragonKey } from "./ddHelpers";
 
 // Team Detail Modal
 const TeamDetailModal = ({ team, onClose }) => {
