@@ -190,6 +190,95 @@ const TeamDetailModal = ({ team, onClose }) => {
     </div>
   )}
 </div>
+        {/* Champion Stats */}
+        {teamData?.champion_stats && (
+          (teamData.champion_stats.picks?.length > 0 || teamData.champion_stats.bans?.length > 0) && (
+            <div style={{ padding: "0 24px 24px" }}>
+
+              {/* Picks */}
+              {teamData.champion_stats.picks?.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 10 }}>
+                    Picks
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "0 12px", alignItems: "center" }}>
+                    {/* Header */}
+                    <div style={{ fontSize: 10, color: "var(--text-secondary)", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }} />
+                    {["WR", "Games"].map(h => (
+                      <div key={h} style={{ fontSize: 10, color: "var(--text-secondary)", textAlign: "right", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)", fontWeight: 700 }}>{h}</div>
+                    ))}
+                    <div style={{ borderBottom: "1px solid var(--border-subtle)", paddingBottom: 6 }} />
+                    {/* Rows */}
+                    {teamData.champion_stats.picks.map((c, i) => {
+                      const key = toDDragonKey(c.name);
+                      const maxPicks = teamData.champion_stats.picks[0]?.picks || 1;
+                      const barPct = Math.round((c.picks / maxPicks) * 100);
+                      const wrColor = c.wr >= 55 ? "var(--success)" : c.wr <= 45 ? "var(--danger)" : "var(--text-primary)";
+                      return (
+                        <React.Fragment key={i}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0" }}>
+                            <img
+                              src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${key}.png`}
+                              alt={c.name}
+                              style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0 }}
+                              onError={e => { e.currentTarget.style.opacity = "0"; }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
+                              <div style={{ height: 4, background: "var(--border-subtle)", borderRadius: 2, marginTop: 3 }}>
+                                <div style={{ width: `${barPct}%`, height: "100%", background: "var(--primary)", borderRadius: 2 }} />
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", fontWeight: 700, fontSize: 13, color: wrColor }}>{c.wr}%</div>
+                          <div style={{ textAlign: "right", fontSize: 13, color: "var(--text-secondary)" }}>{c.picks}</div>
+                          <div style={{ display: "none" }} />
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Bans */}
+              {teamData.champion_stats.bans?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 10 }}>
+                    Bans
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "0 12px", alignItems: "center" }}>
+                    {/* Header */}
+                    <div style={{ fontSize: 10, color: "var(--text-secondary)", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }} />
+                    {[{ label: "Blue", color: "#60a5fa" }, { label: "Red", color: "#f87171" }, { label: "Total", color: "var(--text-secondary)" }].map(h => (
+                      <div key={h.label} style={{ fontSize: 10, color: h.color, textAlign: "right", paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)", fontWeight: 700 }}>{h.label}</div>
+                    ))}
+                    {/* Rows */}
+                    {teamData.champion_stats.bans.map((c, i) => {
+                      const key = toDDragonKey(c.name);
+                      return (
+                        <React.Fragment key={i}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0" }}>
+                            <img
+                              src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${key}.png`}
+                              alt={c.name}
+                              style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0, filter: "grayscale(60%)" }}
+                              onError={e => { e.currentTarget.style.opacity = "0"; }}
+                            />
+                            <span style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</span>
+                          </div>
+                          <div style={{ textAlign: "right", fontSize: 13, color: "#60a5fa", fontWeight: 600 }}>{c.blue}</div>
+                          <div style={{ textAlign: "right", fontSize: 13, color: "#f87171", fontWeight: 600 }}>{c.red}</div>
+                          <div style={{ textAlign: "right", fontSize: 13, fontWeight: 700 }}>{c.total}</div>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        )}
+
       </motion.div>
     </motion.div>
   );
