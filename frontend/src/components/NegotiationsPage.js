@@ -21,12 +21,15 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
   const [aiTransfers, setAiTransfers] = useState(null);
 
   useEffect(() => {
-    axios.get(API + "/game/status")
+    axios.get(API + "/game/state")
       .then(res => {
-        setPhase(res.data.phase);
+        setPhase(res.data.phase || "regular");
         setLoadingPhase(false);
       })
-      .catch(() => setLoadingPhase(false));
+      .catch(() => {
+        setPhase("regular");
+        setLoadingPhase(false);
+      });
   }, []);
 
   useEffect(() => {
