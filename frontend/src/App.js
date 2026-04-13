@@ -403,7 +403,11 @@ function App() {
             userTeam={userTeamData}
             players={null}
             teams={teams}
-            nextMatch={schedule.find(m => !m.played && (m.team1 === userTeamData.id || m.team2 === userTeamData.id)) || null}
+            nextMatch={
+              schedule.find(m => !m.played && (m.team1 === userTeamData.id || m.team2 === userTeamData.id)) ||
+              (playoffBracket?.matches || []).find(m => !m.played && (m.team1 === userTeamData.id || m.team2 === userTeamData.id)) ||
+              null
+            }
           />
         )}
 
