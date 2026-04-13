@@ -258,6 +258,10 @@ const PlayerDetailModal = ({ player, onClose, actions = null }) => {
                     })}
                   </div>
                 </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "32px 0", color: "var(--text-secondary)", fontSize: 13 }}>
+                  Aucun match joué pour l'instant
+                </div>
               )}
 
               {actions}
