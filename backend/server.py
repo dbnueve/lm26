@@ -3005,10 +3005,11 @@ async def simulate_match(request: SimulateMatchRequest):
     team2_picks = picks_for(match["team2"])
     # Inject team1 champs as already-used so team2 doesn't duplicate them
     team2_stats = generate_player_stats(match["team2"], result["winner"] == 2, result["duration"], k2, k1, team2_picks, excluded=team1_champs)
-    match["match_details"] = {**result, "team1_stats": team1_stats, "team2_stats": team2_stats}
     user_bans  = (request.user_draft or {}).get("bans", [])
     enemy_bans = (GAME_STATE.get("draft_state") or {}).get("enemy_bans", [])
-    update_champ_stats(team1_stats, team2_stats, winner_id, match["team1"], user_bans + enemy_bans)
+    all_bans   = user_bans + enemy_bans
+    match["match_details"] = {**result, "team1_stats": team1_stats, "team2_stats": team2_stats, "bans": all_bans}
+    update_champ_stats(team1_stats, team2_stats, winner_id, match["team1"], all_bans)
 
     # ELO update + player performance evolution
     w_stats = team1_stats if winner_id == match["team1"] else team2_stats
