@@ -3323,8 +3323,9 @@ async def make_offer(offer: NegotiationOffer):
         acceptance_chance *= 0.7
     if player["rating"] > 85:
         acceptance_chance *= 0.6
-    
-    accepted = random.random() < acceptance_chance
+
+    # Counter-offer acceptances are always honoured — the club named its price
+    accepted = True if offer.is_counter_offer else random.random() < acceptance_chance
     
     if accepted:
         # Transfer the player
