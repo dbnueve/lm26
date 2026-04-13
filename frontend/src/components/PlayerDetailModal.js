@@ -53,14 +53,7 @@ const PlayerDetailModal = ({ player, onClose, actions = null }) => {
       >
         {/* Hero banner with optional splash background */}
         <div style={{ position: "relative", background: "linear-gradient(135deg, var(--surface) 0%, #1a1a2e 100%)", padding: "24px 24px 0", borderBottom: "1px solid var(--border-subtle)", overflow: "hidden" }}>
-          {splashUrl && (
-            <div style={{
-              position: "absolute", inset: 0, zIndex: 0,
-              backgroundImage: `url(${splashUrl})`,
-              backgroundSize: "cover", backgroundPosition: "center top",
-              opacity: 0.1, pointerEvents: "none",
-            }} />
-          )}
+          
           <div style={{ position: "relative", zIndex: 1 }}>
             <button onClick={onClose} style={{ position: "absolute", top: 0, right: 0, background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", padding: 4 }}>
               <X size={20} />

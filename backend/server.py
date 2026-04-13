@@ -1684,6 +1684,8 @@ def update_player_from_performance(
     player_stats_list: list,
     won: bool,
     game_duration: float,
+    opponent_id: str = None,
+    week: int = None,
 ) -> None:
     """
     Apply small performance-based rating deltas after a game.

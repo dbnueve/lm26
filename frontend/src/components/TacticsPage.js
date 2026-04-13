@@ -81,9 +81,7 @@ const CoherencePanel = ({ coherence, players }) => {
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 12 }}>Impact Preview</div>
           {players.map((p, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "var(--text-secondary)", flexShrink: 0 }}>
-                {p.name?.charAt(0)}
-              </div>
+               <PlayerAvatar name={p.name} size={40} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
                 <div style={{ fontSize: 10, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
