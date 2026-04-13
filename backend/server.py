@@ -4058,6 +4058,7 @@ def ai_select_ban(draft: dict) -> Optional[str]:
     Sequence-aware ban selection:
     - Early bans  (step ≤ 5) : target S-tier + opponent's champion pool
     - Late bans   (step > 5) : target counters to our forming composition
+    Never ban a champion for a role the opponent has already filled.
     Fearless-excluded champions are never banned (they can't be picked anyway).
     """
     step        = draft["step"]
@@ -4069,6 +4070,11 @@ def ai_select_ban(draft: dict) -> Optional[str]:
     opp_id   = _get_current_opponent_id()
     opp_pool = _get_team_champ_pool(opp_id) if opp_id else set()
 
+    # Positions the opponent (user) has already locked in
+    opp_filled_positions = {p.get("position") for p in draft["user_picks"] if p.get("position")}
+    # Positions the opponent still needs
+    opp_needed_positions = set(_needed_positions(draft, "user"))
+
     my_scalers = sum(1 for t in my_traits if "scl" in t[2])
     my_eg      = sum(1 for t in my_traits if "eg"  in t[2])
 
@@ -4077,17 +4083,26 @@ def ai_select_ban(draft: dict) -> Optional[str]:
         if name in unavailable:
             continue
 
-        tier     = meta.get("tier", "C")
-        presence = meta.get("presence", 0.0)
-        wr       = meta.get("winrate", 50.0)
+        tier      = meta.get("tier", "C")
+        presence  = meta.get("presence", 0.0)
+        wr        = meta.get("winrate", 50.0)
+        champ_pos = meta.get("position", "")
 
         # Base ban priority: raw meta value
         weight = presence * 0.4 + wr * 0.2
         weight += {"S": 18, "A": 9, "B": 3, "C": 0}.get(tier, 0)
 
+        # De-prioritize banning for roles the opponent already filled — it's a wasted ban
+        if champ_pos and champ_pos in opp_filled_positions:
+            weight -= 20
+
+        # Extra value for banning strong champions the opponent still needs
+        if champ_pos and champ_pos in opp_needed_positions:
+            weight += 8
+
         if step <= 5:
             # Early: punish opponent's pool + global S-tier threats
-            if name in opp_pool:
+            if name in opp_pool and champ_pos not in opp_filled_positions:
                 weight += 22
         else:
             # Late: protect our comp from specific threats
