@@ -3128,6 +3128,8 @@ async def simulate_week():
     """Simulate all matches in current week"""
     if not GAME_STATE["user_team"]:
         raise HTTPException(status_code=400, detail="No team selected")
+    if GAME_STATE.get("phase") == "preseason":
+        raise HTTPException(status_code=400, detail="Lancez la saison depuis la page Négociations avant de jouer des matchs")
     
     current_week = GAME_STATE["current_week"]
     week_matches = [m for m in GAME_STATE["schedule"] if m["week"] == current_week and not m["played"]]
