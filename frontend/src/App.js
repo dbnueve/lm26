@@ -241,12 +241,13 @@ function App() {
     showToast("Match terminé!", "success");
   };
 
-  const handleMakeOffer = async (playerId, amount, years, playerToSwapId = null) => {
+  const handleMakeOffer = async (playerId, amount, years, playerToSwapId = null, isCounterOffer = false) => {
     try {
       const response = await axios.post(API + "/negotiations/offer", {
         player_id: playerId,
         offered_amount: amount,
         contract_years: years,
+        is_counter_offer: isCounterOffer,
         ...(playerToSwapId ? { player_to_swap_id: playerToSwapId } : {}),
       });
 
