@@ -1734,6 +1734,25 @@ def update_player_from_performance(
             perf_history.pop(0)
         player["avg_perf"] = round(sum(perf_history) / len(perf_history), 2)
 
+        # Track detailed match history (champion, opponent, result, KDA)
+        k = pstat.get("kills", 0) or 0
+        d = pstat.get("deaths", 0) or 0
+        a = pstat.get("assists", 0) or 0
+        kda_val = round((k + a) / max(d, 1), 2)
+        opp_abbr = (GAME_STATE["teams"].get(opponent_id, {}).get("abbr") or opponent_id) if opponent_id else None
+        match_entry = {
+            "score": round(score, 2),
+            "won": won,
+            "champion": pstat.get("champion"),
+            "opponent": opp_abbr,
+            "kda": kda_val,
+            "week": week,
+        }
+        match_history = player.setdefault("match_history", [])
+        match_history.append(match_entry)
+        if len(match_history) > 20:
+            match_history.pop(0)
+
 
 def apply_match_result_updates(
     winner_id: str,
