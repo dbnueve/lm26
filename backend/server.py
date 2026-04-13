@@ -4186,6 +4186,9 @@ async def draft_suggest():
     opp_pool     = _get_team_champ_pool(opp_id) if opp_id else set()
 
     if action_type == "ban":
+        # Positions the enemy still needs to fill
+        enemy_needed = set(_needed_positions(draft, "enemy"))
+
         candidates = []
         for name, meta in META_LOOKUP.items():
             if name in unavailable:
@@ -4193,18 +4196,34 @@ async def draft_suggest():
             tier     = meta.get("tier", "C")
             presence = meta.get("presence", 0.0)
             wr       = meta.get("winrate", 50.0)
+            champ_pos = meta.get("position", "")
             weight   = presence * 0.4 + wr * 0.2
             weight  += {"S": 18, "A": 9, "B": 3, "C": 0}.get(tier, 0)
             in_pool  = name in opp_pool
-            if in_pool:
-                weight += 22
+
+            # Bonus if champion fills a role the enemy still needs
+            fills_needed = champ_pos in enemy_needed
+            if fills_needed:
+                weight += 12
+            # Stacked bonus: strong champion for a needed enemy position
+            if fills_needed and in_pool:
+                weight += 18
+            elif in_pool:
+                weight += 12
+
             # Reason label
             parts = []
             if tier == "S": parts.append("S-tier")
-            if in_pool:     parts.append("dans le pool adverse")
-            if wr > 58:     parts.append(f"{wr:.0f}% WR")
+            if in_pool and fills_needed:
+                parts.append(f"pool {champ_pos} adverse")
+            elif in_pool:
+                parts.append("dans le pool adverse")
+            elif fills_needed:
+                parts.append(f"fort {champ_pos} disponible")
+            if wr > 58: parts.append(f"{wr:.0f}% WR")
             candidates.append({
-                "champion": name, "score": round(weight, 1),
+                "champion": name, "position": champ_pos,
+                "score": round(weight, 1),
                 "reason": " · ".join(parts) or "Forte présence méta",
             })
         candidates.sort(key=lambda x: -x["score"])
