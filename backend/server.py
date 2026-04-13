@@ -1798,6 +1798,120 @@ def apply_match_result_updates(
     return elo_summary
 
 
+# ── Inbox helpers ─────────────────────────────────────────────────────────────
+
+def _add_inbox_message(msg_type: str, sender: str, subject: str, body: str, week: int = None) -> dict:
+    msg = {
+        "id": str(uuid.uuid4()),
+        "type": msg_type,
+        "sender": sender,
+        "subject": subject,
+        "body": body,
+        "week": week or GAME_STATE.get("current_week", 0),
+        "read": False,
+    }
+    inbox = GAME_STATE.setdefault("inbox", [])
+    inbox.append(msg)
+    if len(inbox) > 60:
+        GAME_STATE["inbox"] = inbox[-60:]
+    return msg
+
+
+def _generate_match_inbox_messages(winner_id: str, loser_id: str, match_result: dict, week: int = None):
+    """Generate board + soloq inbox messages after the user plays a match."""
+    user_id = GAME_STATE.get("user_team")
+    if not user_id:
+        return
+    user_won = winner_id == user_id
+    opp_id = loser_id if user_won else winner_id
+    opp_team = GAME_STATE["teams"].get(opp_id, {})
+    opp_name = opp_team.get("name", "l'adversaire")
+    opp_abbr = opp_team.get("abbr", opp_name[:3].upper())
+    user_team = GAME_STATE["teams"].get(user_id, {})
+    wins = user_team.get("wins", 0)
+    losses = user_team.get("losses", 0)
+    week_num = week or GAME_STATE.get("current_week", 0)
+    duration = match_result.get("duration", 30)
+    phases = match_result.get("phases", [])
+    gold_diff = abs(phases[-1].get("gold_diff", 0)) if phases else 0
+
+    if user_won:
+        if gold_diff > 8000:
+            board_pool = [
+                ("Direction Sportive", f"Victoire dominante contre {opp_name}",
+                 f"Excellente performance ce soir contre {opp_abbr}. La domination dans les lanes et la prise d'objectifs était exemplaire. Les sponsors sont ravis. Bilan actuel : {wins}V-{losses}D."),
+                ("Président", f"Félicitations — Semaine {week_num}",
+                 f"Victoire convaincante contre {opp_name}. L'organisation est fière. Les investisseurs suivent de près et ce niveau de jeu ne passe pas inaperçu. Classement : {wins}V-{losses}D."),
+            ]
+        else:
+            board_pool = [
+                ("Direction Sportive", f"Victoire acquise contre {opp_name}",
+                 f"Bonne victoire ce soir contre {opp_abbr}, même si le score aurait pu être plus net. L'essentiel est là. Bilan : {wins}V-{losses}D."),
+                ("Manager Général", f"Résultat positif — Semaine {week_num}",
+                 f"Victoire contre {opp_name} confirmée. Match serré par moments, mais l'équipe a su s'adapter. On reste sur la bonne trajectoire : {wins}V-{losses}D."),
+            ]
+        soloq_pool = [
+            ("@LoLAnalyst_EU", f"Thread : {opp_abbr} battu ✅",
+             f"Performance solide ce soir. Vision control et pacing mid-game au top. La victoire en {duration}min montre une bonne lecture du jeu. #LoLEsports"),
+            ("LeagueFanatic42", f"Enfin une belle victoire !",
+             f"J'étais devant ma TV ce soir, c'était vraiment beau. Victoire contre {opp_abbr} en {duration}min — let's go ! 🔥"),
+            ("EsportsInsider", f"Analyse post-match vs {opp_abbr}",
+             f"Belle cohérence tactique ce soir. La victoire contre {opp_abbr} renforce la position au classement : {wins}V-{losses}D."),
+        ]
+    else:
+        if losses > wins:
+            board_pool = [
+                ("Manager Général", f"Défaite préoccupante — URGENT",
+                 f"Cette défaite contre {opp_abbr} est difficile à accepter. Avec {wins}V-{losses}D, notre position devient critique. J'attends une réunion tactique avant le prochain match."),
+                ("Président", f"Réunion de crise demandée",
+                 f"Suite à la défaite contre {opp_name} et notre bilan ({wins}V-{losses}D), je souhaite un point de situation. Les investisseurs posent des questions."),
+            ]
+        else:
+            board_pool = [
+                ("Direction Sportive", f"Défaite contre {opp_name} — Analyse requise",
+                 f"Défaite ce soir contre {opp_abbr} en {duration}min. Bilan toujours positif : {wins}V-{losses}D. Analysez les erreurs et revenez plus forts la semaine prochaine."),
+                ("Manager Général", f"Retour sur la défaite — S{week_num}",
+                 f"Résultat décevant contre {opp_name}. Des lacunes visibles en mid-game. À corriger. Bilan : {wins}V-{losses}D — les points se rattrapent."),
+            ]
+        soloq_pool = [
+            ("@CriticalCoach", f"Analyse défaite vs {opp_abbr} 🔴",
+             f"Difficile à regarder ce soir. La défaite contre {opp_abbr} en {duration}min est symptomatique des problèmes récurrents. Vision control en mid-game catastrophique. #LoLEsports"),
+            ("LoLFan_Frustrated", f"Qu'est-ce qui se passe ???",
+             f"Comment on perd contre {opp_abbr} comme ça... L'équipe doit se ressaisir. {wins}V-{losses}D c'est pas acceptable à ce niveau."),
+            ("EsportsBetting", f"Post-match {opp_abbr} — Côtes révisées",
+             f"La défaite contre {opp_abbr} impacte les prévisions. Le bilan {wins}V-{losses}D place l'équipe dans une position délicate pour la suite."),
+        ]
+
+    b = random.choice(board_pool)
+    s = random.choice(soloq_pool)
+    _add_inbox_message("board", b[0], b[1], b[2], week_num)
+    _add_inbox_message("soloq", s[0], s[1], s[2], week_num)
+
+
+def _generate_weekly_board_message(week: int):
+    """Board message at the start of each new week."""
+    user_id = GAME_STATE.get("user_team")
+    if not user_id:
+        return
+    user_team = GAME_STATE["teams"].get(user_id, {})
+    wins = user_team.get("wins", 0)
+    losses = user_team.get("losses", 0)
+    total = wins + losses
+    if total == 0:
+        return
+    wr = round(wins / total * 100)
+    if wr >= 70:
+        subject = f"Excellent début de saison — Semaine {week}"
+        body = f"Le bilan de {wins}V-{losses}D ({wr}% de victoires) est au-dessus des objectifs fixés en début de split. Continuez ainsi — les playoffs semblent à portée."
+    elif wr >= 50:
+        subject = f"Bilan semaine {week} — En bonne voie"
+        body = f"Le bilan {wins}V-{losses}D est satisfaisant pour l'instant. Restez concentrés sur les prochains matchs décisifs pour la qualification aux playoffs."
+    else:
+        subject = f"Point de situation — Semaine {week}"
+        body = f"Avec {wins}V-{losses}D, nous sommes en dessous des attentes. Les prochaines semaines sont cruciales pour maintenir une chance de qualification. Des ajustements s'imposent."
+    _add_inbox_message("board", "Manager Général", subject, body, week)
+
+
 def generate_player_stats(team_id: str, won: bool, game_duration: int,
                            team_kills: int, opp_kills: int,
                            draft_picks: list = None, excluded: set = None):
