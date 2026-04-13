@@ -1,0 +1,261 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Envelope, EnvelopeOpen, Users, ChatsCircle, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
+import { API } from "../shared";
+import axios from "axios";
+
+const TYPE_BOARD = "board";
+const TYPE_SOLOQ = "soloq";
+
+const SENDER_AVATARS = {
+  "Direction Sportive": "DS",
+  "Manager Général":    "MG",
+  "Président":          "PR",
+  "@LoLAnalyst_EU":     "LA",
+  "LeagueFanatic42":    "LF",
+  "EsportsInsider":     "EI",
+  "@CriticalCoach":     "CC",
+  "LoLFan_Frustrated":  "LF",
+  "EsportsBetting":     "EB",
+};
+
+const SENDER_COLORS = {
+  "Direction Sportive": "#3b82f6",
+  "Manager Général":    "#8b5cf6",
+  "Président":          "#f59e0b",
+  "@LoLAnalyst_EU":     "#06b6d4",
+  "LeagueFanatic42":    "#22c55e",
+  "EsportsInsider":     "#64748b",
+  "@CriticalCoach":     "#ef4444",
+  "LoLFan_Frustrated":  "#f97316",
+  "EsportsBetting":     "#6366f1",
+};
+
+const getAvatar = (sender) => SENDER_AVATARS[sender] || sender.substring(0, 2).toUpperCase();
+const getColor  = (sender) => SENDER_COLORS[sender]  || "var(--primary)";
+
+const MessageRow = ({ msg, selected, onClick }) => {
+  const color = getColor(msg.sender);
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: "flex", alignItems: "flex-start", gap: 12,
+        padding: "12px 16px", cursor: "pointer",
+        background: selected ? "rgba(10,132,255,0.08)" : "transparent",
+        borderLeft: selected ? "2px solid var(--primary)" : "2px solid transparent",
+        borderBottom: "1px solid var(--border-subtle)",
+        transition: "background 0.12s",
+      }}
+    >
+      {/* Avatar */}
+      <div style={{
+        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+        background: color + "22", border: `1px solid ${color}44`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 11, fontWeight: 800, color,
+      }}>
+        {getAvatar(msg.sender)}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+          <span style={{ fontSize: 13, fontWeight: msg.read ? 500 : 700, color: msg.read ? "var(--text-secondary)" : "var(--text-primary)" }}>
+            {msg.sender}
+          </span>
+          <span style={{ fontSize: 10, color: "var(--text-secondary)", flexShrink: 0, marginLeft: 8 }}>
+            S{msg.week}
+          </span>
+        </div>
+        <div style={{ fontSize: 13, fontWeight: msg.read ? 400 : 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: msg.read ? "var(--text-secondary)" : "var(--text-primary)" }}>
+          {msg.subject}
+        </div>
+        <div style={{ fontSize: 11, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
+          {msg.body.substring(0, 80)}…
+        </div>
+      </div>
+
+      {/* Unread dot */}
+      {!msg.read && (
+        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--primary)", flexShrink: 0, marginTop: 6 }} />
+      )}
+    </div>
+  );
+};
+
+const MessageDetail = ({ msg, onBack }) => {
+  const color = getColor(msg.sender);
+  return (
+    <motion.div
+      key={msg.id}
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.15 }}
+      style={{ height: "100%", display: "flex", flexDirection: "column" }}
+    >
+      {/* Back button (mobile-friendly) */}
+      <button
+        onClick={onBack}
+        style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: 13, padding: "0 0 14px 0", width: "fit-content" }}
+      >
+        <ArrowLeft size={14} /> Retour
+      </button>
+
+      {/* Header */}
+      <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border-subtle)" }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
+          background: color + "22", border: `2px solid ${color}66`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 14, fontWeight: 800, color,
+        }}>
+          {getAvatar(msg.sender)}
+        </div>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>{msg.sender}</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Semaine {msg.week}</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 16 }}>{msg.subject}</div>
+      <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)" }}>{msg.body}</div>
+    </motion.div>
+  );
+};
+
+const InboxPage = () => {
+  const [data, setData]         = useState({ messages: [], unread_board: 0, unread_soloq: 0, unread_total: 0 });
+  const [tab, setTab]           = useState(TYPE_BOARD);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading]   = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await axios.get(API + "/inbox");
+      setData(res.data);
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const markRead = useCallback(async (msg) => {
+    if (msg.read) return;
+    await axios.post(API + `/inbox/${msg.id}/read`).catch(() => {});
+    setData(prev => ({
+      ...prev,
+      messages: prev.messages.map(m => m.id === msg.id ? { ...m, read: true } : m),
+      unread_total: Math.max(0, prev.unread_total - 1),
+      unread_board: msg.type === TYPE_BOARD ? Math.max(0, prev.unread_board - 1) : prev.unread_board,
+      unread_soloq: msg.type === TYPE_SOLOQ ? Math.max(0, prev.unread_soloq - 1) : prev.unread_soloq,
+    }));
+  }, []);
+
+  const handleSelect = useCallback((msg) => {
+    setSelected(msg);
+    markRead(msg);
+  }, [markRead]);
+
+  const markAllRead = useCallback(async () => {
+    await axios.post(API + "/inbox/read-all").catch(() => {});
+    setData(prev => ({
+      ...prev,
+      messages: prev.messages.map(m => ({ ...m, read: true })),
+      unread_board: 0, unread_soloq: 0, unread_total: 0,
+    }));
+  }, []);
+
+  const filtered = data.messages.filter(m => m.type === tab);
+  const unreadCount = tab === TYPE_BOARD ? data.unread_board : data.unread_soloq;
+
+  const tabs = [
+    { id: TYPE_BOARD, label: "Direction",  icon: Users,        unread: data.unread_board },
+    { id: TYPE_SOLOQ, label: "Communauté", icon: ChatsCircle,  unread: data.unread_soloq },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 0, height: "calc(100vh - 120px)", background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 8, overflow: "hidden" }}>
+
+      {/* Left panel — list */}
+      <div style={{ display: "flex", flexDirection: "column", borderRight: "1px solid var(--border-subtle)" }}>
+
+        {/* Tab bar */}
+        <div style={{ display: "flex", borderBottom: "1px solid var(--border-subtle)" }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => { setTab(t.id); setSelected(null); }} style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              padding: "14px 0", background: "none", border: "none", cursor: "pointer",
+              borderBottom: tab === t.id ? "2px solid var(--primary)" : "2px solid transparent",
+              color: tab === t.id ? "var(--primary)" : "var(--text-secondary)",
+              fontSize: 13, fontWeight: 600, transition: "all 0.15s",
+            }}>
+              <t.icon size={16} weight={tab === t.id ? "fill" : "regular"} />
+              {t.label}
+              {t.unread > 0 && (
+                <span style={{ background: "var(--primary)", color: "#fff", borderRadius: 10, fontSize: 10, fontWeight: 800, padding: "1px 6px", minWidth: 18, textAlign: "center" }}>
+                  {t.unread}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Toolbar */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderBottom: "1px solid var(--border-subtle)" }}>
+          <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+            {filtered.length} message{filtered.length !== 1 ? "s" : ""}
+            {unreadCount > 0 && ` · ${unreadCount} non lu${unreadCount > 1 ? "s" : ""}`}
+          </span>
+          {data.unread_total > 0 && (
+            <button onClick={markAllRead} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--primary)", fontWeight: 600 }}>
+              <CheckCircle size={13} /> Tout lire
+            </button>
+          )}
+        </div>
+
+        {/* Message list */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {loading ? (
+            <div style={{ padding: 32, textAlign: "center", color: "var(--text-secondary)", fontSize: 13 }}>Chargement…</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: "var(--text-secondary)" }}>
+              <Envelope size={36} style={{ opacity: 0.3, marginBottom: 10, display: "block", margin: "0 auto 10px" }} />
+              <div style={{ fontSize: 13 }}>Aucun message pour l'instant</div>
+              <div style={{ fontSize: 11, marginTop: 4 }}>Les messages apparaissent après vos matchs</div>
+            </div>
+          ) : (
+            filtered.map(msg => (
+              <MessageRow
+                key={msg.id}
+                msg={msg}
+                selected={selected?.id === msg.id}
+                onClick={() => handleSelect(msg)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Right panel — detail */}
+      <div style={{ padding: 28, overflowY: "auto" }}>
+        <AnimatePresence mode="wait">
+          {selected ? (
+            <MessageDetail key={selected.id} msg={selected} onBack={() => setSelected(null)} />
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}
+            >
+              <EnvelopeOpen size={48} style={{ opacity: 0.2, marginBottom: 12 }} />
+              <div style={{ fontSize: 14 }}>Sélectionnez un message</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+export default InboxPage;
