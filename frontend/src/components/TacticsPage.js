@@ -358,30 +358,49 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
           Roster Adverse &amp; Signature Picks
         </div>
 
-        {oppPlayers.map((p, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 6, marginBottom: 6 }}>
-            <PlayerAvatar name={p.name} size={40} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
+        {oppPlayers.map((p, i) => {
+          // Compute played champs from match_history, fallback to champion_pool
+          const champMap = {};
+          (p.match_history || []).forEach(m => {
+            if (!m.champion) return;
+            if (!champMap[m.champion]) champMap[m.champion] = { games: 0, wins: 0 };
+            champMap[m.champion].games++;
+            if (m.won) champMap[m.champion].wins++;
+          });
+          const playedChamps = Object.entries(champMap).sort((a, b) => b[1].games - a[1].games).slice(0, 3);
+          const hasHistory = playedChamps.length > 0;
+          const displayChamps = hasHistory
+            ? playedChamps.map(([champ, stats]) => ({ champ, games: stats.games, wr: Math.round((stats.wins / stats.games) * 100) }))
+            : (p.champion_pool || []).slice(0, 3).map(champ => ({ champ, games: null, wr: null }));
+
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 6, marginBottom: 6 }}>
+              <PlayerAvatar name={p.name} size={40} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {displayChamps.map(({ champ, games, wr }, ci) => {
+                  const wrColor = wr !== null ? (wr >= 60 ? "var(--success)" : wr >= 45 ? "var(--secondary)" : "var(--danger)") : "var(--text-secondary)";
+                  return (
+                    <div key={ci} style={{ textAlign: "center" }}>
+                      <img
+                        src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(champ)}.png`}
+                        alt={champ}
+                        style={{ width: 32, height: 32, borderRadius: 4 }}
+                        onError={e => { e.currentTarget.style.display = "none"; }}
+                      />
+                      <div style={{ fontSize: 9, color: wrColor, marginTop: 2, fontWeight: wr !== null ? 700 : 400 }}>
+                        {wr !== null ? `${wr}% (${games})` : (ci === 0 ? "SIG" : "—")}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(p.champion_pool || []).slice(0, 3).map((champ, ci) => (
-                <div key={ci} style={{ textAlign: "center" }}>
-                  <img
-                    src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(champ)}.png`}
-                    alt={champ}
-                    style={{ width: 32, height: 32, borderRadius: 4 }}
-                    onError={e => { e.currentTarget.style.display = "none"; }}
-                  />
-                  <div style={{ fontSize: 9, color: "var(--text-secondary)", marginTop: 2 }}>
-                    {ci === 0 ? "100%" : ci === 1 ? "60%" : "30%"}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
