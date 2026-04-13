@@ -42,6 +42,19 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
     }
   };
 
+  const fetchSuggestions = async () => {
+    try {
+      const res = await axios.get(API + "/draft/suggest");
+      if (res.data.action && res.data.action !== "enemy_turn") {
+        setApiSuggestions(res.data.suggestions || []);
+      } else {
+        setApiSuggestions([]);
+      }
+    } catch {
+      setApiSuggestions([]);
+    }
+  };
+
   const performAction = async (action, champion, position = null) => {
     try {
       const url = API + "/draft/action";
@@ -56,6 +69,8 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
 
       if (response.data.phase === "complete") {
         setTimeout(() => onComplete(response.data), 1000);
+      } else if (response.data.current_turn === "user") {
+        fetchSuggestions();
       }
     } catch (e) {
       console.error("Error in draft:", e);
