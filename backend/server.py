@@ -2996,10 +2996,12 @@ class SimulateMatchRequest(BaseModel):
 @api_router.post("/match/simulate")
 async def simulate_match(request: SimulateMatchRequest):
     """Simulate a specific match"""
+    if GAME_STATE.get("phase") == "preseason":
+        raise HTTPException(status_code=400, detail="Lancez la saison depuis la page Négociations avant de jouer des matchs")
     match = next((m for m in GAME_STATE["schedule"] if m["id"] == request.match_id), None)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
-    
+
     if match["played"]:
         raise HTTPException(status_code=400, detail="Match already played")
     
