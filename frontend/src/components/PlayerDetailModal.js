@@ -133,6 +133,31 @@ const PlayerDetailModal = ({ player, onClose, actions = null }) => {
                 ))}
               </div>
 
+              {/* Attributs */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 12 }}>Attributs</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px" }}>
+                  {attrs.map(({ label, key, color }) => {
+                    const val = player[key] ?? 0;
+                    const pct = key === "avg_perf"
+                      ? Math.min(100, Math.max(0, val * 10))
+                      : Math.min(100, Math.max(0, ((val - 50) / 50) * 100));
+                    return (
+                      <div key={key}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{label}</span>
+                          <span className="font-stats" style={{ fontSize: 12, fontWeight: 700, color }}>{val}</span>
+                        </div>
+                        <div style={{ height: 4, background: "var(--border-subtle)", borderRadius: 2 }}>
+                          <motion.div initial={{ width: 0 }} animate={{ width: pct + "%" }} transition={{ duration: 0.5, ease: "easeOut" }}
+                            style={{ height: "100%", borderRadius: 2, background: color }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Performance tiles */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {[
@@ -170,41 +195,67 @@ const PlayerDetailModal = ({ player, onClose, actions = null }) => {
           {/* ── STATS TAB ────────────────────────────────────────────────────── */}
           {tab === "stats" && (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>
-                {attrs.map(({ label, key, color }) => {
-                  const val = player[key] ?? 0;
-                  const pct = key === "avg_perf"
-                    ? Math.min(100, Math.max(0, val * 10))
-                    : Math.min(100, Math.max(0, ((val - 50) / 50) * 100));
-                  return (
-                    <div key={key}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{label}</span>
-                        <span className="font-stats" style={{ fontSize: 12, fontWeight: 700, color }}>{val}</span>
-                      </div>
-                      <div style={{ height: 4, background: "var(--border-subtle)", borderRadius: 2 }}>
-                        <motion.div initial={{ width: 0 }} animate={{ width: pct + "%" }} transition={{ duration: 0.5, ease: "easeOut" }}
-                          style={{ height: "100%", borderRadius: 2, background: color }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Perf history */}
-              {player.perf_history?.length > 0 && (
+              {/* Detailed match history */}
+              {player.match_history?.length > 0 ? (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 10 }}>Historique performances</div>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {player.perf_history.map((score, i) => (
-                      <div key={i} style={{
-                        padding: "4px 10px", borderRadius: 4, fontSize: 13, fontWeight: 700,
-                        background: "var(--surface)", border: "1px solid var(--border-subtle)",
-                        color: score >= 8 ? "var(--secondary)" : score >= 6 ? "var(--success)" : score >= 4 ? "var(--text-primary)" : "var(--danger)",
-                      }}>
-                        {score.toFixed(1)}
-                      </div>
-                    ))}
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 10 }}>
+                    Historique des matchs
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {[...player.match_history].reverse().map((m, i) => {
+                      const champKey = m.champion ? toDDragonKey(m.champion) : null;
+                      const scoreColor = m.score >= 8 ? "var(--secondary)" : m.score >= 6 ? "var(--success)" : m.score >= 4 ? "var(--text-primary)" : "var(--danger)";
+                      return (
+                        <div key={i} style={{
+                          display: "grid", gridTemplateColumns: "28px 1fr auto",
+                          alignItems: "center", gap: 10,
+                          padding: "8px 12px",
+                          background: "var(--surface)", borderRadius: 6,
+                          border: `1px solid ${m.won ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.1)"}`,
+                        }}>
+                          {/* W/L badge */}
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 4,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontWeight: 800, fontSize: 12,
+                            background: m.won ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.12)",
+                            color: m.won ? "var(--success)" : "var(--danger)",
+                          }}>
+                            {m.won ? "V" : "D"}
+                          </div>
+
+                          {/* Champion + opponent */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                            {champKey && (
+                              <img loading="lazy"
+                                src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${champKey}.png`}
+                                alt={m.champion}
+                                style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0 }}
+                                onError={e => { e.currentTarget.style.display = "none"; }}
+                              />
+                            )}
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {m.champion || "—"}
+                              </div>
+                              <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                                vs {m.opponent || "?"}{m.week ? ` · S${m.week}` : ""}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* KDA + score */}
+                          <div style={{ textAlign: "right", flexShrink: 0 }}>
+                            <div className="font-stats" style={{ fontWeight: 700, color: scoreColor, fontSize: 15 }}>
+                              {m.score?.toFixed(1)}
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                              {m.kda?.toFixed(2)} KDA
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
