@@ -1600,25 +1600,61 @@ def generate_kill_totals(duration: int, team1_won: bool):
 
 
 def generate_auto_bans(n: int = 10) -> list:
-    """Pick the n most-banned/meta champions as simulated bans when no real draft is available."""
+    """Pick n champions as simulated bans using weighted random selection from meta pool."""
     meta = get_meta_champions()
     pool = []
     for champs in meta.values():
         pool.extend(champs)
-    # Sort by bans desc, then picks desc
-    pool.sort(key=lambda c: (c.get("bans", 0) + c.get("picks", 0)), reverse=True)
-    seen, result = set(), []
+
+    # Deduplicate by name
+    seen_names = set()
+    unique = []
     for c in pool:
         name = c.get("name")
-        if name and name not in seen:
-            seen.add(name)
-            result.append(name)
-        if len(result) >= n:
+        if name and name not in seen_names:
+            seen_names.add(name)
+            unique.append(c)
+
+    if not unique:
+        return []
+
+    # Score each champion: higher score = more likely to be banned
+    def ban_score(c):
+        return (c.get("bans", 0) * 2) + c.get("picks", 0)
+
+    scores = [max(ban_score(c), 1) for c in unique]
+    total = sum(scores)
+    weights = [s / total for s in scores]
+
+    # Weighted random sample without replacement
+    n = min(n, len(unique))
+    indices = list(range(len(unique)))
+    chosen = []
+    remaining_weights = list(weights)
+    remaining_indices = list(indices)
+
+    for _ in range(n):
+        if not remaining_indices:
             break
-    # Shuffle slightly so it's not always the same 10
-    top = result[:max(n * 2, 20)]
-    random.shuffle(top)
-    return top[:n]
+        w_sum = sum(remaining_weights)
+        if w_sum <= 0:
+            chosen.append(remaining_indices.pop(random.randrange(len(remaining_indices))))
+            if chosen:
+                remaining_weights.pop(len(remaining_indices))
+            break
+        r = random.random() * w_sum
+        cumulative = 0.0
+        pick_pos = len(remaining_indices) - 1
+        for pos, w in enumerate(remaining_weights):
+            cumulative += w
+            if r <= cumulative:
+                pick_pos = pos
+                break
+        chosen.append(remaining_indices[pick_pos])
+        remaining_indices.pop(pick_pos)
+        remaining_weights.pop(pick_pos)
+
+    return [unique[i]["name"] for i in chosen]
 
 
 def update_champ_stats(team1_stats: list, team2_stats: list, winner_id: str, team1_id: str, bans: list = None):
