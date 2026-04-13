@@ -4,14 +4,27 @@ import axios from "axios";
 import { API } from "../shared";
 
 // ── Tier calculation ──────────────────────────────────────────────────────────
-// Score = (WR-50)*1.5 + presence/10  →  S≥12 / A≥6 / B≥0 / C<0
+// Présence = driver principal (champion contesté = méta)
+// WR = modificateur ±1 tier, atténué si peu de picks (confidence)
 const getTier = (champ) => {
   if (!champ.picks || champ.picks < 2) return null;
-  const score = (champ.win_rate - 50) * 1.5 + champ.presence / 10;
-  if (score >= 12) return "S";
-  if (score >= 6)  return "A";
-  if (score >= 0)  return "B";
-  return "C";
+
+  // Tier de base selon présence
+  let base;
+  if (champ.presence >= 65)      base = 3; // S
+  else if (champ.presence >= 38) base = 2; // A
+  else if (champ.presence >= 15) base = 1; // B
+  else                            base = 0; // C
+
+  // Confiance WR : pleine confiance à 6+ picks
+  const confidence = Math.min(champ.picks, 6) / 6;
+  const wrDelta = (champ.win_rate - 50) * confidence;
+
+  // Le WR peut faire monter ou descendre d'1 tier
+  if (wrDelta >= 8)       base = Math.min(base + 1, 3);
+  else if (wrDelta <= -8) base = Math.max(base - 1, 0);
+
+  return ["C", "B", "A", "S"][base];
 };
 
 const TIER_STYLE = {
