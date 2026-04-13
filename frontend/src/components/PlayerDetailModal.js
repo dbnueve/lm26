@@ -308,6 +308,46 @@ const PlayerDetailModal = ({ player, onClose, actions = null }) => {
                 </div>
               )}
 
+              {/* Champions joués dans la save */}
+              {(() => {
+                const playedMap = {};
+                (player.match_history || []).forEach(m => {
+                  if (!m.champion) return;
+                  if (!playedMap[m.champion]) playedMap[m.champion] = { games: 0, wins: 0 };
+                  playedMap[m.champion].games++;
+                  if (m.won) playedMap[m.champion].wins++;
+                });
+                const sorted = Object.entries(playedMap).sort((a, b) => b[1].games - a[1].games);
+                if (!sorted.length) return null;
+                return (
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 10 }}>
+                      Champions joués (save actuelle)
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {sorted.map(([champ, { games, wins }]) => {
+                        const key = toDDragonKey(champ);
+                        const wr = games > 0 ? Math.round((wins / games) * 100) : 0;
+                        const wrColor = wr >= 60 ? "var(--success)" : wr >= 45 ? "var(--secondary)" : "var(--danger)";
+                        return (
+                          <div key={champ} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", background: "var(--surface)", borderRadius: 6 }}>
+                            <img loading="lazy"
+                              src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${key}.png`}
+                              alt={champ}
+                              style={{ width: 28, height: 28, borderRadius: 4, flexShrink: 0 }}
+                              onError={e => { e.currentTarget.style.display = "none"; }}
+                            />
+                            <div style={{ flex: 1, fontWeight: 600, fontSize: 13 }}>{champ}</div>
+                            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{games}G</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: wrColor, minWidth: 38, textAlign: "right" }}>{wr}%</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {actions}
             </>
           )}
