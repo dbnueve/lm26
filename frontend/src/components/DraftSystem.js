@@ -275,6 +275,49 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                 <span style={{ color: "#666" }}>C-Tier</span>
               </div>
             </div>
+            {/* Suggestions bar */}
+            {suggestions.length > 0 && (
+              <div style={{ marginBottom: 10, padding: "8px 10px", background: "rgba(255,184,0,0.07)", border: "1px solid rgba(255,184,0,0.25)", borderRadius: 4 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--secondary)", marginBottom: 6 }}>
+                  {isBanPhase ? "⚡ À bannir" : "✦ Suggestions"}
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {suggestions.map(c => {
+                    const ddKey = toDDragonKey(c.name);
+                    const isSelected = selectedChampion === c.name;
+                    return (
+                      <div
+                        key={c.name}
+                        onClick={() => { setSelectedChampion(c.name); setSelectedPosition(c.position || null); }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 6,
+                          padding: "4px 8px 4px 4px",
+                          background: isSelected ? "rgba(255,184,0,0.2)" : "var(--surface)",
+                          border: "1px solid " + (isSelected ? "var(--secondary)" : tierColor(c.tier)),
+                          borderRadius: 3, cursor: "pointer",
+                          transition: "all 0.12s ease"
+                        }}
+                      >
+                        <img
+                          src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${ddKey}.png`}
+                          alt={c.name}
+                          onError={e => { e.currentTarget.style.display = "none"; }}
+                          style={{ width: 28, height: 28, borderRadius: 2, objectFit: "cover" }}
+                        />
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.2 }}>{c.name}</div>
+                          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                            <span style={{ fontSize: 9, fontWeight: 800, color: tierColor(c.tier) }}>{c.tier}</span>
+                            {c.position && <span style={{ fontSize: 9, color: "var(--text-secondary)" }}>{c.position}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
