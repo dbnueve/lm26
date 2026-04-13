@@ -3188,6 +3188,8 @@ async def get_available_players():
     """Get players available for negotiation (from other teams)"""
     if not GAME_STATE["user_team"]:
         raise HTTPException(status_code=400, detail="No team selected")
+    if GAME_STATE.get("phase") != "preseason":
+        raise HTTPException(status_code=403, detail="Negotiations are only open during preseason/offseason")
     
     available = []
     for player in GAME_STATE["players"].values():
