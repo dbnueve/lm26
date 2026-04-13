@@ -1292,6 +1292,7 @@ def initialize_game(league: str = "LEC"):
     GAME_STATE["champion_stats"] = {}
     GAME_STATE["total_games_played"] = 0
     GAME_STATE["tactics"] = None
+    GAME_STATE["inbox"] = []
     GAME_STATE["schedule"] = []
     GAME_STATE["teams"] = {}
     GAME_STATE["players"] = {}
