@@ -37,6 +37,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
     try {
       const response = await axios.post(API + "/draft/start", matchId ? { match_id: matchId } : {});
       setDraftState(response.data);
+      if (response.data.current_turn === "user") fetchSuggestions();
     } catch (e) {
       console.error("Error starting draft:", e);
     }
