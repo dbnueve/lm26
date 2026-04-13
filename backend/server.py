@@ -3213,29 +3213,28 @@ def _find_coherent_replacement(sold_player: dict, team_id: str) -> dict:
     """Find a coherent replacement for a sold player.
 
     Priority order:
-    1. ERL pool player — same position, rating within ±12 of sold player
-    2. Any ERL pool player — same position, closest rating
-    3. Generated newgen — same position, rating capped near sold player's level
+    1. ERL pool — same position, rating closest to sold player
+    2. League free agents — non-starter players from other teams, same position, closest rating
+    3. Generated newgen — same position, rating calibrated to sold player's level
     """
     pos = sold_player.get("position", "MID")
     sold_rating = sold_player.get("rating", 75)
     active_league = GAME_STATE.get("league", "LEC")
+    user_team_id = GAME_STATE.get("user_team")
 
+    def proximity_score(p):
+        rating_diff = abs(p.get("rating", 70) - sold_rating)
+        pot_bonus = -2 if p.get("potential", 0) >= 80 else 0
+        return rating_diff + pot_bonus
+
+    # 1 — ERL pool
     erl_candidates = [
         p for p in GAME_STATE.get("erl_players", {}).values()
         if p.get("position") == pos
     ]
-
-    def proximity_score(p):
-        rating_diff = abs(p.get("rating", 70) - sold_rating)
-        pot_bonus = -2 if p.get("potential", 0) >= 80 else 0  # slight prefer high potential
-        return rating_diff + pot_bonus
-
     if erl_candidates:
-        # Sort by how close their rating is to the sold player
         erl_candidates.sort(key=proximity_score)
         best = erl_candidates[0]
-
         new_pid = str(uuid.uuid4())
         replacement = {
             **best,
@@ -3245,15 +3244,33 @@ def _find_coherent_replacement(sold_player: dict, team_id: str) -> dict:
             "avg_perf": None,
             "match_history": [],
         }
-        # Remove from ERL pool so they're not available again
         if best["id"] in GAME_STATE["erl_players"]:
             del GAME_STATE["erl_players"][best["id"]]
         return replacement
 
-    # Fallback: generate a newgen whose rating is close to the sold player
+    # 2 — Non-starter players from other AI teams in the league (free agent market)
+    league_candidates = [
+        p for p in GAME_STATE.get("players", {}).values()
+        if p.get("position") == pos
+        and not p.get("is_starter", True)
+        and p.get("team_id") != team_id
+        and p.get("team_id") != user_team_id
+    ]
+    if league_candidates:
+        league_candidates.sort(key=proximity_score)
+        best = league_candidates[0]
+        old_team = GAME_STATE["teams"].get(best["team_id"])
+        if old_team and best["id"] in old_team.get("roster", []):
+            old_team["roster"].remove(best["id"])
+        best["team_id"] = team_id
+        best["is_starter"] = True
+        best["avg_perf"] = None
+        best["match_history"] = []
+        return best
+
+    # 3 — Calibrated newgen fallback
     replacement_data = generate_newgen(active_league)
     replacement_data["position"] = pos
-    # Bias the rating toward the sold player's level (±10)
     target_rating = max(55, min(92, sold_rating + random.randint(-10, 5)))
     replacement_data["rating"] = target_rating
     replacement_data["potential"] = max(target_rating, target_rating + random.randint(0, 10))
