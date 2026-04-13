@@ -3883,6 +3883,20 @@ def _get_team_champ_pool(team_id: str) -> set:
     return pool
 
 
+def _get_team_champ_pool_by_pos(team_id: str) -> dict:
+    """Return {position: set_of_champions} for each player on the team."""
+    if not team_id:
+        return {}
+    team = GAME_STATE["teams"].get(team_id, {})
+    by_pos: dict = {}
+    for pid in team.get("roster", []):
+        p = GAME_STATE["players"].get(pid, {})
+        pos = p.get("position", "")
+        if pos:
+            by_pos.setdefault(pos, set()).update(p.get("champion_pool", []))
+    return by_pos
+
+
 def _get_current_opponent_id() -> Optional[str]:
     """Infer the current opponent from the schedule (current week, first unplayed match)."""
     user_id = GAME_STATE.get("user_team")
