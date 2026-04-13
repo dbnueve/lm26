@@ -4515,6 +4515,146 @@ async def get_split_status():
         "international_result": international_result,
     }
 
+def simulate_offseason_transfers():
+    """AI teams make coherent transfers during preseason.
+
+    Each AI team identifies underperforming players and replaces them with
+    better options from the ERL pool (upgrade or high-potential pick).
+    """
+    user_team_id = GAME_STATE.get("user_team")
+    transfers_done = []
+
+    ai_teams = [t for t in GAME_STATE["teams"].values() if t["id"] != user_team_id]
+    random.shuffle(ai_teams)
+
+    # Work with a local copy of available ERL pool to avoid double-spending
+    available_erl = dict(GAME_STATE.get("erl_players", {}))
+
+    for team in ai_teams:
+        team_players = [
+            GAME_STATE["players"][pid]
+            for pid in team.get("roster", [])
+            if pid in GAME_STATE["players"]
+        ]
+        if not team_players:
+            continue
+
+        team_avg_rating = sum(p.get("rating", 70) for p in team_players) / max(len(team_players), 1)
+
+        def player_weakness(p):
+            avg_perf = p.get("avg_perf") or 0
+            rating = p.get("rating", 70)
+            has_perf = avg_perf > 0
+            perf_score = avg_perf if has_perf else (rating / 20)
+            return perf_score
+
+        sorted_players = sorted(team_players, key=player_weakness)
+
+        transfers_this_team = 0
+        max_transfers = random.randint(1, 2)
+
+        for player in sorted_players:
+            if transfers_this_team >= max_transfers:
+                break
+
+            avg_perf = player.get("avg_perf") or 0
+            rating = player.get("rating", 70)
+            has_perf_data = avg_perf > 0
+
+            # Determine if player is underperforming
+            is_underperforming = (
+                (has_perf_data and avg_perf < 5.0) or
+                (not has_perf_data and rating < team_avg_rating - 8) or
+                rating < 60
+            )
+            if not is_underperforming:
+                break  # Rest of the team is fine
+
+            pos = player["position"]
+
+            # Find ERL candidates for this position that are an upgrade
+            candidates = [
+                p for p in available_erl.values()
+                if p["position"] == pos and (
+                    p["rating"] > rating + 3 or
+                    (p.get("potential", 0) >= 85 and p["rating"] >= rating - 5)
+                )
+            ]
+            if not candidates:
+                continue
+
+            # Pick best candidate (rating + potential bonus)
+            candidates.sort(
+                key=lambda p: p["rating"] + (p.get("potential", 0) / 12 if p.get("potential", 0) >= 85 else 0),
+                reverse=True
+            )
+            best = candidates[0]
+
+            # Execute transfer: new player joins AI team
+            new_pid = str(uuid.uuid4())
+            new_player = {
+                **best,
+                "id": new_pid,
+                "team_id": team["id"],
+                "is_starter": True,
+                "avg_perf": None,
+                "match_history": [],
+            }
+
+            # Update roster list
+            roster = team.get("roster", [])
+            old_pid = player["id"]
+            if old_pid in roster:
+                roster[roster.index(old_pid)] = new_pid
+            else:
+                roster.append(new_pid)
+
+            GAME_STATE["players"][new_pid] = new_player
+            if old_pid in GAME_STATE["players"]:
+                del GAME_STATE["players"][old_pid]
+
+            # Remove from available ERL pools
+            if best["id"] in available_erl:
+                del available_erl[best["id"]]
+            if best["id"] in GAME_STATE.get("erl_players", {}):
+                del GAME_STATE["erl_players"][best["id"]]
+
+            transfers_done.append({
+                "team": team["name"],
+                "team_abbr": team.get("abbr", ""),
+                "out": player["name"],
+                "in": best["name"],
+                "position": pos,
+                "rating_change": best["rating"] - rating,
+            })
+            transfers_this_team += 1
+
+    return transfers_done
+
+
+@api_router.post("/season/start")
+async def start_season():
+    """Launch the season from preseason: run AI transfers then begin week 1."""
+    if not GAME_STATE["user_team"]:
+        raise HTTPException(status_code=400, detail="No team selected")
+    if GAME_STATE.get("phase") != "preseason":
+        raise HTTPException(status_code=400, detail="Season already started or not in preseason")
+
+    # AI teams do their offseason business
+    transfers = simulate_offseason_transfers()
+
+    # Start the season
+    GAME_STATE["phase"] = "regular"
+    GAME_STATE["current_week"] = 1
+    save_state()
+
+    return {
+        "success": True,
+        "ai_transfers": transfers,
+        "message": f"La saison démarre ! {len(transfers)} transfert(s) IA effectué(s).",
+    }
+
+
 @api_router.post("/split/next")
 async def advance_to_next_split():
     """
