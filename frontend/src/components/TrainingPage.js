@@ -68,7 +68,7 @@ const TrainingPage = ({ userTeam, onApplyTraining }) => {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div className="font-stats" style={{ color: "var(--secondary)", fontWeight: 700 }}>
-                      {training.cost > 0 ? (training.cost / 1000).toFixed(0) + "K EUR" : "Gratuit"}
+                      {training.cost > 0 ? formatMoney(training.cost) + " EUR" : "Gratuit"}
                     </div>
                   </div>
                 </div>
