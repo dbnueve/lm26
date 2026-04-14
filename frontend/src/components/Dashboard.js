@@ -97,7 +97,33 @@ const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, onPlayMa
           <h3 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)" }}>
             Prochain Match
           </h3>
-          {nextMatch ? (
+          {phase === "preseason" ? (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              style={{ textAlign: "center" }}
+            >
+              <div style={{
+                marginBottom: 16, padding: "12px 16px",
+                background: "rgba(200,155,60,0.1)",
+                border: "1px solid rgba(200,155,60,0.3)",
+                borderRadius: 4, fontSize: 13, color: "var(--secondary)"
+              }}>
+                ⏸ Pré-saison — Mercato ouvert<br />
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                  Finalisez vos transferts puis lancez la saison
+                </span>
+              </div>
+              <button
+                className="btn-primary"
+                style={{ width: "100%", fontSize: 15, padding: "12px 0" }}
+                onClick={onSeasonStart}
+                data-testid="start-season-btn"
+              >
+                <Play size={20} style={{ marginRight: 8 }} />
+                Lancer la Saison
+              </button>
+            </motion.div>
+          ) : nextMatch ? (
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, marginBottom: 16 }}>
                 <div style={{ textAlign: "center" }}>
