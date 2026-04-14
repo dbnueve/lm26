@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { X, Star } from "@phosphor-icons/react";
-import { PlayerImagesContext, toFlag } from "../shared";
+import { PlayerImagesContext, toFlag, formatMoney } from "../shared";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 
 // ─── Shared PlayerDetailModal ────────────────────────────────────────────────
