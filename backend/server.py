@@ -5435,13 +5435,53 @@ async def get_career_history():
 # Worlds (split 2+): 17 teams — Play-In 2 teams Bo5 → Swiss 16 teams 5 rounds → Knockout 8 teams SE Bo5
 
 def _intl_pick_top_n(league: str, n: int, user_league: str, user_champ_id) -> list:
-    all_t = sorted(LEAGUES_DATA.get(league, {}).get("teams", []), key=lambda x: x.get("rating", 0), reverse=True)
-    result = [{**t, "league": league, "is_user_champ": (league == user_league and t["id"] == user_champ_id)} for t in all_t]
-    if league == user_league and user_champ_id:
-        idx = next((i for i, t in enumerate(result) if t["id"] == user_champ_id), None)
-        if idx is not None and idx >= n:
-            result.insert(0, result.pop(idx))
-    return result[:n]
+    """Return the top-N qualified teams for an international tournament.
+    Uses actual W-L standings for the user's league, intl_standings simulation for others.
+    Does NOT force the user in if they didn't finish top-N.
+    """
+    is_user_league = (league == user_league)
+
+    if is_user_league:
+        # Use real in-game standings
+        gs_teams = GAME_STATE.get("teams", {})
+        league_team_ids = {t["id"] for t in LEAGUES_DATA.get(league, {}).get("teams", [])}
+        ranked = sorted(
+            [t for t in gs_teams.values() if t["id"] in league_team_ids],
+            key=lambda t: (-t.get("wins", 0), t.get("losses", 0))
+        )
+        result = []
+        for t in ranked[:n]:
+            base = next((lt for lt in LEAGUES_DATA[league]["teams"] if lt["id"] == t["id"]), t)
+            result.append({**base, **t, "league": league,
+                           "is_user_champ": t["id"] == user_champ_id})
+    else:
+        # Use simulated intl standings if available, else fall back to rating sort
+        intl_table = GAME_STATE.get("intl_standings", {}).get(league)
+        league_teams_map = {t["id"]: t for t in LEAGUES_DATA.get(league, {}).get("teams", [])}
+        if intl_table:
+            sorted_table = sorted(intl_table, key=lambda x: (-x["wins"], x["losses"]))
+            result = []
+            for row in sorted_table[:n]:
+                team_id = next(
+                    (tid for tid, t in league_teams_map.items()
+                     if t.get("abbr", "").upper() == row["team"].upper()
+                     or t.get("name", "").upper() == row["team"].upper()
+                     or tid.upper() == row["team"].upper()),
+                    None
+                )
+                if team_id and team_id in league_teams_map:
+                    result.append({**league_teams_map[team_id], "league": league,
+                                   "is_user_champ": False,
+                                   "sim_wins": row["wins"], "sim_losses": row["losses"]})
+                elif result:
+                    pass  # skip unmapped team
+        else:
+            # Fallback: sort by rating
+            all_t = sorted(LEAGUES_DATA.get(league, {}).get("teams", []),
+                           key=lambda x: x.get("rating", 0), reverse=True)
+            result = [{**t, "league": league, "is_user_champ": False} for t in all_t[:n]]
+
+    return result
 
 
 def _intl_make_match(mid: str, round_name: str, best_of: int = 5, t1=None, t2=None) -> dict:
