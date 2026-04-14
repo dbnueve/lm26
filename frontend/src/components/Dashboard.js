@@ -192,7 +192,6 @@ const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, onPlayMa
               Aucun match programmé
             </div>
           )}
-          </div>
         </div>
 
         <div className="card" style={{ padding: 24 }}>
