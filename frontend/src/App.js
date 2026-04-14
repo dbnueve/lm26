@@ -366,8 +366,10 @@ function App() {
             schedule={schedule}
             standings={standings}
             splitStatus={splitStatus}
+            phase={gameState.phase}
             onPlayMatch={handlePlayMatch}
             onPlayPlayoffMatch={(m) => setActivePlayoffMatch(m)}
+            onSeasonStart={handleSeasonStart}
           />
         )}
 
