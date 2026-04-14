@@ -281,16 +281,33 @@ function App() {
 
   const handleApplyTraining = async (playerId, trainingType) => {
     try {
-      await axios.post(API + "/training/apply", {
+      const res = await axios.post(API + "/training/apply", {
         player_id: playerId,
         training_type: trainingType
       });
       await loadUserTeam(gameState.userTeam);
-      showToast("Entrainement appliqué!", "success");
+      showToast("Entraînement appliqué!", "success");
+      return res.data;
     } catch (e) {
-      console.error("Error applying training:", e);
-      showToast("Erreur lors de l entrainement", "error");
+      const msg = e?.response?.data?.detail || "Erreur lors de l'entraînement";
+      showToast(msg, "error");
+      throw e;
     }
+  };
+
+  const handleSetTrainingPlan = async (playerId, trainingType) => {
+    const res = await axios.post(API + "/training/set-plan", {
+      player_id: playerId,
+      training_type: trainingType
+    });
+    await loadUserTeam(gameState.userTeam);
+    return res.data;
+  };
+
+  const handleSeasonStart = async () => {
+    await axios.post(API + "/season/start");
+    await loadGameData();
+    if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
   };
 
   const handleDraftComplete = (completedDraft) => {
