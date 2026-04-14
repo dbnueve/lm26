@@ -21,7 +21,14 @@ const toFlag = (code) => {
 const TeamLogosContext = React.createContext({});
 const TeamModalContext = React.createContext({ openTeam: () => {} });
 
-export { BACKEND_URL, API, PlayerImagesContext, toFlag, TeamLogosContext, TeamModalContext };
+// Format a money amount: >= 1 000 000 → "X.XM", otherwise → "XK"
+const formatMoney = (amount) => {
+  if (!amount && amount !== 0) return "0K";
+  if (amount >= 1_000_000) return (amount / 1_000_000).toFixed(1) + "M";
+  return Math.round(amount / 1000) + "K";
+};
+
+export { BACKEND_URL, API, PlayerImagesContext, toFlag, TeamLogosContext, TeamModalContext, formatMoney };
 export { axios };
 export const withTimeout = (promise, ms = 10000) =>
   Promise.race([
