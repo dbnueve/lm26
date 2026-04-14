@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { formatMoney } from "../shared";
 import { motion } from "framer-motion";
 import { Sword, ChartBar, Fire, ClockCounterClockwise, Check } from "@phosphor-icons/react";
 
