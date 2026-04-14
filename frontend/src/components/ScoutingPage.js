@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lightning, Check, Star, Globe } from "@phosphor-icons/react";
 import axios from "axios";
-import { API, PlayerImagesContext, toFlag } from "../shared";
+import { API, PlayerImagesContext, toFlag, formatMoney } from "../shared";
 import PlayerDetailModal from "./PlayerDetailModal";
 
 const MAJOR_LEAGUES = ["LEC", "LCK", "LPL", "LCS", "CBLOL"];
