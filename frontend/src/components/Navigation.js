@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { formatMoney } from "../shared";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, Users, ShoppingCart, Target, Calendar,
