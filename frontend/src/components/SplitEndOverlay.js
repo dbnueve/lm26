@@ -301,7 +301,7 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
                   {[
                     { label: "Bilan",      value: `${lastEntry.wins}V-${lastEntry.losses}D` },
                     { label: "Classement", value: `#${lastEntry.final_rank}` },
-                    { label: "Budget",     value: `${(lastEntry.budget/1e6).toFixed(1)}M€` },
+                    { label: "Budget",     value: `${formatMoney(lastEntry.budget)}€` },
                     { label: "Prestige",   value: lastEntry.prestige ?? userTeam?.prestige ?? "—" },
                   ].map(s => (
                     <div key={s.label} style={{
