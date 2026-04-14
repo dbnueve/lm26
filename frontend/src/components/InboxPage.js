@@ -89,6 +89,82 @@ const MessageRow = ({ msg, selected, onClick }) => {
   );
 };
 
+// ── International standings renderer ─────────────────────────────────────────
+const MEDAL_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32", null, null];
+
+const IntlStandingsBody = ({ body }) => {
+  const blocks = body.split("\n\n").filter(Boolean);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }}>
+      {blocks.map((block, bi) => {
+        const lines = block.trim().split("\n").filter(Boolean);
+        if (!lines.length) return null;
+        const header = lines[0]; // e.g. "🇰🇷 LCK"
+        const rows   = lines.slice(1);
+        return (
+          <div key={bi} style={{
+            background: "var(--surface-hover)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            padding: "14px 16px",
+          }}>
+            {/* League header */}
+            <div style={{
+              fontSize: 13, fontWeight: 800, letterSpacing: "0.06em",
+              marginBottom: 12, paddingBottom: 8,
+              borderBottom: "1px solid var(--border)",
+              color: "var(--text-primary)",
+            }}>
+              {header}
+            </div>
+
+            {/* Team rows */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {rows.map((row, ri) => {
+                const trimmed = row.trim();
+                // Format: "🥇 T1       5V-0D"  or  "4. KT       2V-3D"
+                const match = trimmed.match(/^(\S+)\s+(.+?)\s{2,}(\d+V-\d+D)$/);
+                const medal  = match ? match[1] : trimmed.slice(0, 2);
+                const team   = match ? match[2].trim() : "?";
+                const record = match ? match[3] : "";
+                const [wStr, lStr] = record.split("-");
+                const wins   = parseInt(wStr) || 0;
+                const losses = parseInt(lStr) || 0;
+                const mc     = MEDAL_COLORS[ri];
+                const isTop3 = ri < 3;
+
+                return (
+                  <div key={ri} style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "5px 8px", borderRadius: 4,
+                    background: isTop3 ? (mc + "11") : "transparent",
+                  }}>
+                    <span style={{ width: 22, fontSize: 13, flexShrink: 0, textAlign: "center" }}>
+                      {medal}
+                    </span>
+                    <span style={{
+                      flex: 1, fontSize: 13,
+                      fontWeight: isTop3 ? 600 : 400,
+                      color: isTop3 ? "var(--text-primary)" : "var(--text-secondary)",
+                    }}>
+                      {team}
+                    </span>
+                    <span style={{ fontSize: 12, flexShrink: 0 }}>
+                      <span style={{ color: "var(--success)", fontWeight: 700 }}>{wins}V</span>
+                      <span style={{ color: "var(--text-secondary)" }}>-</span>
+                      <span style={{ color: "var(--danger)", fontWeight: 700 }}>{losses}D</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const MessageDetail = ({ msg, onBack }) => {
   const color = getColor(msg.sender);
   return (
@@ -99,7 +175,7 @@ const MessageDetail = ({ msg, onBack }) => {
       transition={{ duration: 0.15 }}
       style={{ height: "100%", display: "flex", flexDirection: "column" }}
     >
-      {/* Back button (mobile-friendly) */}
+      {/* Back button */}
       <button
         onClick={onBack}
         style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: 13, padding: "0 0 14px 0", width: "fit-content" }}
@@ -124,7 +200,11 @@ const MessageDetail = ({ msg, onBack }) => {
       </div>
 
       <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 16 }}>{msg.subject}</div>
-      <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)" }}>{msg.body}</div>
+
+      {msg.type === TYPE_INTL
+        ? <IntlStandingsBody body={msg.body} />
+        : <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{msg.body}</div>
+      }
     </motion.div>
   );
 };
