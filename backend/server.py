@@ -1832,6 +1832,15 @@ def apply_match_result_updates(
     update_player_from_performance(winner_id, winner_stats, True,  duration, opponent_id=loser_id,  week=week)
     update_player_from_performance(loser_id,  loser_stats,  False, duration, opponent_id=winner_id, week=week)
 
+    # Post-match training reset: form_bonus decays, training slot reopens
+    for tid in (winner_id, loser_id):
+        team = GAME_STATE["teams"].get(tid, {})
+        for pid in team.get("roster", []):
+            p = GAME_STATE["players"].get(pid)
+            if p:
+                p["form_bonus"] = max(0, p.get("form_bonus", 0) - 1)
+                p["training_done_this_week"] = False
+
     return elo_summary
 
 
