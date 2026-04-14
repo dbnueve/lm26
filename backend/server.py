@@ -4468,6 +4468,91 @@ async def apply_training(request: TrainingRequest):
         }
     }
 
+
+def _execute_training_plan(player: dict, team: dict) -> bool:
+    """Auto-apply a player's training_plan. Returns True if applied."""
+    plan = player.get("training_plan")
+    if not plan or player.get("training_done_this_week"):
+        return False
+
+    TRAINING_CONFIG = {
+        "scrims":     {"fatigue": +10, "moral": -3,  "form_bonus": 2, "dev": {"mechanics": 2, "teamwork": 1},     "cost": 50000},
+        "vod_review": {"fatigue": +4,  "moral": +3,  "form_bonus": 1, "dev": {"game_sense": 3, "consistency": 1}, "cost": 20000},
+        "bootcamp":   {"fatigue": +18, "moral": -8,  "form_bonus": 3, "dev": {"mechanics": 2, "game_sense": 2},   "cost": 100000},
+        "rest":       {"fatigue": -25, "moral": +12, "form_bonus": 1, "dev": {},                                  "cost": 0},
+    }
+    cfg = TRAINING_CONFIG.get(plan)
+    if not cfg:
+        return False
+
+    # Check budget
+    cost = cfg["cost"]
+    if cost > 0:
+        user_team = GAME_STATE["teams"].get(GAME_STATE.get("user_team", ""), {})
+        if user_team.get("budget", 0) < cost:
+            # Fall back to rest (free)
+            cfg = TRAINING_CONFIG["rest"]
+            cost = 0
+        else:
+            user_team["budget"] = user_team["budget"] - cost
+
+    DEV_XP_THRESHOLD = 10
+    player["fatigue"]    = max(0,   min(100, player.get("fatigue", 30) + cfg["fatigue"]))
+    player["moral"]      = max(0,   min(100, player.get("moral",   75) + cfg["moral"]))
+    player["form_bonus"] = min(6,   player.get("form_bonus", 0) + cfg["form_bonus"])
+
+    for stat, xp_gain in cfg["dev"].items():
+        xp_key = f"dev_xp_{stat}"
+        player[xp_key] = player.get(xp_key, 0) + xp_gain
+        while player[xp_key] >= DEV_XP_THRESHOLD:
+            player[xp_key] -= DEV_XP_THRESHOLD
+            gain_key = f"training_gain_{stat}"
+            total_gain = player.get(gain_key, 0.0)
+            if total_gain < 2.0:
+                actual = min(0.3, 2.0 - total_gain)
+                player[stat] = round(min(player.get("potential", 90) * 0.9, player.get(stat, 75) + actual), 2)
+                player[gain_key] = round(total_gain + actual, 2)
+
+    player["rating"] = int(
+        player.get("mechanics",   75) * 0.4 +
+        player.get("game_sense",  75) * 0.4 +
+        player.get("teamwork",    75) * 0.1 +
+        player.get("consistency", 75) * 0.1
+    )
+    player["training_done_this_week"] = True
+    return True
+
+
+class TrainingPlanRequest(BaseModel):
+    player_id: str
+    training_type: str  # scrims, vod_review, bootcamp, rest, or "" to clear
+
+
+@api_router.post("/training/set-plan")
+async def set_training_plan(request: TrainingPlanRequest):
+    """Set a recurring training plan for a player. Applied automatically after each match."""
+    player = GAME_STATE["players"].get(request.player_id)
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    if player["team_id"] != GAME_STATE["user_team"]:
+        raise HTTPException(status_code=400, detail="Not your player")
+
+    valid = {"scrims", "vod_review", "bootcamp", "rest", ""}
+    if request.training_type not in valid:
+        raise HTTPException(status_code=400, detail="Type invalide")
+
+    player["training_plan"] = request.training_type or None
+
+    # Immediately apply if slot still available this week
+    applied = False
+    if request.training_type:
+        user_team = GAME_STATE["teams"].get(GAME_STATE["user_team"], {})
+        applied = _execute_training_plan(player, user_team)
+
+    save_state()
+    return {"success": True, "player": player, "applied_now": applied}
+
+
 # Roster Management
 
 class RosterSwapRequest(BaseModel):
