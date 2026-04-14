@@ -5461,21 +5461,15 @@ def _intl_pick_top_n(league: str, n: int, user_league: str, user_champ_id) -> li
         league_teams_map = {t["id"]: t for t in LEAGUES_DATA.get(league, {}).get("teams", [])}
         if intl_table:
             sorted_table = sorted(intl_table, key=lambda x: (-x["wins"], x["losses"]))
+            # Build a map by abbr for fast lookup
+            abbr_map = {t.get("abbr", "").upper(): t for t in league_teams_map.values()}
             result = []
             for row in sorted_table[:n]:
-                team_id = next(
-                    (tid for tid, t in league_teams_map.items()
-                     if t.get("abbr", "").upper() == row["team"].upper()
-                     or t.get("name", "").upper() == row["team"].upper()
-                     or tid.upper() == row["team"].upper()),
-                    None
-                )
-                if team_id and team_id in league_teams_map:
-                    result.append({**league_teams_map[team_id], "league": league,
+                team = abbr_map.get(row["team"].upper())
+                if team:
+                    result.append({**team, "league": league,
                                    "is_user_champ": False,
                                    "sim_wins": row["wins"], "sim_losses": row["losses"]})
-                elif result:
-                    pass  # skip unmapped team
         else:
             # Fallback: sort by rating
             all_t = sorted(LEAGUES_DATA.get(league, {}).get("teams", []),
