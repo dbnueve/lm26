@@ -277,7 +277,7 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                     <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Montant de l'offre</span>
                     <span className="font-stats" style={{ fontSize: 20, fontWeight: 700, color: "var(--secondary)" }}>
-                      {(offerAmount / 1000000).toFixed(2)}M EUR
+                      {formatMoney(offerAmount)} EUR
                     </span>
                   </div>
                   <input type="range"
