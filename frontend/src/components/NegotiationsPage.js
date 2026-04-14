@@ -289,8 +289,8 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
                     data-testid="offer-slider"
                   />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
-                    <span>Min: {(selectedPlayer.transfer_value * 0.5 / 1000000).toFixed(2)}M</span>
-                    <span>Budget: {(userTeam.budget / 1000000).toFixed(2)}M</span>
+                    <span>Min: {formatMoney(selectedPlayer.transfer_value * 0.5)}</span>
+                    <span>Budget: {formatMoney(userTeam.budget)}</span>
                   </div>
                 </div>
 
