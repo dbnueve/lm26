@@ -126,7 +126,7 @@ const MessageDetail = ({ msg, onBack }) => {
 };
 
 const InboxPage = () => {
-  const [data, setData]         = useState({ messages: [], unread_board: 0, unread_soloq: 0, unread_total: 0 });
+  const [data, setData]         = useState({ messages: [], unread_board: 0, unread_soloq: 0, unread_international: 0, unread_total: 0 });
   const [tab, setTab]           = useState(TYPE_BOARD);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading]   = useState(true);
