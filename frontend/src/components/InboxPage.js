@@ -169,11 +169,12 @@ const InboxPage = () => {
   }, []);
 
   const filtered = data.messages.filter(m => m.type === tab);
-  const unreadCount = tab === TYPE_BOARD ? data.unread_board : data.unread_soloq;
+  const unreadCount = tab === TYPE_BOARD ? data.unread_board : tab === TYPE_SOLOQ ? data.unread_soloq : data.unread_international;
 
   const tabs = [
-    { id: TYPE_BOARD, label: "Direction",  icon: Users,        unread: data.unread_board },
-    { id: TYPE_SOLOQ, label: "Communauté", icon: ChatsCircle,  unread: data.unread_soloq },
+    { id: TYPE_BOARD, label: "Direction",      icon: Users,        unread: data.unread_board },
+    { id: TYPE_SOLOQ, label: "Communauté",     icon: ChatsCircle,  unread: data.unread_soloq },
+    { id: TYPE_INTL,  label: "International",  icon: Globe,        unread: data.unread_international },
   ];
 
   return (
