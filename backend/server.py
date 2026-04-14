@@ -4958,25 +4958,26 @@ def simulate_offseason_transfers():
 # ── International standings ───────────────────────────────────────────────────
 
 INTL_LEAGUES_DATA = {
+    # Team abbreviations MUST match LEAGUES_DATA abbr fields exactly
     "LCK": {
         "flag": "🇰🇷",
-        "teams": ["T1", "GEN.G", "DRX", "KT", "HLE", "NS", "LSB", "DNF", "BRO", "DK"],
+        "teams": ["GEN", "T1", "BNK", "DK", "DNS", "KT", "HLE", "NS", "DRX", "BRN"],
     },
     "LPL": {
         "flag": "🇨🇳",
-        "teams": ["JDG", "BLG", "EDG", "WBG", "LNG", "TES", "IG", "FPX", "OMG", "NIP"],
+        "teams": ["BLG", "LNG", "AL", "NIP", "EDG", "JDG", "WBG", "TES", "LGD", "WE"],
     },
     "LCS": {
         "flag": "🇺🇸",
-        "teams": ["C9", "TL", "100T", "FLY", "NRG", "DIG", "IMT", "GG", "EG", "LYN"],
+        "teams": ["C9", "LYN", "TL", "SEN", "DSG", "FLY", "DIG", "SR"],
     },
     "CBLOL": {
         "flag": "🇧🇷",
-        "teams": ["paiN", "LOUD", "RED", "Fluxo", "INTZ", "KBM", "9z", "VK", "Kabum", "Rensga"],
+        "teams": ["LOUD", "FUR", "RED", "LÉS", "VKS", "LEV", "FXO", "PNG"],
     },
     "LEC": {
         "flag": "🇪🇺",
-        "teams": ["G2", "FNC", "KC", "KOI", "GX", "RGE", "BDS", "SK", "TH", "VIT"],
+        "teams": ["G2", "KC", "NAVI", "VIT", "KOI", "GX", "SFT", "TH", "FNC", "SK"],
     },
 }
 
