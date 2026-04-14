@@ -281,7 +281,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
               </span>
               <span style={{ display: "flex", flexDirection: "column" }}>
                 <span className="font-stats" style={{ color: isIntl ? "var(--secondary)" : "var(--text-secondary)", fontWeight: isIntl ? 700 : 400 }}>
-                  {(displayCost / 1000).toFixed(0)}K
+                  {formatMoney(displayCost)}
                 </span>
                 {isIntl && <span style={{ fontSize: 9, color: leagueColor }}>intl ×2</span>}
               </span>
