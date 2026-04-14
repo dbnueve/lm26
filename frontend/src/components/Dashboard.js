@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { AnimatePresence } from "framer-motion";
-import { Trophy, Calendar, GameController } from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Trophy, Calendar, GameController, Play } from "@phosphor-icons/react";
 import axios from "axios";
 import { API } from "../shared";
 import TeamLogo from "./TeamLogo";
@@ -8,7 +8,7 @@ import PlayerCard from "./PlayerCard";
 import PlayerDetailModal from "./PlayerDetailModal";
 
 // Dashboard Component
-const Dashboard = ({ userTeam, schedule, standings, splitStatus, onPlayMatch, onPlayPlayoffMatch }) => {
+const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, onPlayMatch, onPlayPlayoffMatch, onSeasonStart }) => {
   const [playoffsData, setPlayoffsData] = useState(null);
   const [detailPlayer, setDetailPlayer] = useState(null);
 
