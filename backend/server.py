@@ -3384,6 +3384,16 @@ async def make_offer(offer: NegotiationOffer):
         GAME_STATE["players"][replacement["id"]] = replacement
         old_team["roster"].append(replacement["id"])
 
+        # Track transfer for recap message
+        GAME_STATE.setdefault("mercato_recap", []).append({
+            "player": player["name"],
+            "position": player["position"],
+            "rating": player["rating"],
+            "amount": offer.offered_amount,
+            "buyer": GAME_STATE["user_team"],
+            "seller": old_team.get("abbr", old_team_id),
+        })
+
         save_state()
         msg = f"{player['name']} a rejoint votre équipe !"
         if swapped_out_name:
