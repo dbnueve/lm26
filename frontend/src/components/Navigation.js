@@ -68,7 +68,7 @@ const Navigation = ({ currentPage, setCurrentPage, userTeam, onChangeSave, unrea
             <div className="team-info">
               <div className="budget-display">
                 <Coins size={20} weight="fill" />
-                <span className="amount">{(userTeam.budget / 1000000).toFixed(1)}M EUR</span>
+                <span className="amount">{formatMoney(userTeam.budget)} EUR</span>
               </div>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={28} style={{ filter: "brightness(0) invert(1)" }} />
