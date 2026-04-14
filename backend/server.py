@@ -4436,12 +4436,6 @@ async def apply_training(request: TrainingRequest):
     if not cfg:
         raise HTTPException(status_code=400, detail="Type d'entraînement inconnu")
 
-    # Ensure sub-stats exist (seed from rating if missing to avoid overwriting it with 75)
-    base = player.get("rating", 75)
-    for stat in ("mechanics", "game_sense", "teamwork", "consistency"):
-        if stat not in player:
-            player[stat] = float(base)
-
     # Apply fatigue & moral
     player["fatigue"] = max(0, min(100, player.get("fatigue", 30) + cfg["fatigue"]))
     player["moral"]   = max(0, min(100, player.get("moral",   75) + cfg["moral"]))
@@ -4449,32 +4443,24 @@ async def apply_training(request: TrainingRequest):
     # Apply form_bonus (additive, capped at 6)
     player["form_bonus"] = min(6, player.get("form_bonus", 0) + cfg["form_bonus"])
 
-    # Accumulate dev_xp and apply permanent micro-gains
+    # Accumulate dev_xp — gains go directly to rating (never recompute from sub-stats)
     stat_gains = {}
     max_training_gain_per_split = 2.0
     for stat, xp_gain in cfg["dev"].items():
         xp_key = f"dev_xp_{stat}"
         player[xp_key] = player.get(xp_key, 0) + xp_gain
-        # Check threshold
         while player[xp_key] >= DEV_XP_THRESHOLD:
             player[xp_key] -= DEV_XP_THRESHOLD
-            # Guard: cap total training gain this split
             gain_key = f"training_gain_{stat}"
             total_gain = player.get(gain_key, 0.0)
             if total_gain < max_training_gain_per_split:
                 actual = min(0.3, max_training_gain_per_split - total_gain)
-                player[stat] = round(min(player.get("potential", 90) * 0.9,
-                                        player.get(stat, base) + actual), 2)
+                # Apply gain directly to rating (capped by potential)
+                pot_cap = int(player.get("potential", 90) * 0.95)
+                player["rating"] = min(pot_cap, player.get("rating", 75) + 1)
                 player[gain_key] = round(total_gain + actual, 2)
                 stat_gains[stat] = round(actual, 2)
-
-    # Recompute rating only if sub-stats are meaningful (all seeded or real)
-    player["rating"] = int(round(
-        player.get("mechanics",   base) * 0.4 +
-        player.get("game_sense",  base) * 0.4 +
-        player.get("teamwork",    base) * 0.1 +
-        player.get("consistency", base) * 0.1
-    ))
+    # rating stays as-is — no recalculation from sub-stats
 
     # Lock training for this week
     player["training_done_this_week"] = True
