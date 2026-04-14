@@ -4946,6 +4946,17 @@ def simulate_offseason_transfers():
                 "position": pos,
                 "rating_change": best["rating"] - rating,
             })
+
+            # Track for transfer recap inbox message
+            GAME_STATE.setdefault("mercato_recap", []).append({
+                "player": best["name"],
+                "position": pos,
+                "rating": best["rating"],
+                "amount": 0,
+                "buyer": team["id"],
+                "seller": "ERL",
+            })
+
             transfers_this_team += 1
 
     return transfers_done
