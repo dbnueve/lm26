@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TeamLogosContext } from "../shared";
+import { TeamLogosContext, formatMoney } from "../shared";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
