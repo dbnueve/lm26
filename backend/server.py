@@ -2287,6 +2287,20 @@ async def get_erl_players():
         if p.get("scouting_for", "LEC") == active_league
     ]
 
+@api_router.get("/scouting/all")
+async def get_all_scouting_players():
+    """Get all scoutable players across every region (ERL pool, all leagues)."""
+    if not GAME_STATE["initialized"]:
+        ensure_initialized()
+    active_league = GAME_STATE.get("league", "LEC")
+    players = []
+    for p in GAME_STATE["erl_players"].values():
+        scout_for = p.get("scouting_for", "LEC")
+        # International players cost more to sign (2× transfer value)
+        cost_multiplier = 1.0 if scout_for == active_league else 2.0
+        players.append({**p, "international": scout_for != active_league, "cost_multiplier": cost_multiplier})
+    return players
+
 class SignERLPlayerRequest(BaseModel):
     player_id: str = Field(min_length=1, max_length=100)
     offered_salary: int = Field(ge=0, le=50_000_000)
