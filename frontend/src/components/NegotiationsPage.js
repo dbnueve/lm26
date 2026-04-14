@@ -328,7 +328,7 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
                           setNegotiationResult(result);
                           if (result.accepted) setSelectedPlayer(null);
                         }}>
-                        Accepter contre-offre : {(negotiationResult.counter_offer.amount / 1000000).toFixed(2)}M EUR
+                        Accepter contre-offre : {formatMoney(negotiationResult.counter_offer.amount)} EUR
                       </button>
                     )}
                   </div>
