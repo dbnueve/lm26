@@ -9,27 +9,31 @@ const TYPE_SOLOQ = "soloq";
 const TYPE_INTL  = "international";
 
 const SENDER_AVATARS = {
-  "Direction Sportive": "DS",
-  "Manager Général":    "MG",
-  "Président":          "PR",
-  "@LoLAnalyst_EU":     "LA",
-  "LeagueFanatic42":    "LF",
-  "EsportsInsider":     "EI",
-  "@CriticalCoach":     "CC",
-  "LoLFan_Frustrated":  "LF",
-  "EsportsBetting":     "EB",
+  "Direction Sportive":  "DS",
+  "Manager Général":     "MG",
+  "Président":           "PR",
+  "Directeur Sportif":   "DS",
+  "Scout International": "SI",
+  "@LoLAnalyst_EU":      "LA",
+  "LeagueFanatic42":     "LF",
+  "EsportsInsider":      "EI",
+  "@CriticalCoach":      "CC",
+  "LoLFan_Frustrated":   "LF",
+  "EsportsBetting":      "EB",
 };
 
 const SENDER_COLORS = {
-  "Direction Sportive": "#3b82f6",
-  "Manager Général":    "#8b5cf6",
-  "Président":          "#f59e0b",
-  "@LoLAnalyst_EU":     "#06b6d4",
-  "LeagueFanatic42":    "#22c55e",
-  "EsportsInsider":     "#64748b",
-  "@CriticalCoach":     "#ef4444",
-  "LoLFan_Frustrated":  "#f97316",
-  "EsportsBetting":     "#6366f1",
+  "Direction Sportive":  "#3b82f6",
+  "Manager Général":     "#8b5cf6",
+  "Président":           "#f59e0b",
+  "Directeur Sportif":   "#3b82f6",
+  "Scout International": "#10b981",
+  "@LoLAnalyst_EU":      "#06b6d4",
+  "LeagueFanatic42":     "#22c55e",
+  "EsportsInsider":      "#64748b",
+  "@CriticalCoach":      "#ef4444",
+  "LoLFan_Frustrated":   "#f97316",
+  "EsportsBetting":      "#6366f1",
 };
 
 const getAvatar = (sender) => SENDER_AVATARS[sender] || sender.substring(0, 2).toUpperCase();
