@@ -4436,6 +4436,12 @@ async def apply_training(request: TrainingRequest):
     if not cfg:
         raise HTTPException(status_code=400, detail="Type d'entraînement inconnu")
 
+    # Ensure sub-stats exist (seed from rating if missing to avoid overwriting it with 75)
+    base = player.get("rating", 75)
+    for stat in ("mechanics", "game_sense", "teamwork", "consistency"):
+        if stat not in player:
+            player[stat] = float(base)
+
     # Apply fatigue & moral
     player["fatigue"] = max(0, min(100, player.get("fatigue", 30) + cfg["fatigue"]))
     player["moral"]   = max(0, min(100, player.get("moral",   75) + cfg["moral"]))
@@ -4458,17 +4464,17 @@ async def apply_training(request: TrainingRequest):
             if total_gain < max_training_gain_per_split:
                 actual = min(0.3, max_training_gain_per_split - total_gain)
                 player[stat] = round(min(player.get("potential", 90) * 0.9,
-                                        player.get(stat, 75) + actual), 2)
+                                        player.get(stat, base) + actual), 2)
                 player[gain_key] = round(total_gain + actual, 2)
                 stat_gains[stat] = round(actual, 2)
 
-    # Recompute rating (base stats may have micro-changed)
-    player["rating"] = int(
-        player.get("mechanics",   75) * 0.4 +
-        player.get("game_sense",  75) * 0.4 +
-        player.get("teamwork",    75) * 0.1 +
-        player.get("consistency", 75) * 0.1
-    )
+    # Recompute rating only if sub-stats are meaningful (all seeded or real)
+    player["rating"] = int(round(
+        player.get("mechanics",   base) * 0.4 +
+        player.get("game_sense",  base) * 0.4 +
+        player.get("teamwork",    base) * 0.1 +
+        player.get("consistency", base) * 0.1
+    ))
 
     # Lock training for this week
     player["training_done_this_week"] = True
