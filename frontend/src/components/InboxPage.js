@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Envelope, EnvelopeOpen, Users, ChatsCircle, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
+import { Envelope, EnvelopeOpen, Users, ChatsCircle, CheckCircle, ArrowLeft, Globe } from "@phosphor-icons/react";
 import { API } from "../shared";
 import axios from "axios";
 
 const TYPE_BOARD = "board";
 const TYPE_SOLOQ = "soloq";
+const TYPE_INTL  = "international";
 
 const SENDER_AVATARS = {
   "Direction Sportive": "DS",
