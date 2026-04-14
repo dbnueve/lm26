@@ -150,6 +150,7 @@ const InboxPage = () => {
       unread_total: Math.max(0, prev.unread_total - 1),
       unread_board: msg.type === TYPE_BOARD ? Math.max(0, prev.unread_board - 1) : prev.unread_board,
       unread_soloq: msg.type === TYPE_SOLOQ ? Math.max(0, prev.unread_soloq - 1) : prev.unread_soloq,
+      unread_international: msg.type === TYPE_INTL ? Math.max(0, prev.unread_international - 1) : prev.unread_international,
     }));
   }, []);
 
