@@ -4941,6 +4941,145 @@ def simulate_offseason_transfers():
     return transfers_done
 
 
+# ── International standings ───────────────────────────────────────────────────
+
+INTL_LEAGUES_DATA = {
+    "LCK": {
+        "flag": "🇰🇷",
+        "teams": ["T1", "GEN.G", "DRX", "KT", "HLE", "NS", "LSB", "DNF", "BRO", "DK"],
+    },
+    "LPL": {
+        "flag": "🇨🇳",
+        "teams": ["JDG", "BLG", "EDG", "WBG", "LNG", "TES", "IG", "FPX", "OMG", "NIP"],
+    },
+    "LCS": {
+        "flag": "🇺🇸",
+        "teams": ["C9", "TL", "100T", "FLY", "NRG", "DIG", "IMT", "GG", "EG", "LYN"],
+    },
+    "CBLOL": {
+        "flag": "🇧🇷",
+        "teams": ["paiN", "LOUD", "RED", "Fluxo", "INTZ", "KBM", "9z", "VK", "Kabum", "Rensga"],
+    },
+    "LEC": {
+        "flag": "🇪🇺",
+        "teams": ["G2", "FNC", "KC", "KOI", "GX", "RGE", "BDS", "SK", "TH", "VIT"],
+    },
+}
+
+
+def _init_intl_standings():
+    """Initialize or reset international standings for all non-user leagues."""
+    user_league = GAME_STATE.get("league", "LEC")
+    standings = {}
+    for league_id, data in INTL_LEAGUES_DATA.items():
+        if league_id == user_league:
+            continue  # user's league is tracked natively
+        standings[league_id] = [
+            {"team": t, "wins": 0, "losses": 0} for t in data["teams"]
+        ]
+    GAME_STATE["intl_standings"] = standings
+
+
+def _simulate_intl_week(week: int):
+    """Simulate one week of matches for every international league and send inbox message."""
+    if "intl_standings" not in GAME_STATE or not GAME_STATE["intl_standings"]:
+        _init_intl_standings()
+
+    user_league = GAME_STATE.get("league", "LEC")
+    blocks = []
+
+    for league_id, table in GAME_STATE["intl_standings"].items():
+        data = INTL_LEAGUES_DATA.get(league_id, {})
+        flag = data.get("flag", "🌍")
+
+        # Simulate 5 best-of-1 matches (10 teams, each plays once)
+        teams = list(range(len(table)))
+        random.shuffle(teams)
+        pairs = [(teams[i], teams[i + 1]) for i in range(0, len(teams) - 1, 2)]
+        for a, b in pairs:
+            # Slight skill-based weight so standings diverge realistically
+            wa = table[a]["wins"] + 1
+            wb = table[b]["wins"] + 1
+            winner = a if random.random() < wa / (wa + wb) else b
+            loser  = b if winner == a else a
+            table[winner]["wins"]  += 1
+            table[loser]["losses"] += 1
+
+        # Sort by wins desc, then losses asc
+        table.sort(key=lambda x: (-x["wins"], x["losses"]))
+
+        top5 = table[:5]
+        lines = [f"{flag} {league_id}"]
+        for i, row in enumerate(top5):
+            medal = ["🥇", "🥈", "🥉", "4.", "5."][i]
+            lines.append(f"  {medal} {row['team']:<8} {row['wins']}V-{row['losses']}D")
+        blocks.append("\n".join(lines))
+
+    if not blocks:
+        return
+
+    body = "\n\n".join(blocks)
+    _add_inbox_message(
+        "international",
+        "Scout International",
+        f"Classements internationaux — Semaine {week}",
+        body,
+        week,
+    )
+
+
+# ── Transfer recap ────────────────────────────────────────────────────────────
+
+def _generate_transfer_recap_message():
+    """Build an inbox message summarising all mercato transfers (user + AI)."""
+    recap = GAME_STATE.pop("mercato_recap", [])
+    if not recap:
+        return
+
+    user_id = GAME_STATE.get("user_team")
+    user_abbr = GAME_STATE["teams"].get(user_id, {}).get("abbr", "Vous")
+
+    user_moves  = [r for r in recap if r.get("buyer") == user_id]
+    ai_moves    = [r for r in recap if r.get("buyer") != user_id]
+
+    lines = []
+
+    if user_moves:
+        lines.append("🔵 VOS TRANSFERTS")
+        for m in user_moves:
+            lines.append(
+                f"  ✅ {m['player']} ({m['position']}, {m['rating']}) "
+                f"← {m['seller']}  |  {m['amount']:,} €"
+            )
+        lines.append("")
+
+    if ai_moves:
+        lines.append("📋 MOUVEMENTS DES AUTRES ÉQUIPES")
+        for m in ai_moves[:20]:   # cap at 20 to avoid wall of text
+            buyer_abbr  = GAME_STATE["teams"].get(m["buyer"],  {}).get("abbr", m["buyer"])
+            seller_abbr = m.get("seller", "?")
+            lines.append(
+                f"  • {m['player']} ({m['position']}, {m['rating']}) "
+                f"→ {buyer_abbr}  ←  {seller_abbr}"
+            )
+
+    if not lines:
+        return
+
+    body = "\n".join(lines)
+    split_label = f"{GAME_STATE.get('league','LEC')} " \
+                  f"{'Spring' if GAME_STATE.get('current_split',1)==1 else 'Summer'} " \
+                  f"{GAME_STATE.get('season', 2026)}"
+
+    _add_inbox_message(
+        "board",
+        "Directeur Sportif",
+        f"Récapitulatif du mercato — {split_label}",
+        body,
+        0,
+    )
+
+
 @api_router.post("/season/start")
 async def start_season():
     """Launch the season from preseason: run AI transfers then begin week 1."""
@@ -4951,6 +5090,12 @@ async def start_season():
 
     # AI teams do their offseason business
     transfers = simulate_offseason_transfers()
+
+    # Generate transfer recap inbox message (user + AI moves)
+    _generate_transfer_recap_message()
+
+    # Init international standings for the new season
+    _init_intl_standings()
 
     # Start the season
     GAME_STATE["phase"] = "regular"
