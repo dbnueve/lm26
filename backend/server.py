@@ -3201,7 +3201,8 @@ async def simulate_week():
     week_incomplete = any(m for m in GAME_STATE["schedule"] if m["week"] == current_week and not m["played"])
     if not week_incomplete:
         GAME_STATE["current_week"] += 1
-        
+        if GAME_STATE["phase"] == "regular":
+            _simulate_intl_week(current_week)
         # Check if regular season is over (9 weeks) - Start playoffs
         if GAME_STATE["current_week"] > 9 and GAME_STATE["phase"] == "regular":
             start_playoffs()
