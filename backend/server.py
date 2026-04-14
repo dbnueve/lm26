@@ -1416,7 +1416,8 @@ def calculate_team_power(team_id: str, draft_advantage: float = 0, apply_tactics
                + p["consistency"] * SKILL_W_CONSISTENCY)
 
         # Form modifier: moral boosts, fatigue penalises — non-linear
-        form = 1.0 + (p["moral"] - 65) / 350.0 - (p["fatigue"] / 200.0)
+        # form_bonus (0-6) from training adds up to +3% power
+        form = 1.0 + (p["moral"] - 65) / 350.0 - (p["fatigue"] / 200.0) + p.get("form_bonus", 0) / 200.0
         form = max(0.75, min(1.20, form))
 
         # Clutch factor adds a small ceiling-breaker in key moments
