@@ -308,6 +308,7 @@ function App() {
 
   const handleSeasonStart = async () => {
     await axios.post(API + "/season/start");
+    setGameState(prev => ({ ...prev, phase: "regular" }));
     await loadGameData();
     if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
   };
