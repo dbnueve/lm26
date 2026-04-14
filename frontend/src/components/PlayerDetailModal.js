@@ -162,8 +162,8 @@ const PlayerDetailModal = ({ player, onClose, actions = null }) => {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {[
                   { label: "Kill Part.", value: player.kp != null ? player.kp + "%" : "—" },
-                  { label: "Salaire",    value: Math.round((player.salary ?? 40000) / 1000) + "K/an" },
-                  { label: "Transfert",  value: ((player.transfer_value ?? 0) / 1000).toFixed(0) + "K" },
+                  { label: "Salaire",    value: formatMoney(player.salary ?? 40000) + "/an" },
+                  { label: "Transfert",  value: formatMoney(player.transfer_value ?? 0) },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ background: "var(--surface)", borderRadius: 4, padding: "10px 12px", textAlign: "center" }}>
                     <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>{label}</div>
