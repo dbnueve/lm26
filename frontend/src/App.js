@@ -396,6 +396,7 @@ function App() {
           <TrainingPage
             userTeam={userTeamData}
             onApplyTraining={handleApplyTraining}
+            onSetTrainingPlan={handleSetTrainingPlan}
           />
         )}
 
