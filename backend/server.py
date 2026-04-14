@@ -4508,12 +4508,6 @@ def _execute_training_plan(player: dict, team: dict) -> bool:
 
     DEV_XP_THRESHOLD = 10
 
-    # Ensure sub-stats exist (seed from rating if missing)
-    base = player.get("rating", 75)
-    for stat in ("mechanics", "game_sense", "teamwork", "consistency"):
-        if stat not in player:
-            player[stat] = float(base)
-
     player["fatigue"]    = max(0,   min(100, player.get("fatigue", 30) + cfg["fatigue"]))
     player["moral"]      = max(0,   min(100, player.get("moral",   75) + cfg["moral"]))
     player["form_bonus"] = min(6,   player.get("form_bonus", 0) + cfg["form_bonus"])
@@ -4527,15 +4521,12 @@ def _execute_training_plan(player: dict, team: dict) -> bool:
             total_gain = player.get(gain_key, 0.0)
             if total_gain < 2.0:
                 actual = min(0.3, 2.0 - total_gain)
-                player[stat] = round(min(player.get("potential", 90) * 0.9, player.get(stat, base) + actual), 2)
+                # Apply gain directly to rating — never recompute from sub-stats
+                pot_cap = int(player.get("potential", 90) * 0.95)
+                player["rating"] = min(pot_cap, player.get("rating", 75) + 1)
                 player[gain_key] = round(total_gain + actual, 2)
+    # rating stays as-is — no recalculation from sub-stats
 
-    player["rating"] = int(round(
-        player.get("mechanics",   base) * 0.4 +
-        player.get("game_sense",  base) * 0.4 +
-        player.get("teamwork",    base) * 0.1 +
-        player.get("consistency", base) * 0.1
-    ))
     player["training_done_this_week"] = True
     return True
 
