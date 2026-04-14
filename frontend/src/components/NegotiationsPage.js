@@ -255,7 +255,7 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Valeur estimée</div>
                     <div className="font-stats" style={{ color: "var(--secondary)" }}>
-                      {(player.transfer_value / 1000).toFixed(0)}K EUR
+                      {formatMoney(player.transfer_value)} EUR
                     </div>
                   </div>
                 </div>
