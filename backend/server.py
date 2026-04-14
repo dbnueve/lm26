@@ -4373,33 +4373,100 @@ class TrainingRequest(BaseModel):
 
 @api_router.post("/training/apply")
 async def apply_training(request: TrainingRequest):
-    """Apply training to a player"""
+    """Apply training to a player — FM-style: 1 session/week, temp form_bonus + slow dev_xp"""
     player = GAME_STATE["players"].get(request.player_id)
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
-    
     if player["team_id"] != GAME_STATE["user_team"]:
         raise HTTPException(status_code=400, detail="Not your player")
-    
-    effects = {
-        "scrims": {"mechanics": 2, "teamwork": 3, "fatigue": 15, "moral": -5},
-        "vod_review": {"game_sense": 3, "consistency": 2, "fatigue": 5, "moral": 0},
-        "bootcamp": {"mechanics": 4, "game_sense": 2, "clutch": 3, "fatigue": 25, "moral": -10},
-        "rest": {"fatigue": -30, "moral": 15, "mechanics": 0, "game_sense": 0}
+    if player.get("training_done_this_week"):
+        raise HTTPException(status_code=400, detail="Ce joueur a déjà été entraîné cette semaine")
+
+    # Effects: only fatigue/moral change immediately + form_bonus (temp) + dev_xp (slow progression)
+    # form_bonus: 0-6, used in match calculation, decays -1 after each match
+    # dev_xp_*: accumulate → every DEV_XP_THRESHOLD points = +0.3 permanent stat (max +2 per split)
+    DEV_XP_THRESHOLD = 10
+
+    TRAINING_CONFIG = {
+        "scrims": {
+            "fatigue": +10, "moral": -3,
+            "form_bonus": 2,
+            "dev": {"mechanics": 2, "teamwork": 1},
+            "label": "Scrims"
+        },
+        "vod_review": {
+            "fatigue": +4, "moral": +3,
+            "form_bonus": 1,
+            "dev": {"game_sense": 3, "consistency": 1},
+            "label": "VOD Review"
+        },
+        "bootcamp": {
+            "fatigue": +18, "moral": -8,
+            "form_bonus": 3,
+            "dev": {"mechanics": 2, "game_sense": 2},
+            "label": "Bootcamp"
+        },
+        "rest": {
+            "fatigue": -25, "moral": +12,
+            "form_bonus": 1,
+            "dev": {},
+            "label": "Repos"
+        },
     }
-    
-    effect = effects.get(request.training_type, {})
-    
-    for stat, change in effect.items():
-        if stat in player:
-            player[stat] = max(0, min(100, player[stat] + change))
-    
-    # Update rating based on key stats — weights aligned with SKILL_W_* constants
-    player["rating"] = int((player["mechanics"] * 0.4 + player["game_sense"] * 0.4 +
-                           player["teamwork"] * 0.1 + player["consistency"] * 0.1))
-    
+
+    cfg = TRAINING_CONFIG.get(request.training_type)
+    if not cfg:
+        raise HTTPException(status_code=400, detail="Type d'entraînement inconnu")
+
+    # Apply fatigue & moral
+    player["fatigue"] = max(0, min(100, player.get("fatigue", 30) + cfg["fatigue"]))
+    player["moral"]   = max(0, min(100, player.get("moral",   75) + cfg["moral"]))
+
+    # Apply form_bonus (additive, capped at 6)
+    player["form_bonus"] = min(6, player.get("form_bonus", 0) + cfg["form_bonus"])
+
+    # Accumulate dev_xp and apply permanent micro-gains
+    stat_gains = {}
+    max_training_gain_per_split = 2.0
+    for stat, xp_gain in cfg["dev"].items():
+        xp_key = f"dev_xp_{stat}"
+        player[xp_key] = player.get(xp_key, 0) + xp_gain
+        # Check threshold
+        while player[xp_key] >= DEV_XP_THRESHOLD:
+            player[xp_key] -= DEV_XP_THRESHOLD
+            # Guard: cap total training gain this split
+            gain_key = f"training_gain_{stat}"
+            total_gain = player.get(gain_key, 0.0)
+            if total_gain < max_training_gain_per_split:
+                actual = min(0.3, max_training_gain_per_split - total_gain)
+                player[stat] = round(min(player.get("potential", 90) * 0.9,
+                                        player.get(stat, 75) + actual), 2)
+                player[gain_key] = round(total_gain + actual, 2)
+                stat_gains[stat] = round(actual, 2)
+
+    # Recompute rating (base stats may have micro-changed)
+    player["rating"] = int(
+        player.get("mechanics",   75) * 0.4 +
+        player.get("game_sense",  75) * 0.4 +
+        player.get("teamwork",    75) * 0.1 +
+        player.get("consistency", 75) * 0.1
+    )
+
+    # Lock training for this week
+    player["training_done_this_week"] = True
+
     save_state()
-    return {"success": True, "player": player, "effects": effect}
+    return {
+        "success": True,
+        "player": player,
+        "form_bonus_added": cfg["form_bonus"],
+        "stat_gains": stat_gains,
+        "effects_summary": {
+            "fatigue": cfg["fatigue"],
+            "moral": cfg["moral"],
+            "form_bonus": cfg["form_bonus"],
+        }
+    }
 
 # Roster Management
 
