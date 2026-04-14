@@ -2131,6 +2131,7 @@ async def load_save_slot(slot: int):
             "current_week": GAME_STATE["current_week"],
             "initialized": GAME_STATE["initialized"],
             "league": GAME_STATE.get("league", "LEC"),
+            "phase": GAME_STATE.get("phase", "regular"),
         }
     except HTTPException:
         raise
