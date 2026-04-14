@@ -6121,6 +6121,7 @@ async def get_inbox():
         "messages": list(reversed(msgs)),
         "unread_board": sum(1 for m in msgs if not m["read"] and m["type"] == "board"),
         "unread_soloq": sum(1 for m in msgs if not m["read"] and m["type"] == "soloq"),
+        "unread_international": sum(1 for m in msgs if not m["read"] and m["type"] == "international"),
         "unread_total": sum(1 for m in msgs if not m["read"]),
     }
 
