@@ -157,7 +157,7 @@ function App() {
     const res = await axios.post(API + `/saves/${slot}/load`);
     const league = res.data.league || "LEC";
     localStorage.setItem(getSlotStorageKey(league), slot);
-    setGameState({ initialized: res.data.initialized, userTeam: res.data.user_team, league });
+    setGameState({ initialized: res.data.initialized, userTeam: res.data.user_team, league, phase: res.data.phase || "regular" });
     if (res.data.user_team) await loadUserTeam(res.data.user_team);
     await loadGameData();
     await loadSplitStatus(res.data.user_team);
