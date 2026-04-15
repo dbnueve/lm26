@@ -184,6 +184,83 @@ const IntlStandingsBody = ({ body }) => {
   );
 };
 
+// ── Youth scouting report renderer ───────────────────────────────────────────
+const POS_COLORS = { TOP: "#f97316", JUNGLE: "#22c55e", MID: "#3b82f6", ADC: "#ec4899", SUPPORT: "#a78bfa" };
+
+const ScoutingReportBody = ({ body }) => {
+  const lines = body.split("\n").filter(Boolean);
+  // Find prospect blocks: lines containing "Rating" are part of a prospect
+  const prospects = [];
+  let current = null;
+  for (const line of lines) {
+    const nameMatch = line.match(/^([🛡️🌲⚡🏹💊])\s(.+?)\s\((.+?),\s(\d+(?:\.\d+)?)\s ans\)\s—\s(\w+)/u);
+    if (nameMatch) {
+      if (current) prospects.push(current);
+      current = { icon: nameMatch[1], name: nameMatch[2], nat: nameMatch[3], age: nameMatch[4], pos: nameMatch[5], detail: "" };
+    } else if (current && line.trim().startsWith("Rating")) {
+      current.detail = line.trim().replace(/^Rating\s/, "").replace("·", "·");
+    } else if (!current) {
+      // intro / footer lines handled separately
+    }
+  }
+  if (current) prospects.push(current);
+
+  const intro  = lines.find(l => l.includes("méritent votre attention") || l.includes("Rapport de scouting"));
+  const footer = lines.find(l => l.startsWith("Ces joueurs") || l.startsWith("Suivez") || l.startsWith("Note"));
+
+  return (
+    <div>
+      {intro && <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 18 }}>{intro}</div>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {prospects.map((p, i) => {
+          const posColor = POS_COLORS[p.pos] || "var(--primary)";
+          return (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", gap: 14,
+              padding: "12px 16px",
+              background: "var(--surface-hover)",
+              border: "1px solid var(--border-subtle)",
+              borderLeft: `3px solid ${posColor}`,
+              borderRadius: 6,
+            }}>
+              <div style={{ fontSize: 22, width: 32, textAlign: "center", flexShrink: 0 }}>{p.icon}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</span>
+                  <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.nat} · {p.age} ans</span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 3,
+                    background: posColor + "22", color: posColor,
+                  }}>{p.pos}</span>
+                </div>
+                {p.detail && (
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                    {p.detail.split("·").map((part, j) => (
+                      <span key={j}>
+                        {j > 0 && <span style={{ margin: "0 6px", opacity: 0.4 }}>·</span>}
+                        <span style={part.includes("Potentiel") ? { color: "#fbbf24", fontWeight: 600 } : {}}>{part.trim()}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {footer && (
+        <div style={{
+          marginTop: 16, padding: "10px 14px",
+          background: "rgba(6,214,160,0.06)", border: "1px solid rgba(6,214,160,0.2)",
+          borderRadius: 6, fontSize: 12, color: "var(--text-secondary)", fontStyle: "italic",
+        }}>
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MessageDetail = ({ msg, onBack }) => {
   const color = getColor(msg.sender);
   return (
