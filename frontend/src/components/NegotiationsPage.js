@@ -66,14 +66,6 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
     return team ? team.abbr : "Unknown";
   };
 
-  if (loadingPhase) {
-    return (
-      <div style={{ padding: 40, textAlign: "center", color: "var(--text-secondary)" }}>
-        Chargement...
-      </div>
-    );
-  }
-
   // Show AI transfers summary after season start
   if (aiTransfers !== null && phase === "regular") {
     return (
