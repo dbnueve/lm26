@@ -50,7 +50,9 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
 
   const handleOffer = async () => {
     if (!selectedPlayer) return;
-    const playerToSwap = userTeam.players.find(p => p.position === selectedPlayer.position);
+    // Prefer swapping a starter; fall back to any player of the same position
+    const playerToSwap = userTeam.players.find(p => p.position === selectedPlayer.position && p.is_starter)
+      || userTeam.players.find(p => p.position === selectedPlayer.position);
     const result = await onMakeOffer(selectedPlayer.id, offerAmount, contractYears, playerToSwap?.id);
     setNegotiationResult(result);
     if (result.accepted) setSelectedPlayer(null);
