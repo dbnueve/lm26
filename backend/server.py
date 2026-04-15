@@ -4494,11 +4494,11 @@ async def apply_training(request: TrainingRequest):
     }
 
 
-def _execute_training_plan(player: dict, team: dict) -> bool:
-    """Auto-apply a player's training_plan. Returns True if applied."""
+def _execute_training_plan(player: dict, team: dict) -> str | None:
+    """Auto-apply a player's training_plan. Returns the plan actually applied, or None."""
     plan = player.get("training_plan")
     if not plan or player.get("training_done_this_week"):
-        return False
+        return None
 
     TRAINING_CONFIG = {
         "scrims":     {"fatigue": +10, "moral": -3,  "form_bonus": 2, "dev": {"mechanics": 2, "teamwork": 1},     "cost": 50000},
@@ -4508,16 +4508,18 @@ def _execute_training_plan(player: dict, team: dict) -> bool:
     }
     cfg = TRAINING_CONFIG.get(plan)
     if not cfg:
-        return False
+        return None
 
     # Check budget
     cost = cfg["cost"]
+    applied_plan = plan
     if cost > 0:
         user_team = GAME_STATE["teams"].get(GAME_STATE.get("user_team", ""), {})
         if user_team.get("budget", 0) < cost:
-            # Fall back to rest (free)
+            # Fall back to rest (free) — caller can detect this and notify the user
             cfg = TRAINING_CONFIG["rest"]
             cost = 0
+            applied_plan = "rest"
         else:
             user_team["budget"] = user_team["budget"] - cost
 
