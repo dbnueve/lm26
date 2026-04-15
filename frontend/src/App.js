@@ -370,6 +370,7 @@ function App() {
             standings={standings}
             splitStatus={splitStatus}
             phase={gameState.phase}
+            playoffsData={playoffBracket}
             onPlayMatch={handlePlayMatch}
             onPlayPlayoffMatch={(m) => setActivePlayoffMatch(m)}
             onSeasonStart={handleSeasonStart}
