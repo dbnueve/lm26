@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const SPEEDS = [
   { label: "1×", ms: 2400 },
@@ -14,26 +14,24 @@ const PHASE_ICON = { "Early Game": "🌅", "Mid Game": "⚔️", "Late Game": "�
 const EVENT_ICON = { first_blood: "🩸", teamfight: "⚔️", objective: "🏯", baron: "👑", drake: "🐉" };
 const CS_EXPECT  = { TOP: 9.0, JUNGLE: 7.5, MID: 9.0, ADC: 9.5, SUPPORT: 0.8 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function parseMin(t) {
   if (!t) return 99;
   return parseInt(String(t).split(":")[0], 10);
 }
 
-/** Même formule que dans MatchSimulation.renderScoreboard pour cohérence */
+/** Même formule que MatchSimulation.renderScoreboard */
 function calcNote(p, duration, won) {
-  const pos  = p.position || "MID";
-  const k    = p.kills   || 0;
-  const d    = Math.max(p.deaths || 1, 1);
-  const a    = p.assists || 0;
-  const cs   = p.cs      || 0;
-  const dur  = Math.max(duration || 1, 1);
-  const kdaRaw   = (k + a * 0.5) / d;
-  const kdaScore = Math.min(5.0, kdaRaw * 1.2);
-  const csPm     = cs / dur;
-  const csRatio  = csPm / Math.max(CS_EXPECT[pos] || 8.0, 0.1);
-  const csScore  = Math.min(3.0, csRatio * 3.0);
-  const winBonus = won ? 2.0 : 0.0;
-  return Math.round((kdaScore + csScore + winBonus) * 10) / 10;
+  const pos      = p.position || "MID";
+  const k        = p.kills    || 0;
+  const d        = Math.max(p.deaths || 1, 1);
+  const a        = p.assists  || 0;
+  const cs       = p.cs       || 0;
+  const dur      = Math.max(duration || 1, 1);
+  const kdaScore = Math.min(5.0, ((k + a * 0.5) / d) * 1.2);
+  const csScore  = Math.min(3.0, (cs / dur / Math.max(CS_EXPECT[pos] || 8.0, 0.1)) * 3.0);
+  return Math.round((kdaScore + csScore + (won ? 2.0 : 0.0)) * 10) / 10;
 }
 
 function buildObjectives(ph) {
@@ -59,18 +57,37 @@ function buildObjectives(ph) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+/**
+ * Props
+ *  team1Abbr / team1Stats : backend team1 (peut être user ou adversaire)
+ *  team2Abbr / team2Stats : backend team2
+ *  winnerTeam  : 1 ou 2  (numérotation backend)
+ *  userIsTeam1 : true si l'utilisateur est team1 dans le backend
+ *                → détermine quel côté afficher à gauche
+ */
 const MatchTimeline = ({
   phases = [], events = [],
   team1Abbr, team2Abbr,
   team1Stats = [], team2Stats = [],
-  duration = 30,
-  winnerTeam = 0,          // 1 or 2
+  duration    = 30,
+  winnerTeam  = 0,
+  userIsTeam1 = true,
   onContinue,
 }) => {
+  // Côtés gauche/droite : user toujours à gauche
+  const leftNum   = userIsTeam1 ? 1 : 2;
+  const rightNum  = userIsTeam1 ? 2 : 1;
+  const leftAbbr  = userIsTeam1 ? team1Abbr  : team2Abbr;
+  const rightAbbr = userIsTeam1 ? team2Abbr  : team1Abbr;
+  const leftStats  = userIsTeam1 ? team1Stats : team2Stats;
+  const rightStats = userIsTeam1 ? team2Stats : team1Stats;
+  const userWon   = winnerTeam === leftNum;
+
+  // Couleur par numéro backend (pour objectifs / events qui utilisent team: 1|2)
   const tc = (n) => n === 1 ? "var(--primary)" : "var(--danger)";
   const tn = (n) => n === 1 ? team1Abbr : team2Abbr;
 
-  // ── Build flat sorted timeline + kill increments ───────────────────────────
+  // ── Build flat timeline + kill increments ────────────────────────────────
   const { tl, killIncs, totalK1, totalK2 } = useMemo(() => {
     const PHASE_MIN = { "Early Game": 0, "Mid Game": 14, "Late Game": 25 };
     const items = [];
@@ -87,13 +104,14 @@ const MatchTimeline = ({
     const endEv = events.find(e => e.type === "game_end");
     if (endEv) items.push({ _kind: "end", _min: parseMin(endEv.time), ...endEv });
 
+    // kills1/kills2 = backend team1/team2 totals (alignés avec team: 1|2 des events)
     const tK1 = (team1Stats || []).reduce((s, p) => s + (p.kills || 0), 0);
     const tK2 = (team2Stats || []).reduce((s, p) => s + (p.kills || 0), 0);
 
-    // Distribute kills across events
     const incs = items.map(() => [0, 0]);
     let rem1 = tK1, rem2 = tK2;
 
+    // First blood
     items.forEach((it, i) => {
       if (it._kind === "event" && it.type === "first_blood") {
         if (it.team === 1) { incs[i][0] += 1; rem1 = Math.max(0, rem1 - 1); }
@@ -101,6 +119,7 @@ const MatchTimeline = ({
       }
     });
 
+    // Teamfights
     const tf1 = items.map((it, i) =>
       (it._kind === "event" && it.type === "teamfight" && it.team === 1) ? i : -1
     ).filter(x => x >= 0);
@@ -120,16 +139,20 @@ const MatchTimeline = ({
     return { tl: items, killIncs: incs, totalK1: tK1, totalK2: tK2 };
   }, [phases, events, team1Stats, team2Stats]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [visible,      setVisible]      = useState(0);
-  const [kills1,       setKills1]       = useState(0);
-  const [kills2,       setKills2]       = useState(0);
-  const [speedIdx,     setSpeedIdx]     = useState(0);
-  const [playing,      setPlaying]      = useState(true);
-  const [done,         setDone]         = useState(false);
-  const [currentPhase, setCurrentPhase] = useState(null);
+  // ── State ────────────────────────────────────────────────────────────────
+  const [visible,       setVisible]       = useState(0);
+  const [kills1,        setKills1]        = useState(0);  // backend team1
+  const [kills2,        setKills2]        = useState(0);  // backend team2
+  const [speedIdx,      setSpeedIdx]      = useState(0);
+  const [playing,       setPlaying]       = useState(true);
+  const [done,          setDone]          = useState(false);
+  const [currentPhase,  setCurrentPhase]  = useState(null);
 
-  // ── Playback loop ──────────────────────────────────────────────────────────
+  // Kills affiché selon le côté
+  const leftKills  = userIsTeam1 ? kills1 : kills2;
+  const rightKills = userIsTeam1 ? kills2 : kills1;
+
+  // ── Playback ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!playing || done) return;
     if (visible >= tl.length) { setDone(true); setPlaying(false); return; }
@@ -151,7 +174,7 @@ const MatchTimeline = ({
     return () => clearTimeout(timer);
   }, [playing, visible, speedIdx, done, tl, killIncs]);
 
-  // ── Skip ───────────────────────────────────────────────────────────────────
+  // ── Skip ─────────────────────────────────────────────────────────────────
   const handleSkip = () => {
     setVisible(tl.length);
     setKills1(totalK1);
@@ -161,50 +184,63 @@ const MatchTimeline = ({
     setPlaying(false);
   };
 
-  // ── Gold bar ───────────────────────────────────────────────────────────────
+  // ── Gold bar (two-color split) ────────────────────────────────────────────
   const goldDiff   = currentPhase?.gold_diff || 0;
-  const goldTeam   = currentPhase?.advantage || 0;
+  const goldTeam   = currentPhase?.advantage || 0;          // 1 or 2 (backend)
   const goldOffset = Math.min(28, goldDiff / 500);
-  const t1Width    = goldTeam === 1 ? 50 + goldOffset : goldTeam === 2 ? 50 - goldOffset : 50;
+  // leftWidth = part du bar pour le user (toujours gauche)
+  const leftWidth  = goldTeam === 0
+    ? 50
+    : goldTeam === leftNum
+      ? 50 + goldOffset   // user a l'avantage
+      : 50 - goldOffset;  // adversaire a l'avantage
+  const goldLeaderAbbr = goldTeam === leftNum ? leftAbbr : rightAbbr;
 
-  // ── Scoreboard data (even distribution visible while playing too) ──────────
-  const team1Won = winnerTeam === 1;
-  const team2Won = winnerTeam === 2;
-
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={{ padding: "18px 22px", maxHeight: "82vh", overflowY: "auto" }}>
 
-      {/* ── Kill scoreboard header ─────────────────────────────────────────── */}
+      {/* ── Kill scoreboard header ──────────────────────────────────────── */}
       <div style={{
         background: "var(--surface)", borderRadius: 8, padding: "14px 20px",
         marginBottom: 14, border: "1px solid rgba(255,255,255,0.07)",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+
+          {/* Gauche = user */}
           <div style={{ textAlign: "center", minWidth: 70 }}>
             <div style={{ fontSize: 10, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
-              {team1Abbr}
+              {leftAbbr}
             </div>
             <AnimatePresence mode="popLayout">
               <motion.div
-                key={kills1}
+                key={leftKills}
                 initial={{ scale: 1.5, color: "#4ade80" }}
                 animate={{ scale: 1, color: "var(--primary)" }}
                 transition={{ duration: 0.3 }}
                 style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}
               >
-                {kills1}
+                {leftKills}
               </motion.div>
             </AnimatePresence>
           </div>
 
+          {/* Centre : barre gold bicolore */}
           <div style={{ flex: 1, textAlign: "center", padding: "0 16px" }}>
             <div style={{ fontSize: 10, color: "var(--text-secondary)", marginBottom: 6 }}>KILLS</div>
-            <div style={{ height: 8, background: "rgba(255,255,255,0.08)", borderRadius: 4, overflow: "hidden" }}>
+            {/* Barre bicolore : bleu gauche | rouge droite */}
+            <div style={{
+              height: 8, borderRadius: 4, overflow: "hidden",
+              background: "var(--danger)",  // rouge pour le fond (côté droit)
+            }}>
               <motion.div
-                animate={{ width: `${t1Width}%` }}
+                animate={{ width: `${leftWidth}%` }}
                 transition={{ duration: 0.7, ease: "easeInOut" }}
-                style={{ height: "100%", borderRadius: 4, background: "linear-gradient(90deg, var(--primary), #60a5fa)" }}
+                style={{
+                  height: "100%",
+                  background: "var(--primary)",  // bleu côté gauche (user)
+                  borderRadius: "4px 0 0 4px",
+                }}
               />
             </div>
             {goldDiff > 0 && (
@@ -212,36 +248,39 @@ const MatchTimeline = ({
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 style={{ fontSize: 10, color: "var(--text-secondary)", marginTop: 4 }}
               >
-                <span style={{ color: tc(goldTeam), fontWeight: 700 }}>{tn(goldTeam)}</span>
+                <span style={{ color: goldTeam === leftNum ? "var(--primary)" : "var(--danger)", fontWeight: 700 }}>
+                  {goldLeaderAbbr}
+                </span>
                 {" "}+{(goldDiff / 1000).toFixed(1)}k gold
               </motion.div>
             )}
           </div>
 
+          {/* Droite = adversaire */}
           <div style={{ textAlign: "center", minWidth: 70 }}>
             <div style={{ fontSize: 10, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
-              {team2Abbr}
+              {rightAbbr}
             </div>
             <AnimatePresence mode="popLayout">
               <motion.div
-                key={kills2}
+                key={rightKills}
                 initial={{ scale: 1.5, color: "#f87171" }}
                 animate={{ scale: 1, color: "var(--danger)" }}
                 transition={{ duration: 0.3 }}
                 style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}
               >
-                {kills2}
+                {rightKills}
               </motion.div>
             </AnimatePresence>
           </div>
+
         </div>
       </div>
 
-      {/* ── Speed controls ─────────────────────────────────────────────────── */}
+      {/* ── Speed controls ──────────────────────────────────────────────── */}
       <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 14 }}>
         {SPEEDS.map((s, i) => (
-          <button
-            key={s.label}
+          <button key={s.label}
             onClick={() => { setSpeedIdx(i); if (!done) setPlaying(true); }}
             style={{
               padding: "4px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer",
@@ -254,9 +293,7 @@ const MatchTimeline = ({
             {s.label}
           </button>
         ))}
-        <button
-          onClick={handleSkip}
-          disabled={done}
+        <button onClick={handleSkip} disabled={done}
           style={{
             padding: "4px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, marginLeft: 4,
             cursor: done ? "default" : "pointer",
@@ -267,8 +304,7 @@ const MatchTimeline = ({
           ⏭ Skip
         </button>
         {!done && (
-          <button
-            onClick={() => setPlaying(p => !p)}
+          <button onClick={() => setPlaying(p => !p)}
             style={{
               padding: "4px 12px", borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: "pointer",
               border: "1px solid rgba(255,255,255,0.14)", background: "transparent",
@@ -280,14 +316,14 @@ const MatchTimeline = ({
         )}
       </div>
 
-      {/* ── Timeline items ─────────────────────────────────────────────────── */}
+      {/* ── Timeline items ───────────────────────────────────────────────── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         {tl.slice(0, visible).map((item, i) => {
+
           if (item._kind === "phase") {
             const objs = buildObjectives(item);
             return (
-              <motion.div
-                key={`phase-${i}`}
+              <motion.div key={`phase-${i}`}
                 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
                 style={{
@@ -327,8 +363,7 @@ const MatchTimeline = ({
               .replace(/l'équipe 1/gi, team1Abbr)
               .replace(/l'équipe 2/gi, team2Abbr);
             return (
-              <motion.div
-                key={`ev-${i}`}
+              <motion.div key={`ev-${i}`}
                 initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2 }}
                 style={{
@@ -351,8 +386,7 @@ const MatchTimeline = ({
 
           if (item._kind === "end") {
             return (
-              <motion.div
-                key="end"
+              <motion.div key="end"
                 initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
                 style={{
@@ -380,11 +414,10 @@ const MatchTimeline = ({
         )}
       </div>
 
-      {/* ── Player scoreboard (visible après la fin) ───────────────────────── */}
-      {done && (team1Stats.length > 0 || team2Stats.length > 0) && (
+      {/* ── Scoreboard joueurs ───────────────────────────────────────────── */}
+      {done && (leftStats.length > 0 || rightStats.length > 0) && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           style={{ marginTop: 18 }}
         >
@@ -397,11 +430,10 @@ const MatchTimeline = ({
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
-              { stats: team1Stats, won: team1Won, abbr: team1Abbr },
-              { stats: team2Stats, won: team2Won, abbr: team2Abbr },
+              { stats: leftStats,  won: userWon,  abbr: leftAbbr  },
+              { stats: rightStats, won: !userWon, abbr: rightAbbr },
             ].map(({ stats, won, abbr }, teamIdx) => (
               <div key={teamIdx} style={{ background: "var(--surface)", borderRadius: 6, overflow: "hidden" }}>
-                {/* Team header */}
                 <div style={{
                   padding: "6px 12px", fontWeight: 700, fontSize: 12,
                   background: won ? "var(--primary)" : "var(--danger)",
@@ -409,52 +441,35 @@ const MatchTimeline = ({
                 }}>
                   {abbr} — {won ? "Victoire ✓" : "Défaite"}
                 </div>
-                {/* Column headers */}
                 <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "26px 1fr 70px 36px 44px 46px",
+                  display: "grid", gridTemplateColumns: "26px 1fr 70px 36px 44px 46px",
                   padding: "5px 10px", gap: 2,
-                  fontSize: 10, color: "var(--text-secondary)", fontWeight: 600,
-                  textTransform: "uppercase",
+                  fontSize: 10, color: "var(--text-secondary)", fontWeight: 600, textTransform: "uppercase",
                 }}>
-                  <span />
-                  <span>Joueur</span>
+                  <span /><span>Joueur</span>
                   <span style={{ textAlign: "center" }}>K/D/A</span>
                   <span style={{ textAlign: "center" }}>Note</span>
                   <span style={{ textAlign: "center" }}>CS/m</span>
                   <span style={{ textAlign: "right" }}>DMG</span>
                 </div>
-                {/* Player rows */}
                 {stats.map((p, i) => {
                   const note   = calcNote(p, duration, won);
-                  const isGood = note >= 7;
-                  const isBad  = note <= 3;
-                  const cspm   = duration ? (p.cs / Math.max(1, duration)).toFixed(1) : "-";
-                  const dmg    = p.damage ? (p.damage / 1000).toFixed(1) + "k" : "-";
+                  const isGood = note >= 7, isBad = note <= 3;
                   return (
-                    <div
-                      key={i}
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "26px 1fr 70px 36px 44px 46px",
-                        padding: "5px 10px", gap: 2,
-                        borderTop: "1px solid var(--border-subtle)",
-                        alignItems: "center",
-                      }}
-                    >
+                    <div key={i} style={{
+                      display: "grid", gridTemplateColumns: "26px 1fr 70px 36px 44px 46px",
+                      padding: "5px 10px", gap: 2,
+                      borderTop: "1px solid var(--border-subtle)", alignItems: "center",
+                    }}>
                       {p.champion ? (
-                        <img
-                          loading="lazy"
+                        <img loading="lazy"
                           src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(p.champion)}.png`}
                           alt={p.champion} title={p.champion}
                           style={{ width: 22, height: 22, borderRadius: 3 }}
                           onError={e => { e.currentTarget.style.display = "none"; }}
                         />
                       ) : <span />}
-                      <span style={{
-                        fontSize: 12, fontWeight: 500,
-                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                      }}>
+                      <span style={{ fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {p.player_name || `Joueur ${i + 1}`}
                       </span>
                       <span style={{ textAlign: "center", fontSize: 11, fontWeight: 700 }}>
@@ -470,8 +485,12 @@ const MatchTimeline = ({
                       }}>
                         {note.toFixed(1)}
                       </span>
-                      <span style={{ textAlign: "center", fontSize: 11 }}>{cspm}</span>
-                      <span style={{ textAlign: "right", fontSize: 11, color: "var(--secondary)" }}>{dmg}</span>
+                      <span style={{ textAlign: "center", fontSize: 11 }}>
+                        {duration ? (p.cs / Math.max(1, duration)).toFixed(1) : "-"}
+                      </span>
+                      <span style={{ textAlign: "right", fontSize: 11, color: "var(--secondary)" }}>
+                        {p.damage ? (p.damage / 1000).toFixed(1) + "k" : "-"}
+                      </span>
                     </div>
                   );
                 })}
@@ -481,7 +500,7 @@ const MatchTimeline = ({
         </motion.div>
       )}
 
-      {/* ── Continue button ────────────────────────────────────────────────── */}
+      {/* ── Continue ─────────────────────────────────────────────────────── */}
       {done && (
         <motion.button
           className="btn-primary"
