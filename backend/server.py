@@ -5549,18 +5549,17 @@ def _intl_pick_top_n(league: str, n: int, user_league: str, user_champ_id) -> li
     is_user_league = (league == user_league)
 
     if is_user_league:
-        # Use real in-game standings
+        # Use playoff placement (not regular season W-L): champion → runner-up → 3rd → 4th
+        playoff_ids = _get_playoff_top_n(n)
         gs_teams = GAME_STATE.get("teams", {})
-        league_team_ids = {t["id"] for t in LEAGUES_DATA.get(league, {}).get("teams", [])}
-        ranked = sorted(
-            [t for t in gs_teams.values() if t["id"] in league_team_ids],
-            key=lambda t: (-t.get("wins", 0), t.get("losses", 0))
-        )
         result = []
-        for t in ranked[:n]:
-            base = next((lt for lt in LEAGUES_DATA[league]["teams"] if lt["id"] == t["id"]), t)
+        for tid in playoff_ids[:n]:
+            t = gs_teams.get(tid)
+            if not t:
+                continue
+            base = next((lt for lt in LEAGUES_DATA[league]["teams"] if lt["id"] == tid), t)
             result.append({**base, **t, "league": league,
-                           "is_user_champ": t["id"] == user_champ_id})
+                           "is_user_champ": tid == user_champ_id})
     else:
         # Use simulated intl standings if available, else fall back to rating sort
         intl_table = GAME_STATE.get("intl_standings", {}).get(league)
