@@ -5187,7 +5187,11 @@ async def advance_to_next_split():
         "losses": user_team.get("losses", 0),
         "final_rank": next(
             (i + 1 for i, t in enumerate(
-                sorted(GAME_STATE["teams"].values(), key=lambda x: (x["wins"], x["wins"] - x["losses"]), reverse=True)
+                sorted(
+                    [t for t in GAME_STATE["teams"].values()
+                     if t["id"] in {tm["id"] for tm in LEAGUES_DATA.get(GAME_STATE.get("league", "LEC"), {}).get("teams", [])}],
+                    key=lambda x: (-x.get("wins", 0), x.get("losses", 0))
+                )
             ) if t["id"] == user_team_id),
             10
         ),
