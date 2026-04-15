@@ -4842,6 +4842,7 @@ async def get_split_status():
         "roster_changes_preview": roster_changes,
         "other_regions": other_regions,
         "international_result": international_result,
+        "league": user_league,
     }
 
 def simulate_offseason_transfers():
