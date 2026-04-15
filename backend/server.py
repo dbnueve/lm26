@@ -3230,17 +3230,24 @@ async def get_available_players():
     if GAME_STATE.get("phase") != "preseason":
         raise HTTPException(status_code=403, detail="Negotiations are only open during preseason/offseason")
     
+    # Seed price per (player_id, season, split) so it stays stable across refreshes
+    season = GAME_STATE.get("season", 2026)
+    split_num = GAME_STATE.get("current_split", 1)
+
     available = []
     for player in GAME_STATE["players"].values():
         if player["team_id"] != GAME_STATE["user_team"]:
             team = GAME_STATE["teams"][player["team_id"]]
+            price_seed = hash((player["id"], season, split_num)) & 0xFFFFFFFF
+            price_rng = random.Random(price_seed)
+            asking_price = int(player["transfer_value"] * price_rng.uniform(1.0, 1.5))
             available.append({
                 **player,
                 "team_name": team["name"],
                 "team_abbr": team["abbr"],
-                "asking_price": int(player["transfer_value"] * random.uniform(1.0, 1.5))
+                "asking_price": asking_price,
             })
-    
+
     return available
 
 
