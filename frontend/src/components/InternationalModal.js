@@ -236,27 +236,48 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
 
   // ── User status strip ──────────────────────────────────────────────────────
   const UserStatus = () => {
-    if (!intl || !uc || !userTeam) return null;
+    if (!intl || !userTeam) return null;
+    const userTeamId = intl.user_team_id || userTeam.id;
+
+    // Spectator mode: user didn't qualify
+    if (!intl.user_qualified) {
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "var(--surface)", borderRadius: 4, marginBottom: 16, fontSize: 12 }}>
+          <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={20} noClick />
+          <span style={{ fontWeight: 700 }}>{userTeam.abbr}</span>
+          <span style={{ color: "var(--text-secondary)" }}>·</span>
+          <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>Non qualifié — Mode spectateur</span>
+        </div>
+      );
+    }
+
     let statusText = ""; let statusColor = "var(--text-secondary)";
     if (intl.type === "msi") {
       const pi = intl.play_in; const bk = intl.bracket;
+      const inPI = pi.teams?.some(t => t.id === uc);
+      const inPreseeded = bk.pre_seeded?.some(t => t.id === uc);
       const inBK = bk.teams?.some(t => t.id === uc);
-      if (intl.winner === uc)          { statusText = "🏆 Champion MSI 2026"; statusColor = "var(--secondary)"; }
-      else if (inBK && bk.completed)   { statusText = "Éliminé au Bracket"; statusColor = "var(--danger)"; }
-      else if (inBK)                   { statusText = "Bracket Stage — En compétition"; statusColor = "var(--primary)"; }
-      else if (pi.completed)           { statusText = "Éliminé en Play-In"; statusColor = "var(--danger)"; }
-      else                             { statusText = "Play-In — En compétition"; }
+      if (intl.winner === uc)               { statusText = "🏆 Champion MSI 2026"; statusColor = "var(--secondary)"; }
+      else if (inBK && bk.completed)        { statusText = "Éliminé au Bracket"; statusColor = "var(--danger)"; }
+      else if (inBK || inPreseeded)         { statusText = "Bracket Stage — En compétition"; statusColor = "var(--primary)"; }
+      else if (pi.completed && inPI)        { statusText = "Éliminé en Play-In"; statusColor = "var(--danger)"; }
+      else if (inPI)                        { statusText = "Play-In — En compétition"; }
+      else                                  { statusText = "En compétition"; }
     } else {
       const sw = intl.swiss; const ko = intl.knockout;
       const swTeam = sw.teams?.find(t => t.id === uc);
+      const inPreQ = sw.pre_qualified?.some(t => t.id === uc);
       const inKO   = ko.teams?.some(t => t.id === uc);
+      const inPI   = intl.play_in?.teams?.some(t => t.id === uc);
       if (intl.winner === uc)              { statusText = "🏆 Champion Worlds 2026"; statusColor = "var(--secondary)"; }
       else if (inKO && ko.completed)       { statusText = "Éliminé au Knockout"; statusColor = "var(--danger)"; }
       else if (inKO)                       { statusText = "Knockout Stage — En compétition"; statusColor = "var(--primary)"; }
       else if (swTeam?.sw_eliminated)      { statusText = `Éliminé (Swiss ${swTeam.sw_wins}W-${swTeam.sw_losses}L)`; statusColor = "var(--danger)"; }
       else if (swTeam?.sw_advanced)        { statusText = `Qualifié pour le Knockout ✓ (${swTeam.sw_wins}W)`; statusColor = "var(--success)"; }
-      else if (swTeam)                     { statusText = `Swiss Stage — ${swTeam.sw_wins}W · ${swTeam.sw_losses}L`; }
-      else                                 { statusText = "Play-In — En compétition"; }
+      else if (swTeam || inPreQ)           { statusText = swTeam ? `Swiss Stage — ${swTeam.sw_wins}W · ${swTeam.sw_losses}L` : "Swiss Stage — En compétition"; }
+      else if (intl.play_in.completed && inPI) { statusText = "Éliminé en Play-In"; statusColor = "var(--danger)"; }
+      else if (inPI)                       { statusText = "Play-In — En compétition"; }
+      else                                 { statusText = "En compétition"; }
     }
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "var(--surface)", borderRadius: 4, marginBottom: 16, fontSize: 12 }}>
