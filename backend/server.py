@@ -2038,27 +2038,78 @@ def _generate_match_inbox_messages(
 
 
 def _generate_weekly_board_message(week: int):
-    """Board message at the start of each new week."""
+    """Board message at the start of each new week with standings context."""
     user_id = GAME_STATE.get("user_team")
     if not user_id:
         return
-    user_team = GAME_STATE["teams"].get(user_id, {})
-    wins = user_team.get("wins", 0)
-    losses = user_team.get("losses", 0)
-    total = wins + losses
+    user_team_obj = GAME_STATE["teams"].get(user_id, {})
+    wins   = user_team_obj.get("wins", 0)
+    losses = user_team_obj.get("losses", 0)
+    total  = wins + losses
     if total == 0:
         return
+
     wr = round(wins / total * 100)
-    if wr >= 70:
-        subject = f"Excellent début de saison — Semaine {week}"
-        body = f"Le bilan de {wins}V-{losses}D ({wr}% de victoires) est au-dessus des objectifs fixés en début de split. Continuez ainsi — les playoffs semblent à portée."
-    elif wr >= 50:
-        subject = f"Bilan semaine {week} — En bonne voie"
-        body = f"Le bilan {wins}V-{losses}D est satisfaisant pour l'instant. Restez concentrés sur les prochains matchs décisifs pour la qualification aux playoffs."
+    league_sorted = sorted(
+        GAME_STATE["teams"].values(),
+        key=lambda t: (-t.get("wins", 0), t.get("losses", 0))
+    )
+    rank = next((i + 1 for i, t in enumerate(league_sorted) if t["id"] == user_id), "?")
+    n_teams = len(league_sorted)
+    playoff_spots = 6  # standard playoff qualification
+    remaining = max(0, 9 - total)  # 9 regular season weeks
+
+    # Phase context
+    if week <= 3:
+        phase_ctx = "début de split"
+    elif week <= 6:
+        phase_ctx = "mi-saison"
     else:
-        subject = f"Point de situation — Semaine {week}"
-        body = f"Avec {wins}V-{losses}D, nous sommes en dessous des attentes. Les prochaines semaines sont cruciales pour maintenir une chance de qualification. Des ajustements s'imposent."
-    _add_inbox_message("board", "Manager Général", subject, body, week)
+        phase_ctx = "sprint final"
+
+    if wr >= 70:
+        pool = [
+            (f"Semaine {week} — Objectifs dépassés ✅",
+             f"Bilan {wins}V-{losses}D ({wr}%) en {phase_ctx}. #{rank}/{n_teams} au classement. "
+             f"L'équipe est en avance sur les objectifs fixés — les playoffs semblent assurés si l'élan se maintient."),
+            (f"Point hebdomadaire — Semaine {week}",
+             f"#{rank} au classement avec {wins}V-{losses}D ({wr}%). Excellente régularité en {phase_ctx}. "
+             f"{remaining} match(s) restant(s) — continuez à capitaliser sur cette dynamique."),
+        ]
+        sender = "Direction Sportive"
+    elif wr >= 50:
+        pool = [
+            (f"Bilan semaine {week} — En bonne voie",
+             f"#{rank}/{n_teams} avec {wins}V-{losses}D ({wr}%) — bilan satisfaisant en {phase_ctx}. "
+             f"Les prochains matchs seront décisifs pour la qualification aux playoffs ({playoff_spots} places disponibles)."),
+            (f"Point hebdomadaire — Semaine {week}",
+             f"Bilan {wins}V-{losses}D, #{rank} au classement. {remaining} match(s) restant(s) en {phase_ctx}. "
+             f"La qualification reste à portée — pas de relâchement."),
+        ]
+        sender = "Manager Général"
+    elif rank <= playoff_spots:
+        pool = [
+            (f"Semaine {week} — Position précaire",
+             f"#{rank}/{n_teams} avec {wins}V-{losses}D ({wr}%). Encore dans les playoffs pour l'instant, "
+             f"mais la marge est mince. {remaining} match(s) pour consolider — chaque point compte."),
+            (f"Point hebdomadaire — Semaine {week}",
+             f"Bilan {wins}V-{losses}D. #{rank} au classement — dans la zone playoffs mais sous pression. "
+             f"Des adversaires directs se rapprochent. Il faut une réaction en {phase_ctx}."),
+        ]
+        sender = "Manager Général"
+    else:
+        pool = [
+            (f"ALERTE — Semaine {week} : playoffs compromis",
+             f"#{rank}/{n_teams} avec {wins}V-{losses}D ({wr}%) — hors des {playoff_spots} premières places. "
+             f"{remaining} match(s) restant(s). Des victoires consécutives sont indispensables pour remonter."),
+            (f"Point de crise — Semaine {week}",
+             f"Bilan {wins}V-{losses}D, #{rank}/{n_teams}. En {phase_ctx}, la qualification devient critique. "
+             f"Chaque défaite supplémentaire réduit nos chances. J'attends une réponse collective."),
+        ]
+        sender = "Président"
+
+    subject, body = random.choice(pool)
+    _add_inbox_message("board", sender, subject, body, week)
 
 
 def generate_player_stats(team_id: str, won: bool, game_duration: int,
