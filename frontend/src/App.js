@@ -388,6 +388,7 @@ function App() {
           <NegotiationsPage
             userTeam={userTeamData}
             teams={teams}
+            phase={gameState.phase}
             onMakeOffer={handleMakeOffer}
             onSeasonStart={async () => {
               await loadGameData();
