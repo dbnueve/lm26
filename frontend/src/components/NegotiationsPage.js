@@ -53,8 +53,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
     try {
       const res = await axios.post(API + "/season/start");
       setAiTransfers(res.data.ai_transfers || []);
-      setPhase("regular");
-      if (onSeasonStart) onSeasonStart();
+      if (onSeasonStart) onSeasonStart(); // App.js reloads game state → phase prop updates
     } catch (e) {
       console.error("Error starting season:", e);
     } finally {
