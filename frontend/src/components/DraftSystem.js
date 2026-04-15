@@ -414,6 +414,11 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                 );
               })}
             </div>
+            {hiddenCount > 0 && (
+              <div style={{ textAlign: "center", padding: "6px 0", fontSize: 11, color: "var(--text-secondary)" }}>
+                +{hiddenCount} champions — utilisez un filtre par position pour les afficher
+              </div>
+            )}
           </div>
 
           {/* Enemy Team */}
