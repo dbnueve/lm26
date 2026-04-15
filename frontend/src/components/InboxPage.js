@@ -222,6 +222,8 @@ const MessageDetail = ({ msg, onBack }) => {
 
       {msg.type === TYPE_INTL
         ? <IntlStandingsBody body={msg.body} />
+        : msg.sender === "Cellule de Recrutement"
+        ? <ScoutingReportBody body={msg.body} />
         : <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{msg.body}</div>
       }
     </motion.div>
