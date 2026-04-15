@@ -269,20 +269,17 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
             </div>
           )}
 
-          {phase === "timeline" && gameResult && (() => {
-            // Toujours userTeam à gauche (team1) et adversaire à droite (team2)
-            const uStats = isTeam1 ? (gameResult.team1_stats || []) : (gameResult.team2_stats || []);
-            const oStats = isTeam1 ? (gameResult.team2_stats || []) : (gameResult.team1_stats || []);
-            return (
+          {phase === "timeline" && gameResult && (
             <MatchTimeline
               phases={gameResult.phases || []}
               events={gameResult.events || []}
-              team1Abbr={userTeam.abbr}
-              team2Abbr={oppTeam?.abbr}
-              team1Stats={uStats}
-              team2Stats={oStats}
+              team1Abbr={isTeam1 ? userTeam.abbr : oppTeam?.abbr}
+              team2Abbr={isTeam1 ? oppTeam?.abbr : userTeam.abbr}
+              team1Stats={gameResult.team1_stats || []}
+              team2Stats={gameResult.team2_stats || []}
               duration={gameResult.duration}
-              winnerTeam={gameResult.winner === userTeam.id ? 1 : 2}
+              winnerTeam={gameResult.winner === match.team1 ? 1 : 2}
+              userIsTeam1={isTeam1}
               onContinue={() => {
                 if (pendingScoreRef.current) {
                   setT1Wins(pendingScoreRef.current.t1);
@@ -292,8 +289,7 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
                 setPhase("game_result");
               }}
             />
-            );
-          })()}
+          )}
 
           {phase === "game_result" && (
             <div>
