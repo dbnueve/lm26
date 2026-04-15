@@ -5476,6 +5476,15 @@ def _intl_pick_top_n(league: str, n: int, user_league: str, user_champ_id) -> li
                            key=lambda x: x.get("rating", 0), reverse=True)
             result = [{**t, "league": league, "is_user_champ": False} for t in all_t[:n]]
 
+    # Safety padding: always return exactly n teams to prevent IndexError in tournament creation
+    if len(result) < n:
+        all_t = sorted(LEAGUES_DATA.get(league, {}).get("teams", []),
+                       key=lambda x: x.get("rating", 0), reverse=True)
+        existing_ids = {t["id"] for t in result}
+        for t in all_t:
+            if t["id"] not in existing_ids and len(result) < n:
+                result.append({**t, "league": league, "is_user_champ": False})
+
     return result
 
 
