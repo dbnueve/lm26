@@ -5800,7 +5800,9 @@ async def start_international():
         key=lambda t: (-t.get("wins", 0), t.get("losses", 0))
     )
     top_ids = [t["id"] for t in ranked[:spots]]
-    user_qualified = user_team_id in top_ids
+    # The playoff champion always qualifies (split champion = MSI seed), even if outside top-N by W-L
+    playoff_champion_id = (GAME_STATE.get("playoffs_bracket") or {}).get("champion")
+    user_qualified = user_team_id in top_ids or playoff_champion_id == user_team_id
 
     # user_champ_id = user's team if qualified, else None (spectator mode)
     user_champ_id = user_team_id if user_qualified else None
