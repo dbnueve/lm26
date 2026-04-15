@@ -277,6 +277,8 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
               team2Abbr={isTeam1 ? oppTeam?.abbr : userTeam.abbr}
               team1Stats={gameResult.team1_stats || []}
               team2Stats={gameResult.team2_stats || []}
+              duration={gameResult.duration}
+              winnerTeam={gameResult.winner === match.team1 ? 1 : 2}
               onContinue={() => {
                 if (pendingScoreRef.current) {
                   setT1Wins(pendingScoreRef.current.t1);
