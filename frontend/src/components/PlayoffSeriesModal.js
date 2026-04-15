@@ -292,7 +292,8 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
                 setPhase("game_result");
               }}
             />
-          )}
+            );
+          })()}
 
           {phase === "game_result" && (
             <div>
