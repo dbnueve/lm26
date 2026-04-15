@@ -5493,6 +5493,54 @@ async def get_career_history():
 # MSI   (split 1): 10 teams  — Play-In 4 teams DE Bo5 → Bracket 8 teams DE Bo5
 # Worlds (split 2+): 17 teams — Play-In 2 teams Bo5 → Swiss 16 teams 5 rounds → Knockout 8 teams SE Bo5
 
+
+def _get_playoff_top_n(n: int) -> list[str]:
+    """Return the top-N team IDs for the user's league by playoff placement.
+    Placement order: 1st = champion, 2nd = grand_final loser,
+                     3rd = lb_final loser, 4th = lb_sf/lb_r3 loser.
+    """
+    bracket = GAME_STATE.get("playoffs_bracket") or {}
+    matches  = bracket.get("matches", [])
+    result: list[str] = []
+
+    def _loser(m: dict) -> str | None:
+        if not m or not m.get("winner"):
+            return None
+        return m["team2"] if m["team1"] == m["winner"] else m["team1"]
+
+    # 1st — champion
+    if bracket.get("champion"):
+        result.append(bracket["champion"])
+
+    # 2nd — grand_final runner-up
+    gf = next((m for m in matches if m["round"] == "grand_final"), None)
+    if lo := _loser(gf):
+        if lo not in result:
+            result.append(lo)
+
+    if n <= 2:
+        return result[:n]
+
+    # 3rd — lb_final loser
+    lbf = next((m for m in matches if m["round"] == "lb_final"), None)
+    if lo := _loser(lbf):
+        if lo not in result:
+            result.append(lo)
+
+    if n <= 3:
+        return result[:n]
+
+    # 4th — lb_sf loser (LPL 6-team format) or lb_r3 loser (standard 6-team format)
+    for rnd in ("lb_sf", "lb_r3"):
+        m4 = next((m for m in matches if m["round"] == rnd), None)
+        if lo := _loser(m4):
+            if lo not in result:
+                result.append(lo)
+                break
+
+    return result[:n]
+
+
 def _intl_pick_top_n(league: str, n: int, user_league: str, user_champ_id) -> list:
     """Return the top-N qualified teams for an international tournament.
     Uses actual W-L standings for the user's league, intl_standings simulation for others.
