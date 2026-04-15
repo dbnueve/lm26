@@ -4545,7 +4545,7 @@ def _execute_training_plan(player: dict, team: dict) -> str | None:
     # rating stays as-is — no recalculation from sub-stats
 
     player["training_done_this_week"] = True
-    return True
+    return applied_plan
 
 
 class TrainingPlanRequest(BaseModel):
