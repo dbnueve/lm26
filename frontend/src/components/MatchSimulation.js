@@ -613,6 +613,8 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
               events={matchResult.match_details.events || []}
               team1Abbr={isTeam1 ? userTeam.abbr : opponentTeam?.abbr}
               team2Abbr={isTeam1 ? opponentTeam?.abbr : userTeam.abbr}
+              team1Stats={matchResult.match_details.team1_stats || []}
+              team2Stats={matchResult.match_details.team2_stats || []}
               onContinue={() => setPhase("result")}
             />
           )}
