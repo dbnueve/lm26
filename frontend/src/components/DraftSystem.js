@@ -139,6 +139,11 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allChampionsDeduped, champions, posFilter]);
 
+  // Limit DOM nodes in "ALL" mode to avoid rendering 200+ items at once
+  const GRID_LIMIT = 120;
+  const visibleChampions = posFilter === "ALL" ? filteredChampions.slice(0, GRID_LIMIT) : filteredChampions;
+  const hiddenCount = filteredChampions.length - visibleChampions.length;
+
   return (
     <motion.div
       className="modal-overlay"
