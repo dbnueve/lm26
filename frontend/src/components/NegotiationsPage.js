@@ -6,7 +6,7 @@ import { API, PlayerImagesContext, toFlag, formatMoney } from "../shared";
 import PlayerDetailModal from "./PlayerDetailModal";
 
 // Negotiations Page Component
-const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
+const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSeasonStart }) => {
   const playerImages = React.useContext(PlayerImagesContext);
   const [availablePlayers, setAvailablePlayers] = useState([]);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
@@ -15,22 +15,12 @@ const NegotiationsPage = ({ userTeam, teams, onMakeOffer, onSeasonStart }) => {
   const [contractYears, setContractYears] = useState(2);
   const [negotiationResult, setNegotiationResult] = useState(null);
   const [positionFilter, setPositionFilter] = useState("ALL");
-  const [phase, setPhase] = useState(null);
-  const [loadingPhase, setLoadingPhase] = useState(true);
   const [startingSeasonLoading, setStartingSeasonLoading] = useState(false);
   const [aiTransfers, setAiTransfers] = useState(null);
 
-  useEffect(() => {
-    axios.get(API + "/game/state")
-      .then(res => {
-        setPhase(res.data.phase || "regular");
-        setLoadingPhase(false);
-      })
-      .catch(() => {
-        setPhase("regular");
-        setLoadingPhase(false);
-      });
-  }, []);
+  // Use phase from parent (App.js) — no redundant GET /game/state needed
+  const phase = phaseProp || "regular";
+  const loadingPhase = false;
 
   useEffect(() => {
     if (phase !== "preseason") return;
