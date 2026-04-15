@@ -2342,8 +2342,8 @@ async def sign_erl_player(request: SignERLPlayerRequest):
     player["team_id"] = GAME_STATE["user_team"]
     player["salary"] = request.offered_salary
     player["contract_years"] = 2
-    del player["league"]
-    del player["current_team"]
+    player.pop("league", None)
+    player.pop("current_team", None)
     
     # Move from ERL to regular players
     GAME_STATE["players"][player["id"]] = player
