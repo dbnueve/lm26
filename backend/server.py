@@ -5839,17 +5839,10 @@ async def start_international():
     if split_num != 1 and user_league in ("LCK", "LPL"):
         spots = 4
 
-    # Check if the user's team actually finished in the qualifying positions
-    gs_teams = GAME_STATE.get("teams", {})
-    league_team_ids = {t["id"] for t in LEAGUES_DATA.get(user_league, {}).get("teams", [])}
-    ranked = sorted(
-        [t for t in gs_teams.values() if t["id"] in league_team_ids],
-        key=lambda t: (-t.get("wins", 0), t.get("losses", 0))
-    )
-    top_ids = [t["id"] for t in ranked[:spots]]
-    # The playoff champion always qualifies (split champion = MSI seed), even if outside top-N by W-L
-    playoff_champion_id = (GAME_STATE.get("playoffs_bracket") or {}).get("champion")
-    user_qualified = user_team_id in top_ids or playoff_champion_id == user_team_id
+    # Qualification based on playoff placement (not regular season W-L):
+    # top-2 finishers (finalists) for MSI, top-3 or top-4 for Worlds
+    top_ids = _get_playoff_top_n(spots)
+    user_qualified = user_team_id in top_ids
 
     # user_champ_id = user's team if qualified, else None (spectator mode)
     user_champ_id = user_team_id if user_qualified else None
