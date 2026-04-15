@@ -5717,9 +5717,33 @@ async def start_international():
     if GAME_STATE.get("international") and not GAME_STATE["international"].get("completed"):
         return GAME_STATE["international"]
     user_league   = GAME_STATE.get("league", "LEC")
-    user_champ_id = GAME_STATE.get("user_team")
+    user_team_id  = GAME_STATE.get("user_team")
     split_num     = GAME_STATE.get("current_split", 1)
+
+    # Determine how many spots the user's league sends to the tournament
+    spots_msi    = 2  # top-2 from each league for MSI
+    spots_worlds = 3  # top-3 from each league for Worlds (LCK/LPL send 4)
+    spots = spots_msi if split_num == 1 else spots_worlds
+    # LCK/LPL send more teams to Worlds
+    if split_num != 1 and user_league in ("LCK", "LPL"):
+        spots = 4
+
+    # Check if the user's team actually finished in the qualifying positions
+    gs_teams = GAME_STATE.get("teams", {})
+    league_team_ids = {t["id"] for t in LEAGUES_DATA.get(user_league, {}).get("teams", [])}
+    ranked = sorted(
+        [t for t in gs_teams.values() if t["id"] in league_team_ids],
+        key=lambda t: (-t.get("wins", 0), t.get("losses", 0))
+    )
+    top_ids = [t["id"] for t in ranked[:spots]]
+    user_qualified = user_team_id in top_ids
+
+    # user_champ_id = user's team if qualified, else None (spectator mode)
+    user_champ_id = user_team_id if user_qualified else None
+
     GAME_STATE["international"] = _create_msi(user_league, user_champ_id) if split_num == 1 else _create_worlds(user_league, user_champ_id)
+    GAME_STATE["international"]["user_team_id"] = user_team_id
+    GAME_STATE["international"]["user_qualified"] = user_qualified
     return GAME_STATE["international"]
 
 
