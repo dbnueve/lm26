@@ -275,6 +275,8 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
               events={gameResult.events || []}
               team1Abbr={isTeam1 ? userTeam.abbr : oppTeam?.abbr}
               team2Abbr={isTeam1 ? oppTeam?.abbr : userTeam.abbr}
+              team1Stats={gameResult.team1_stats || []}
+              team2Stats={gameResult.team2_stats || []}
               onContinue={() => {
                 if (pendingScoreRef.current) {
                   setT1Wins(pendingScoreRef.current.t1);
