@@ -5290,44 +5290,82 @@ def _generate_youth_scouting_report(week: int):
 def _generate_transfer_recap_message():
     """Build an inbox message summarising all mercato transfers (user + AI)."""
     recap = GAME_STATE.pop("mercato_recap", [])
-    if not recap:
-        return
-
-    user_id = GAME_STATE.get("user_team")
+    user_id   = GAME_STATE.get("user_team")
     user_abbr = GAME_STATE["teams"].get(user_id, {}).get("abbr", "Vous")
+    split_label = (
+        f"{GAME_STATE.get('league','LEC')} "
+        f"{'Spring' if GAME_STATE.get('current_split',1)==1 else 'Summer'} "
+        f"{GAME_STATE.get('season', 2026)}"
+    )
 
-    user_moves  = [r for r in recap if r.get("buyer") == user_id]
-    ai_moves    = [r for r in recap if r.get("buyer") != user_id]
+    user_moves = [r for r in recap if r.get("buyer") == user_id]
+    ai_moves   = [r for r in recap if r.get("buyer") != user_id]
 
     lines = []
 
+    # ── User transfers ──────────────────────────────────────────────────────
     if user_moves:
-        lines.append("🔵 VOS TRANSFERTS")
+        total_spent = sum(m.get("amount", 0) for m in user_moves)
+        lines.append(f"🔵 VOS TRANSFERTS ({len(user_moves)} recrutement(s))")
         for m in user_moves:
+            icon = _POS_ICON.get(m.get("position", ""), "🎮")
             lines.append(
-                f"  ✅ {m['player']} ({m['position']}, {m['rating']}) "
-                f"← {m['seller']}  |  {m['amount']:,} €"
+                f"  {icon} {m['player']} ({m['position']}, note {m['rating']}) "
+                f"← {m.get('seller','?')}  |  {m['amount']:,} €"
             )
+        budget_after = GAME_STATE["teams"].get(user_id, {}).get("budget", 0)
+        lines.append(f"\n  💰 Total dépensé : {total_spent:,} €  |  Budget restant : {budget_after:,} €")
+        lines.append("")
+    else:
+        lines.append("🔵 VOS TRANSFERTS")
+        lines.append("  Aucun transfert réalisé cette offseason.")
         lines.append("")
 
+    # ── AI transfers by league ──────────────────────────────────────────────
     if ai_moves:
-        lines.append("📋 MOUVEMENTS DES AUTRES ÉQUIPES")
-        for m in ai_moves[:20]:   # cap at 20 to avoid wall of text
-            buyer_abbr  = GAME_STATE["teams"].get(m["buyer"],  {}).get("abbr", m["buyer"])
-            seller_abbr = m.get("seller", "?")
-            lines.append(
-                f"  • {m['player']} ({m['position']}, {m['rating']}) "
-                f"→ {buyer_abbr}  ←  {seller_abbr}"
-            )
+        # Group by buyer team for readability (max 5 teams shown, 2 moves each)
+        from collections import defaultdict
+        by_team: dict = defaultdict(list)
+        for m in ai_moves:
+            by_team[m["buyer"]].append(m)
 
-    if not lines:
+        lines.append(f"📋 MOUVEMENTS DES AUTRES ÉQUIPES ({len(ai_moves)} transfert(s))")
+        shown = 0
+        for tid, moves in list(by_team.items())[:8]:
+            team_abbr = GAME_STATE["teams"].get(tid, {}).get("abbr", tid[:3].upper())
+            for m in moves[:2]:
+                icon = _POS_ICON.get(m.get("position", ""), "🎮")
+                lines.append(
+                    f"  {icon} {team_abbr} recrute {m['player']} "
+                    f"({m['position']}, {m['rating']}) ← {m.get('seller','?')}"
+                )
+                shown += 1
+            if shown >= 14:
+                break
+        if len(ai_moves) > shown:
+            lines.append(f"  ... et {len(ai_moves) - shown} autre(s) mouvement(s).")
+
+    if not any(l.strip() for l in lines):
         return
 
-    body = "\n".join(lines)
-    split_label = f"{GAME_STATE.get('league','LEC')} " \
-                  f"{'Spring' if GAME_STATE.get('current_split',1)==1 else 'Summer'} " \
-                  f"{GAME_STATE.get('season', 2026)}"
+    # ── Closing assessment ──────────────────────────────────────────────────
+    lines.append("")
+    user_team_obj = GAME_STATE["teams"].get(user_id, {})
+    avg_rating = 0
+    if user_team_obj.get("roster"):
+        ratings = [GAME_STATE["players"].get(pid, {}).get("rating", 0) for pid in user_team_obj["roster"]]
+        ratings = [r for r in ratings if r > 0]
+        avg_rating = round(sum(ratings) / len(ratings)) if ratings else 0
+    if avg_rating >= 85:
+        assessment = f"✅ Votre effectif ({avg_rating} de moyenne) figure parmi les plus compétitifs de la ligue."
+    elif avg_rating >= 78:
+        assessment = f"📊 Effectif solide ({avg_rating} de moyenne) — visez le top 4 pour les playoffs."
+    else:
+        assessment = f"⚠️ Effectif en construction ({avg_rating} de moyenne) — le mercato n'est pas terminé."
+    lines.append(assessment)
+    lines.append(f"\nBonne chance pour {split_label} !")
 
+    body = "\n".join(lines)
     _add_inbox_message(
         "board",
         "Directeur Sportif",
