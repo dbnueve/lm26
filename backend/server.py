@@ -1886,69 +1886,149 @@ def _add_inbox_message(msg_type: str, sender: str, subject: str, body: str, week
     return msg
 
 
-def _generate_match_inbox_messages(winner_id: str, loser_id: str, match_result: dict, week: int = None):
+def _get_user_streak() -> tuple[str, int]:
+    """Return ('win'|'loss'|None, count) for the user's current streak from the schedule."""
+    user_id = GAME_STATE.get("user_team")
+    played = sorted(
+        [m for m in GAME_STATE.get("schedule", []) if m.get("played") and
+         (m["team1"] == user_id or m["team2"] == user_id)],
+        key=lambda m: m.get("week", 0)
+    )
+    if not played:
+        return None, 0
+    streak_type = "win" if played[-1].get("winner") == user_id else "loss"
+    count = 0
+    for m in reversed(played):
+        result = "win" if m.get("winner") == user_id else "loss"
+        if result == streak_type:
+            count += 1
+        else:
+            break
+    return streak_type, count
+
+
+def _get_mvp_name(stats: list) -> str | None:
+    """Return the name of the player with the best KDA from a stats list."""
+    if not stats:
+        return None
+    best = max(
+        stats,
+        key=lambda p: (p.get("kills", 0) + p.get("assists", 0)) / max(p.get("deaths", 1), 1),
+    )
+    return best.get("name") or best.get("player")
+
+
+def _generate_match_inbox_messages(
+    winner_id: str, loser_id: str, match_result: dict,
+    w_stats: list = None, l_stats: list = None, week: int = None
+):
     """Generate board + soloq inbox messages after the user plays a match."""
     user_id = GAME_STATE.get("user_team")
     if not user_id:
         return
     user_won = winner_id == user_id
-    opp_id = loser_id if user_won else winner_id
+    opp_id   = loser_id if user_won else winner_id
     opp_team = GAME_STATE["teams"].get(opp_id, {})
     opp_name = opp_team.get("name", "l'adversaire")
     opp_abbr = opp_team.get("abbr", opp_name[:3].upper())
-    user_team = GAME_STATE["teams"].get(user_id, {})
-    wins = user_team.get("wins", 0)
-    losses = user_team.get("losses", 0)
+    user_team_obj = GAME_STATE["teams"].get(user_id, {})
+    wins     = user_team_obj.get("wins", 0)
+    losses   = user_team_obj.get("losses", 0)
     week_num = week or GAME_STATE.get("current_week", 0)
     duration = match_result.get("duration", 30)
-    phases = match_result.get("phases", [])
+    phases   = match_result.get("phases", [])
     gold_diff = abs(phases[-1].get("gold_diff", 0)) if phases else 0
 
+    streak_type, streak_count = _get_user_streak()
+    user_mvp  = _get_mvp_name(w_stats if user_won else l_stats)
+    mvp_mention = f" {user_mvp} a été exceptionnel." if user_mvp else ""
+
+    # Streak flavour snippets
+    if user_won and streak_count >= 3:
+        streak_note = f" {streak_count} victoires consécutives — l'élan est indéniable."
+    elif not user_won and streak_count >= 3:
+        streak_note = f" {streak_count} défaites de suite — la situation est préoccupante."
+    else:
+        streak_note = ""
+
+    total = wins + losses
+    wr = round(wins / total * 100) if total else 0
+    # Current position in standings
+    league_ids = [t["id"] for t in sorted(
+        GAME_STATE["teams"].values(),
+        key=lambda t: (-t.get("wins", 0), t.get("losses", 0))
+    )]
+    rank = (league_ids.index(user_id) + 1) if user_id in league_ids else "?"
+
     if user_won:
-        if gold_diff > 8000:
+        if gold_diff > 10000:
             board_pool = [
-                ("Direction Sportive", f"Victoire dominante contre {opp_name}",
-                 f"Excellente performance ce soir contre {opp_abbr}. La domination dans les lanes et la prise d'objectifs était exemplaire. Les sponsors sont ravis. Bilan actuel : {wins}V-{losses}D."),
-                ("Président", f"Félicitations — Semaine {week_num}",
-                 f"Victoire convaincante contre {opp_name}. L'organisation est fière. Les investisseurs suivent de près et ce niveau de jeu ne passe pas inaperçu. Classement : {wins}V-{losses}D."),
+                ("Direction Sportive", f"Victoire écrasante contre {opp_name}",
+                 f"Performance de grande classe ce soir contre {opp_abbr} en {duration}min (différence d'or : {gold_diff:,}).{mvp_mention} L'équipe est 1ère au classement si elle continue ainsi. Bilan : {wins}V-{losses}D."),
+                ("Président", f"Domination totale — Semaine {week_num}",
+                 f"Je n'ai pas grand-chose à dire, laissez le jeu parler de lui-même. {opp_abbr} n'a jamais eu le match en main.{mvp_mention} Bilan {wins}V-{losses}D — nous sommes #{rank}."),
+                ("Sponsor Principal", f"Nos partenaires sont conquis 🏆",
+                 f"La domination contre {opp_abbr} en {duration}min a généré un pic d'engagement record sur nos réseaux.{mvp_mention} Sponsors ravis. Bilan {wins}V-{losses}D."),
+            ]
+        elif streak_count >= 3 and streak_type == "win":
+            board_pool = [
+                ("Manager Général", f"Série de {streak_count} — Semaine {week_num}",
+                 f"Encore une victoire contre {opp_abbr} !{mvp_mention}{streak_note} Le groupe est en feu, continuons à capitaliser. #{rank} au classement, {wins}V-{losses}D."),
+                ("Direction Sportive", f"Série en cours — {streak_count} victoires consécutives",
+                 f"L'équipe confirme sa régularité.{mvp_mention} Victoire contre {opp_abbr} en {duration}min.{streak_note} #{rank} au classement avec {wins}V-{losses}D."),
             ]
         else:
             board_pool = [
                 ("Direction Sportive", f"Victoire acquise contre {opp_name}",
-                 f"Bonne victoire ce soir contre {opp_abbr}, même si le score aurait pu être plus net. L'essentiel est là. Bilan : {wins}V-{losses}D."),
+                 f"Bonne victoire contre {opp_abbr} en {duration}min.{mvp_mention} L'essentiel est là. #{rank} au classement — bilan {wins}V-{losses}D."),
                 ("Manager Général", f"Résultat positif — Semaine {week_num}",
-                 f"Victoire contre {opp_name} confirmée. Match serré par moments, mais l'équipe a su s'adapter. On reste sur la bonne trajectoire : {wins}V-{losses}D."),
+                 f"Victoire contre {opp_name} confirmée. Match équilibré mais bien géré.{mvp_mention} On reste sur la bonne trajectoire : {wins}V-{losses}D (#{rank})."),
+                ("Analyste Tactique", f"Post-match vs {opp_abbr} ✅",
+                 f"La lecture mid-game a fait la différence contre {opp_abbr}.{mvp_mention} {duration}min, match maîtrisé. Bilan {wins}V-{losses}D."),
             ]
         soloq_pool = [
             ("@LoLAnalyst_EU", f"Thread : {opp_abbr} battu ✅",
-             f"Performance solide ce soir. Vision control et pacing mid-game au top. La victoire en {duration}min montre une bonne lecture du jeu. #LoLEsports"),
-            ("LeagueFanatic42", f"Enfin une belle victoire !",
-             f"J'étais devant ma TV ce soir, c'était vraiment beau. Victoire contre {opp_abbr} en {duration}min — let's go ! 🔥"),
+             f"Performance solide ce soir. Vision control et pacing mid-game au top. La victoire en {duration}min montre une bonne lecture du jeu.{(' ' + user_mvp + ' MVP incontesté.') if user_mvp else ''} #LoLEsports"),
+            ("LeagueFanatic42", f"Quelle victoire contre {opp_abbr} !",
+             f"J'étais devant ma TV ce soir, c'était vraiment beau. Victoire en {duration}min{(' — ' + user_mvp + ' dominant') if user_mvp else ''} — let's go ! 🔥 {wins}V-{losses}D"),
             ("EsportsInsider", f"Analyse post-match vs {opp_abbr}",
-             f"Belle cohérence tactique ce soir. La victoire contre {opp_abbr} renforce la position au classement : {wins}V-{losses}D."),
+             f"Cohérence tactique notable ce soir. La victoire contre {opp_abbr} renforce la position au classement (#{rank}).{(' ' + user_mvp + ' en grande forme.') if user_mvp else ''} {wins}V-{losses}D"),
+            ("@ProScoutWatch", f"{opp_abbr} neutralisé — les chiffres",
+             f"Victoire en {duration}min contre {opp_abbr}.{(' ' + user_mvp + ' : KDA hors normes ce soir.') if user_mvp else ''} Le bilan {wins}V-{losses}D est solide. #Analytics"),
         ]
     else:
-        if losses > wins:
+        if streak_count >= 3 and streak_type == "loss":
+            board_pool = [
+                ("Président", f"URGENT — Série noire : {streak_count} défaites",
+                 f"Je ne peux plus rester silencieux. {streak_count} défaites consécutives dont ce soir contre {opp_abbr}. Bilan {wins}V-{losses}D (#{rank}). Une réunion de crise est convoquée."),
+                ("Manager Général", f"Crise de résultats — Action immédiate requise",
+                 f"La série de {streak_count} défaites (dernière contre {opp_abbr} en {duration}min) exige une réponse concrète. {wins}V-{losses}D. #{rank} au classement — les playoffs s'éloignent."),
+            ]
+        elif losses > wins:
             board_pool = [
                 ("Manager Général", f"Défaite préoccupante — URGENT",
-                 f"Cette défaite contre {opp_abbr} est difficile à accepter. Avec {wins}V-{losses}D, notre position devient critique. J'attends une réunion tactique avant le prochain match."),
-                ("Président", f"Réunion de crise demandée",
-                 f"Suite à la défaite contre {opp_name} et notre bilan ({wins}V-{losses}D), je souhaite un point de situation. Les investisseurs posent des questions."),
+                 f"Cette défaite contre {opp_abbr} est difficile à accepter. Avec {wins}V-{losses}D (#{rank}), notre position devient critique. Réunion tactique avant le prochain match."),
+                ("Président", f"Réunion de situation demandée",
+                 f"Suite à la défaite contre {opp_name} — bilan {wins}V-{losses}D, #{rank}. Les investisseurs s'interrogent. J'attends un retour d'analyse sous 48h."),
             ]
         else:
             board_pool = [
                 ("Direction Sportive", f"Défaite contre {opp_name} — Analyse requise",
-                 f"Défaite ce soir contre {opp_abbr} en {duration}min. Bilan toujours positif : {wins}V-{losses}D. Analysez les erreurs et revenez plus forts la semaine prochaine."),
+                 f"Défaite ce soir contre {opp_abbr} en {duration}min. Bilan toujours positif : {wins}V-{losses}D (#{rank}). Identifiez les erreurs et revenez plus forts."),
                 ("Manager Général", f"Retour sur la défaite — S{week_num}",
-                 f"Résultat décevant contre {opp_name}. Des lacunes visibles en mid-game. À corriger. Bilan : {wins}V-{losses}D — les points se rattrapent."),
+                 f"Résultat décevant contre {opp_name} en {duration}min. Des lacunes en mid-game. Bilan : {wins}V-{losses}D (#{rank}) — les points se rattrapent encore."),
+                ("Analyste Tactique", f"Points à corriger vs {opp_abbr}",
+                 f"Défaite en {duration}min contre {opp_abbr}. La gestion des objectifs a posé problème. À travailler avant le prochain match. Bilan : {wins}V-{losses}D."),
             ]
         soloq_pool = [
             ("@CriticalCoach", f"Analyse défaite vs {opp_abbr} 🔴",
-             f"Difficile à regarder ce soir. La défaite contre {opp_abbr} en {duration}min est symptomatique des problèmes récurrents. Vision control en mid-game catastrophique. #LoLEsports"),
+             f"Difficile à regarder ce soir. La défaite en {duration}min est symptomatique de problèmes récurrents. Vision control en mid-game à retravailler.{streak_note} #LoLEsports"),
             ("LoLFan_Frustrated", f"Qu'est-ce qui se passe ???",
-             f"Comment on perd contre {opp_abbr} comme ça... L'équipe doit se ressaisir. {wins}V-{losses}D c'est pas acceptable à ce niveau."),
+             f"Comment on perd contre {opp_abbr} comme ça en {duration}min... L'équipe doit se ressaisir.{streak_note} {wins}V-{losses}D c'est pas acceptable à ce niveau."),
             ("EsportsBetting", f"Post-match {opp_abbr} — Côtes révisées",
-             f"La défaite contre {opp_abbr} impacte les prévisions. Le bilan {wins}V-{losses}D place l'équipe dans une position délicate pour la suite."),
+             f"La défaite contre {opp_abbr} en {duration}min impacte les prévisions playoff. Le bilan {wins}V-{losses}D (#{rank}) place l'équipe dans une position délicate."),
+            ("@ProScoutWatch", f"Analyse froide : {opp_abbr} a dominé",
+             f"Pas grand-chose à sauver ce soir. {opp_abbr} a contrôlé le tempo en {duration}min.{streak_note} #{rank} au classement, {wins}V-{losses}D. #Analytics"),
         ]
 
     b = random.choice(board_pool)
