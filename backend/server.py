@@ -5537,8 +5537,14 @@ def _intl_sim(t1: dict, t2: dict, best_of: int, t1_boost: float = 0, t2_boost: f
     wn = (best_of + 1) // 2
     w1 = w2 = 0
     games = []
+    # Apply a per-series form variance to match the variability of calculate_team_power
+    # (international teams lack real moral/fatigue data, so we simulate it with small noise)
+    t1_form = random.gauss(0, 3.0)
+    t2_form = random.gauss(0, 3.0)
+    t1_power = max(30, min(100, t1["rating"] + t1_boost + t1_form))
+    t2_power = max(30, min(100, t2["rating"] + t2_boost + t2_form))
     while w1 < wn and w2 < wn:
-        r = simulate_match_phases(t1["rating"] + t1_boost, t2["rating"] + t2_boost)
+        r = simulate_match_phases(t1_power, t2_power)
         if r["winner"] == 1: w1 += 1
         else: w2 += 1
         games.append({"winner": t1["id"] if r["winner"] == 1 else t2["id"], "duration": r["duration"]})
