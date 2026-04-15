@@ -1,24 +1,45 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import { ArrowsClockwise, Globe, Trophy, Sword, GameController } from "@phosphor-icons/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowsClockwise, Globe, Trophy, Sword, GameController, Star } from "@phosphor-icons/react";
 import axios from "axios";
 import { API } from "../shared";
 import TeamLogo from "./TeamLogo";
 import DraftSystem from "./DraftSystem";
 
-const LEAGUE_FLAG = { LEC: "🇪🇺", LCK: "🇰🇷", LPL: "🇨🇳", LCS: "🇺🇸", CBLOL: "🇧🇷" };
+// ── League identity ────────────────────────────────────────────────────────────
+const LEAGUE_FLAG  = { LEC: "🇪🇺", LCK: "🇰🇷", LPL: "🇨🇳", LCS: "🇺🇸", CBLOL: "🇧🇷" };
+const LEAGUE_COLOR = { LEC: "#0BC4FA", LCK: "#FF0844", LPL: "#FF6B00", LCS: "#1DA1F2", CBLOL: "#00D65C" };
 
+// ── Design tokens (local) ──────────────────────────────────────────────────────
+const C = {
+  gold:      "#FFB800",
+  goldDim:   "rgba(255,184,0,.12)",
+  goldBorder:"rgba(255,184,0,.35)",
+  blue:      "#4FC3F7",
+  blueDim:   "rgba(79,195,247,.10)",
+  danger:    "#FF3366",
+  success:   "#00D65C",
+  surface:   "rgba(255,255,255,.04)",
+  surfaceHov:"rgba(255,255,255,.07)",
+  border:    "rgba(255,255,255,.09)",
+  borderSub: "rgba(255,255,255,.05)",
+  text:      "#E8ECF4",
+  muted:     "#687080",
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
 const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
-  const [intl, setIntl] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [simming, setSimming] = useState(null);
-  const [activeTab, setActiveTab] = useState(null);
+  const [intl,         setIntl]         = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState(null);
+  const [simming,      setSimming]      = useState(null);
+  const [activeTab,    setActiveTab]    = useState(null);
   const [simAllActive, setSimAllActive] = useState(false);
-  const [showDraft, setShowDraft] = useState(false);
+  const [showDraft,    setShowDraft]    = useState(false);
   const [draftMatchId, setDraftMatchId] = useState(null);
-  const [pendingDraft, setPendingDraft] = useState(null); // draft complété, en attente de lancer
+  const [pendingDraft, setPendingDraft] = useState(null);
 
+  // ── Data fetching ────────────────────────────────────────────────────────
   const fetchIntl = useCallback(async () => {
     setError(null);
     try {
@@ -42,7 +63,6 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
 
   useEffect(() => { fetchIntl(); }, [fetchIntl]);
 
-  // Auto-switch tab when stage changes
   useEffect(() => {
     if (!intl) return;
     const map = {
@@ -111,213 +131,281 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
 
   const uc = intl?.user_champ_id;
 
-  // ── Sub-components ─────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── Sub-components ──────────────────────────────────────────────────────────
 
-  const TeamSlot = ({ t, isWinner }) => {
+  // Team slot inside a match card
+  const TeamSlot = ({ t, isWinner, side }) => {
     if (!t) return (
-      <div style={{ textAlign: "center", minWidth: 64 }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--border)", margin: "0 auto" }} />
-        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>TBD</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1,
+        justifyContent: side === "right" ? "flex-end" : "flex-start" }}>
+        <div style={{ width: 34, height: 34, borderRadius: "50%",
+          background: C.surface, border: `1px solid ${C.border}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: C.muted, fontSize: 11 }}>?</div>
+        <span style={{ color: C.muted, fontSize: 12, fontWeight: 600 }}>TBD</span>
       </div>
     );
-    const isUser = t.id === uc;
+    const isUser  = t.id === uc;
+    const lColor  = LEAGUE_COLOR[t.league] || C.muted;
     return (
-      <div style={{ textAlign: "center", minWidth: 64 }}>
-        <TeamLogo teamId={t.id} abbr={t.abbr} size={32} noClick />
-        <div style={{ fontSize: 11, fontWeight: isUser ? 700 : 400, color: isUser ? "var(--secondary)" : "var(--text-primary)", marginTop: 3 }}>
-          {LEAGUE_FLAG[t.league] || ""} {t.abbr}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1,
+        justifyContent: side === "right" ? "flex-end" : "flex-start",
+        flexDirection: side === "right" ? "row-reverse" : "row" }}>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <TeamLogo teamId={t.id} abbr={t.abbr} size={34} noClick />
+          {isUser && (
+            <div style={{ position: "absolute", bottom: -2, right: -2,
+              width: 10, height: 10, borderRadius: "50%",
+              background: C.gold, border: "1px solid #000" }} />
+          )}
         </div>
-        {isUser && <div style={{ fontSize: 8, color: "var(--secondary)", fontWeight: 900, letterSpacing: 1 }}>▶ VOUS</div>}
-        {isWinner && <div style={{ fontSize: 10, color: "var(--success)", marginTop: 1 }}>✓</div>}
+        <div style={{ textAlign: side === "right" ? "right" : "left" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4,
+            flexDirection: side === "right" ? "row-reverse" : "row" }}>
+            <span style={{ fontSize: 13, fontWeight: isUser ? 800 : 600,
+              color: isUser ? C.gold : isWinner ? C.text : C.muted }}>
+              {t.abbr}
+            </span>
+            {isWinner && <span style={{ color: C.success, fontSize: 13 }}>✓</span>}
+          </div>
+          <div style={{ fontSize: 10, color: lColor, fontWeight: 600 }}>
+            {LEAGUE_FLAG[t.league] || ""} {t.league}
+          </div>
+        </div>
       </div>
     );
   };
 
+  // Match card — the main building block
   const MatchCard = ({ m, compact }) => {
     if (!m) return null;
-    const played = !!m.winner_id;
-    const locked = m.locked || !m.team1 || !m.team2;
-    const isUser = m.team1?.id === uc || m.team2?.id === uc;
-    const canSim = !played && !locked;
-    const t1win = played && m.winner_id === m.team1?.id;
-    const t2win = played && m.winner_id === m.team2?.id;
+    const played  = !!m.winner_id;
+    const locked  = m.locked || !m.team1 || !m.team2;
+    const isUser  = m.team1?.id === uc || m.team2?.id === uc;
+    const canSim  = !played && !locked;
+    const t1win   = played && m.winner_id === m.team1?.id;
+    const t2win   = played && m.winner_id === m.team2?.id;
+    const isSimming = simming === m.id;
+
+    const accentColor = locked ? C.border
+      : isUser && !played ? C.gold
+      : played ? C.border
+      : C.blue;
+
     return (
-      <div style={{
-        background: "var(--bg-dark)",
-        border: `1px solid ${locked ? "var(--border-subtle)" : isUser && !played ? "var(--secondary)" : played ? "var(--border-subtle)" : "var(--border)"}`,
-        borderRadius: 6, padding: compact ? "8px 10px" : "10px 14px", marginBottom: 6,
-        opacity: locked ? 0.4 : 1,
-      }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: "var(--text-secondary)", letterSpacing: 1.5, marginBottom: 8, textTransform: "uppercase", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ color: isUser && !played ? "var(--secondary)" : "var(--text-secondary)" }}>
+      <motion.div
+        layout
+        style={{
+          background: isUser && !played ? C.goldDim : C.surface,
+          border: `1px solid ${accentColor}`,
+          borderLeft: `3px solid ${accentColor}`,
+          borderRadius: 6,
+          padding: compact ? "8px 12px" : "10px 14px",
+          marginBottom: 6,
+          opacity: locked ? 0.4 : 1,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {isSimming && (
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2,
+            background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`,
+            animation: "shimmer 1.2s infinite" }} />
+        )}
+
+        {/* Round label + format */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+          marginBottom: 8, gap: 8 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+            color: isUser && !played ? C.gold : C.muted,
+            textTransform: "uppercase" }}>
             {isUser && !played ? "★ " : ""}{m.round}
           </span>
-          <span style={{ background: "var(--surface)", padding: "1px 5px", borderRadius: 2 }}>Bo{m.best_of}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color: C.muted,
+            background: "rgba(255,255,255,.06)", padding: "2px 6px", borderRadius: 3,
+            letterSpacing: 1 }}>
+            BO{m.best_of}
+          </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-            <TeamSlot t={m.team1} isWinner={t1win} />
+
+        {/* Teams + score */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <TeamSlot t={m.team1} isWinner={t1win} side="left" />
+
+          <div style={{ minWidth: 52, textAlign: "center", flexShrink: 0 }}>
+            {played ? (
+              <span className="font-stats" style={{ fontSize: compact ? 18 : 22, fontWeight: 900, letterSpacing: 2 }}>
+                <span style={{ color: t1win ? C.success : C.danger }}>{m.score1}</span>
+                <span style={{ color: C.muted, margin: "0 3px", fontSize: 14 }}>–</span>
+                <span style={{ color: t2win ? C.success : C.danger }}>{m.score2}</span>
+              </span>
+            ) : (
+              <span style={{ color: C.muted, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>VS</span>
+            )}
           </div>
-          <div style={{ minWidth: 50, textAlign: "center" }}>
-            {played
-              ? <span className="font-stats" style={{ fontSize: 22, fontWeight: 900 }}>
-                  <span style={{ color: t1win ? "var(--success)" : "var(--danger)" }}>{m.score1}</span>
-                  <span style={{ color: "var(--text-secondary)", margin: "0 2px" }}>-</span>
-                  <span style={{ color: t2win ? "var(--success)" : "var(--danger)" }}>{m.score2}</span>
-                </span>
-              : <span style={{ color: "var(--text-secondary)", fontSize: 14, fontWeight: 700 }}>VS</span>
-            }
-          </div>
-          <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-            <TeamSlot t={m.team2} isWinner={t2win} />
-          </div>
+
+          <TeamSlot t={m.team2} isWinner={t2win} side="right" />
         </div>
+
+        {/* Action buttons */}
         {canSim && (
-          <div style={{ marginTop: 8, display: "flex", justifyContent: "center", gap: 8 }}>
+          <div style={{ marginTop: 10, display: "flex", justifyContent: "center", gap: 6 }}>
             {isUser ? (
               draftMatchId === m.id && pendingDraft ? (
-                <button
-                  className="btn-primary"
-                  style={{ padding: "6px 16px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
+                <button onClick={() => simulate(m.id, pendingDraft)}
                   disabled={!!simming}
-                  onClick={() => simulate(m.id, pendingDraft)}
-                >
-                  <GameController size={14} /> Lancer le match
+                  style={btnStyle("gold")}>
+                  <GameController size={13} weight="bold" />
+                  Lancer le match
                 </button>
               ) : (
                 <>
-                  <button
-                    className="btn-secondary"
-                    style={{ padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
+                  <button onClick={() => { setDraftMatchId(m.id); setPendingDraft(null); setShowDraft(true); }}
                     disabled={!!simming || simAllActive}
-                    onClick={() => { setDraftMatchId(m.id); setPendingDraft(null); setShowDraft(true); }}
-                  >
-                    <Sword size={14} /> {draftMatchId === m.id ? "Redraft" : "Phase de Draft"}
+                    style={btnStyle("ghost")}>
+                    <Sword size={13} />
+                    {draftMatchId === m.id ? "Redraft" : "Draft"}
                   </button>
-                  <button
-                    className="btn-primary"
-                    style={{ padding: "6px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
+                  <button onClick={() => simulate(m.id)}
                     disabled={!!simming || simAllActive}
-                    onClick={() => simulate(m.id)}
-                  >
-                    <GameController size={14} /> Simuler
+                    style={btnStyle("primary")}>
+                    <GameController size={13} />
+                    Simuler
                   </button>
                 </>
               )
             ) : (
-              <button
-                className="btn-secondary"
-                style={{ padding: "6px 16px", fontSize: 12 }}
+              <button onClick={() => simulate(m.id)}
                 disabled={!!simming || simAllActive}
-                onClick={() => simulate(m.id)}
-              >
-                {simming === m.id ? "..." : "Simuler"}
+                style={btnStyle("ghost")}>
+                {isSimming ? <><ArrowsClockwise size={12} style={{ animation: "spin 1s linear infinite" }} /> Simulation...</> : "Simuler"}
               </button>
             )}
           </div>
         )}
-      </div>
+      </motion.div>
     );
   };
 
+  // Section header divider
+  const SectionHead = ({ label, done, color }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "14px 0 8px" }}>
+      <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2,
+        color: done ? C.success : color || C.blue,
+        textTransform: "uppercase", whiteSpace: "nowrap" }}>
+        {label}
+      </span>
+      {done && <span style={{ color: C.success, fontSize: 10 }}>✓</span>}
+      <div style={{ flex: 1, height: 1, background: C.borderSub }} />
+    </div>
+  );
+
+  // Column header (UB / LB)
   const ColHeader = ({ label, color }) => (
-    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: color || "var(--primary)", textTransform: "uppercase", borderBottom: `2px solid ${color || "var(--primary)"}`, paddingBottom: 5, marginBottom: 10 }}>
+    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2,
+      color: color || C.blue, textTransform: "uppercase",
+      borderBottom: `2px solid ${color || C.blue}`,
+      paddingBottom: 6, marginBottom: 10 }}>
       {label}
     </div>
   );
 
-  const RoundLabel = ({ label, done }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "10px 0 6px" }}>
-      <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: done ? "var(--success)" : "var(--text-secondary)", textTransform: "uppercase" }}>{label}</span>
-      {done && <span style={{ color: "var(--success)", fontSize: 9 }}>✓</span>}
-      <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
-    </div>
-  );
-
-  // ── User status strip ──────────────────────────────────────────────────────
+  // ── User status banner ──────────────────────────────────────────────────────
   const UserStatus = () => {
     if (!intl || !userTeam) return null;
-    const userTeamId = intl.user_team_id || userTeam.id;
 
-    // Spectator mode: user didn't qualify
     if (!intl.user_qualified) {
       return (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "var(--surface)", borderRadius: 4, marginBottom: 16, fontSize: 12 }}>
-          <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={20} noClick />
-          <span style={{ fontWeight: 700 }}>{userTeam.abbr}</span>
-          <span style={{ color: "var(--text-secondary)" }}>·</span>
-          <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>Non qualifié — Mode spectateur</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10,
+          padding: "8px 14px", background: C.surface,
+          border: `1px solid ${C.border}`, borderRadius: 6, marginBottom: 16 }}>
+          <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={22} noClick />
+          <span style={{ fontWeight: 700, fontSize: 13 }}>{userTeam.abbr}</span>
+          <span style={{ color: C.muted, fontSize: 12 }}>·</span>
+          <span style={{ fontSize: 12, color: C.muted }}>Non qualifié — Mode spectateur</span>
         </div>
       );
     }
 
-    let statusText = ""; let statusColor = "var(--text-secondary)";
+    let statusText = "En compétition";
+    let statusColor = C.blue;
+    let statusBg = C.blueDim;
+
     if (intl.type === "msi") {
       const pi = intl.play_in; const bk = intl.bracket;
       const inPI = pi.teams?.some(t => t.id === uc);
       const inPreseeded = bk.pre_seeded?.some(t => t.id === uc);
       const inBK = bk.teams?.some(t => t.id === uc);
-      if (intl.winner === uc)               { statusText = "🏆 Champion MSI 2026"; statusColor = "var(--secondary)"; }
-      else if (inBK && bk.completed)        { statusText = "Éliminé au Bracket"; statusColor = "var(--danger)"; }
-      else if (inBK || inPreseeded)         { statusText = "Bracket Stage — En compétition"; statusColor = "var(--primary)"; }
-      else if (pi.completed && inPI)        { statusText = "Éliminé en Play-In"; statusColor = "var(--danger)"; }
+      if (intl.winner === uc)               { statusText = "🏆 Champion MSI 2026!"; statusColor = C.gold; statusBg = C.goldDim; }
+      else if (inBK && bk.completed)        { statusText = "Éliminé au Bracket Stage"; statusColor = C.danger; statusBg = "rgba(255,51,102,.08)"; }
+      else if (inBK || inPreseeded)         { statusText = "Bracket Stage — En compétition"; }
+      else if (pi.completed && inPI)        { statusText = "Éliminé en Play-In"; statusColor = C.danger; statusBg = "rgba(255,51,102,.08)"; }
       else if (inPI)                        { statusText = "Play-In — En compétition"; }
-      else                                  { statusText = "En compétition"; }
     } else {
       const sw = intl.swiss; const ko = intl.knockout;
       const swTeam = sw.teams?.find(t => t.id === uc);
       const inPreQ = sw.pre_qualified?.some(t => t.id === uc);
       const inKO   = ko.teams?.some(t => t.id === uc);
       const inPI   = intl.play_in?.teams?.some(t => t.id === uc);
-      if (intl.winner === uc)              { statusText = "🏆 Champion Worlds 2026"; statusColor = "var(--secondary)"; }
-      else if (inKO && ko.completed)       { statusText = "Éliminé au Knockout"; statusColor = "var(--danger)"; }
-      else if (inKO)                       { statusText = "Knockout Stage — En compétition"; statusColor = "var(--primary)"; }
-      else if (swTeam?.sw_eliminated)      { statusText = `Éliminé (Swiss ${swTeam.sw_wins}W-${swTeam.sw_losses}L)`; statusColor = "var(--danger)"; }
-      else if (swTeam?.sw_advanced)        { statusText = `Qualifié pour le Knockout ✓ (${swTeam.sw_wins}W)`; statusColor = "var(--success)"; }
-      else if (swTeam || inPreQ)           { statusText = swTeam ? `Swiss Stage — ${swTeam.sw_wins}W · ${swTeam.sw_losses}L` : "Swiss Stage — En compétition"; }
-      else if (intl.play_in.completed && inPI) { statusText = "Éliminé en Play-In"; statusColor = "var(--danger)"; }
+      if (intl.winner === uc)              { statusText = "🏆 Champion Worlds 2026!"; statusColor = C.gold; statusBg = C.goldDim; }
+      else if (inKO && ko.completed)       { statusText = "Éliminé au Knockout"; statusColor = C.danger; statusBg = "rgba(255,51,102,.08)"; }
+      else if (inKO)                       { statusText = "Knockout Stage — En compétition"; }
+      else if (swTeam?.sw_eliminated)      { statusText = `Éliminé en Swiss (${swTeam.sw_wins}W-${swTeam.sw_losses}L)`; statusColor = C.danger; statusBg = "rgba(255,51,102,.08)"; }
+      else if (swTeam?.sw_advanced)        { statusText = `Swiss Stage — Qualifié ✓ (${swTeam.sw_wins}W)`; statusColor = C.success; statusBg = "rgba(0,214,92,.08)"; }
+      else if (swTeam || inPreQ)           { statusText = swTeam ? `Swiss Stage — ${swTeam.sw_wins}W · ${swTeam.sw_losses}L` : "Swiss Stage"; }
+      else if (intl.play_in.completed && inPI) { statusText = "Éliminé en Play-In"; statusColor = C.danger; statusBg = "rgba(255,51,102,.08)"; }
       else if (inPI)                       { statusText = "Play-In — En compétition"; }
-      else                                 { statusText = "En compétition"; }
     }
+
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "var(--surface)", borderRadius: 4, marginBottom: 16, fontSize: 12 }}>
-        <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={20} noClick />
-        <span style={{ fontWeight: 700 }}>{userTeam.abbr}</span>
-        <span style={{ color: "var(--text-secondary)" }}>·</span>
-        <span style={{ fontWeight: 600, color: statusColor }}>{statusText}</span>
-      </div>
+      <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+        style={{ display: "flex", alignItems: "center", gap: 10,
+          padding: "8px 14px", background: statusBg,
+          border: `1px solid ${statusColor}40`, borderRadius: 6, marginBottom: 16 }}>
+        <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={24} noClick />
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <span style={{ fontWeight: 800, fontSize: 12, color: C.text }}>{userTeam.name || userTeam.abbr}</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: statusColor }}>{statusText}</span>
+        </div>
+      </motion.div>
     );
   };
 
-  // ── MSI Play-In ────────────────────────────────────────────────────────────
+  // ── MSI Play-In ─────────────────────────────────────────────────────────────
   const renderMSIPlayIn = () => {
     const ms = intl.play_in.matches || {};
     return (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <div>
-          <ColHeader label="Upper Bracket" color="var(--primary)" />
-          <RoundLabel label="UB Round 1" done={ms.pi_ub1?.winner_id && ms.pi_ub2?.winner_id} />
+          <ColHeader label="Upper Bracket" color={C.blue} />
+          <SectionHead label="UB Round 1" done={ms.pi_ub1?.winner_id && ms.pi_ub2?.winner_id} />
           <MatchCard m={ms.pi_ub1} />
           <MatchCard m={ms.pi_ub2} />
-          <RoundLabel label="UB Final" done={!!ms.pi_ubf?.winner_id} />
+          <SectionHead label="UB Final" done={!!ms.pi_ubf?.winner_id} />
           <MatchCard m={ms.pi_ubf} />
         </div>
         <div>
-          <ColHeader label="Lower Bracket" color="var(--danger)" />
-          <RoundLabel label="LB Round 1" done={!!ms.pi_lb1?.winner_id} />
+          <ColHeader label="Lower Bracket" color={C.danger} />
+          <SectionHead label="LB Round 1" done={!!ms.pi_lb1?.winner_id} color={C.danger} />
           <MatchCard m={ms.pi_lb1} />
-          <RoundLabel label="LB Final" done={!!ms.pi_lbf?.winner_id} />
+          <SectionHead label="LB Final" done={!!ms.pi_lbf?.winner_id} color={C.danger} />
           <MatchCard m={ms.pi_lbf} />
         </div>
       </div>
     );
   };
 
-  // ── MSI Bracket ────────────────────────────────────────────────────────────
+  // ── MSI Bracket ─────────────────────────────────────────────────────────────
   const renderMSIBracket = () => {
     const bm = intl.bracket.matches || {};
     if (Object.keys(bm).length === 0)
-      return <div style={{ textAlign: "center", padding: 48, color: "var(--text-secondary)" }}>En attente de la fin du Play-In...</div>;
+      return (
+        <div style={{ textAlign: "center", padding: "48px 0", color: C.muted }}>
+          <Globe size={36} style={{ marginBottom: 12, opacity: .4 }} />
+          <div style={{ fontSize: 13 }}>En attente de la fin du Play-In...</div>
+        </div>
+      );
     const ubR1Done = ["ub1_1","ub1_2","ub1_3","ub1_4"].every(id => bm[id]?.winner_id);
     const ubSFDone = bm.ub2_1?.winner_id && bm.ub2_2?.winner_id;
     const lbR1Done = bm.lb1_1?.winner_id && bm.lb1_2?.winner_id;
@@ -326,35 +414,36 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
       <div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div>
-            <ColHeader label="Upper Bracket" color="var(--primary)" />
-            <RoundLabel label="UB Round 1" done={ubR1Done} />
-            <MatchCard m={bm.ub1_1} compact />
-            <MatchCard m={bm.ub1_2} compact />
-            <MatchCard m={bm.ub1_3} compact />
-            <MatchCard m={bm.ub1_4} compact />
-            <RoundLabel label="UB Semis" done={ubSFDone} />
-            <MatchCard m={bm.ub2_1} />
-            <MatchCard m={bm.ub2_2} />
-            <RoundLabel label="UB Final" done={!!bm.ubf?.winner_id} />
+            <ColHeader label="Upper Bracket" color={C.blue} />
+            <SectionHead label="Round 1" done={ubR1Done} />
+            <MatchCard m={bm.ub1_1} compact /> <MatchCard m={bm.ub1_2} compact />
+            <MatchCard m={bm.ub1_3} compact /> <MatchCard m={bm.ub1_4} compact />
+            <SectionHead label="Demi-finales" done={ubSFDone} />
+            <MatchCard m={bm.ub2_1} /> <MatchCard m={bm.ub2_2} />
+            <SectionHead label="UB Final" done={!!bm.ubf?.winner_id} />
             <MatchCard m={bm.ubf} />
           </div>
           <div>
-            <ColHeader label="Lower Bracket" color="var(--danger)" />
-            <RoundLabel label="LB Round 1" done={lbR1Done} />
-            <MatchCard m={bm.lb1_1} compact />
-            <MatchCard m={bm.lb1_2} compact />
-            <RoundLabel label="LB Quarterfinal" done={lbQFDone} />
-            <MatchCard m={bm.lb2_1} compact />
-            <MatchCard m={bm.lb2_2} compact />
-            <RoundLabel label="LB Semifinal" done={!!bm.lb3?.winner_id} />
+            <ColHeader label="Lower Bracket" color={C.danger} />
+            <SectionHead label="Round 1" done={lbR1Done} color={C.danger} />
+            <MatchCard m={bm.lb1_1} compact /> <MatchCard m={bm.lb1_2} compact />
+            <SectionHead label="Quarts de finale" done={lbQFDone} color={C.danger} />
+            <MatchCard m={bm.lb2_1} compact /> <MatchCard m={bm.lb2_2} compact />
+            <SectionHead label="Demi-finale" done={!!bm.lb3?.winner_id} color={C.danger} />
             <MatchCard m={bm.lb3} />
-            <RoundLabel label="LB Final" done={!!bm.lbf?.winner_id} />
+            <SectionHead label="LB Final" done={!!bm.lbf?.winner_id} color={C.danger} />
             <MatchCard m={bm.lbf} />
           </div>
         </div>
-        <div style={{ maxWidth: 420, margin: "20px auto 0" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: "var(--secondary)", textAlign: "center", borderBottom: "2px solid var(--secondary)", paddingBottom: 6, marginBottom: 10, textTransform: "uppercase" }}>
-            Grande Finale
+        {/* Grand Final */}
+        <div style={{ maxWidth: 460, margin: "24px auto 0" }}>
+          <div style={{ textAlign: "center", marginBottom: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 3,
+              color: C.gold, textTransform: "uppercase",
+              background: C.goldDim, padding: "4px 14px", borderRadius: 12,
+              border: `1px solid ${C.goldBorder}` }}>
+              ★ Grande Finale ★
+            </span>
           </div>
           <MatchCard m={bm.gf} />
         </div>
@@ -362,74 +451,102 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     );
   };
 
-  // ── Worlds Play-In ─────────────────────────────────────────────────────────
+  // ── Worlds Play-In ──────────────────────────────────────────────────────────
   const renderWorldsPlayIn = () => (
-    <div style={{ maxWidth: 440, margin: "0 auto" }}>
-      <div style={{ fontSize: 12, color: "var(--text-secondary)", textAlign: "center", marginBottom: 16 }}>
-        1 place qualificative pour le Swiss Stage (16 équipes)
+    <div style={{ maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <span style={{ fontSize: 11, color: C.muted }}>
+          1 place qualificative pour le Swiss Stage (16 équipes)
+        </span>
       </div>
       <MatchCard m={intl.play_in.match} />
     </div>
   );
 
-  // ── Worlds Swiss ───────────────────────────────────────────────────────────
+  // ── Worlds Swiss ────────────────────────────────────────────────────────────
   const renderWorldsSwiss = () => {
     const sw = intl.swiss;
     const rounds = sw.rounds || [];
     const curRound = rounds[rounds.length - 1];
-    const curMs = curRound ? Object.values(curRound.matches) : [];
-    const teams = sw.teams ? [...sw.teams].sort((a, b) => b.sw_wins - a.sw_wins || a.sw_losses - b.sw_losses) : [];
+    const curMs    = curRound ? Object.values(curRound.matches) : [];
+    const teams    = sw.teams ? [...sw.teams].sort((a, b) => b.sw_wins - a.sw_wins || a.sw_losses - b.sw_losses) : [];
     return (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
+        {/* Standings */}
         <div>
-          <ColHeader label="Classement" color="var(--text-secondary)" />
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th style={{ padding: "3px 6px", textAlign: "left", fontWeight: 600 }}>#</th>
-                <th style={{ padding: "3px 6px", textAlign: "left", fontWeight: 600 }}>Équipe</th>
-                <th style={{ padding: "3px 6px", textAlign: "center", fontWeight: 600, color: "var(--success)" }}>W</th>
-                <th style={{ padding: "3px 6px", textAlign: "center", fontWeight: 600, color: "var(--danger)" }}>L</th>
-                <th style={{ padding: "3px 6px", textAlign: "center", fontWeight: 600 }}>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teams.map((t, i) => {
-                const isUser = t.id === uc;
-                let statusEl = <span style={{ color: "var(--text-secondary)", fontSize: 10 }}>—</span>;
-                if (t.sw_advanced)   statusEl = <span style={{ color: "var(--success)",  fontSize: 10, fontWeight: 700 }}>Q ✓</span>;
-                if (t.sw_eliminated) statusEl = <span style={{ color: "var(--danger)",   fontSize: 10, fontWeight: 700 }}>E ✗</span>;
-                return (
-                  <tr key={t.id} style={{ borderBottom: "1px solid var(--border-subtle)", background: isUser ? "rgba(255,184,0,0.05)" : "transparent" }}>
-                    <td style={{ padding: "5px 6px", color: "var(--text-secondary)", fontSize: 11 }}>{i + 1}</td>
-                    <td style={{ padding: "5px 6px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                        <TeamLogo teamId={t.id} abbr={t.abbr} size={16} noClick />
-                        <span style={{ fontWeight: isUser ? 700 : 400, color: isUser ? "var(--secondary)" : "var(--text-primary)" }}>
-                          {LEAGUE_FLAG[t.league] || ""} {t.abbr}
-                        </span>
+          <ColHeader label="Classement Swiss" color={C.muted} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {teams.map((t, i) => {
+              const isUser   = t.id === uc;
+              const lColor   = LEAGUE_COLOR[t.league] || C.muted;
+              const advanced = t.sw_advanced;
+              const elim     = t.sw_eliminated;
+              const maxGames = 5;
+              const winPct   = (t.sw_wins / maxGames) * 100;
+              const lossPct  = (t.sw_losses / maxGames) * 100;
+              return (
+                <div key={t.id} style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "6px 10px", borderRadius: 5,
+                  background: isUser ? C.goldDim : advanced ? "rgba(0,214,92,.05)" : elim ? "rgba(255,51,102,.04)" : C.surface,
+                  border: `1px solid ${isUser ? C.goldBorder : advanced ? "rgba(0,214,92,.15)" : elim ? "rgba(255,51,102,.12)" : C.borderSub}`,
+                  opacity: elim ? 0.55 : 1,
+                }}>
+                  <span style={{ fontSize: 11, color: C.muted, width: 16, textAlign: "right", flexShrink: 0 }}>{i+1}</span>
+                  <TeamLogo teamId={t.id} abbr={t.abbr} size={20} noClick />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: isUser ? 800 : 600,
+                        color: isUser ? C.gold : C.text, overflow: "hidden",
+                        textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {t.abbr}
+                      </span>
+                      <span style={{ fontSize: 9, color: lColor, flexShrink: 0 }}>{LEAGUE_FLAG[t.league]}</span>
+                    </div>
+                    {/* W/L bar */}
+                    <div style={{ height: 3, borderRadius: 2, overflow: "hidden",
+                      background: "rgba(255,255,255,.06)", marginTop: 3 }}>
+                      <div style={{ display: "flex", height: "100%" }}>
+                        <div style={{ width: `${winPct}%`, background: C.success, transition: "width .4s" }} />
+                        <div style={{ width: `${lossPct}%`, background: C.danger, transition: "width .4s" }} />
                       </div>
-                    </td>
-                    <td style={{ padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "var(--success)" }}>{t.sw_wins}</td>
-                    <td style={{ padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "var(--danger)" }}>{t.sw_losses}</td>
-                    <td style={{ padding: "5px 6px", textAlign: "center" }}>{statusEl}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.success }}>{t.sw_wins}</span>
+                    <span style={{ fontSize: 12, color: C.muted }}>–</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.danger }}>{t.sw_losses}</span>
+                  </div>
+                  <div style={{ width: 18, textAlign: "center", flexShrink: 0 }}>
+                    {advanced && <span style={{ fontSize: 11, color: C.success }}>Q</span>}
+                    {elim     && <span style={{ fontSize: 11, color: C.danger }}>E</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Current round matches */}
         <div>
           {curRound && (
             <>
-              <ColHeader label={`Round ${curRound.round} / 5${curRound.completed ? " ✓" : ""}`} color={curRound.completed ? "var(--success)" : "var(--primary)"} />
+              <ColHeader
+                label={`Round ${curRound.round} / 5${curRound.completed ? " ✓" : ""}`}
+                color={curRound.completed ? C.success : C.blue}
+              />
               {curMs.map(m => <MatchCard key={m.id} m={m} />)}
             </>
           )}
           {sw.completed && (
             <div style={{ textAlign: "center", padding: "32px 0" }}>
-              <div style={{ color: "var(--success)", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Swiss Stage terminé ✓</div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{sw.advanced?.length || 0} équipes qualifiées pour le Knockout</div>
+              <div style={{ fontSize: 20, marginBottom: 6 }}>🏆</div>
+              <div style={{ color: C.success, fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+                Swiss Stage terminé
+              </div>
+              <div style={{ fontSize: 12, color: C.muted }}>
+                {sw.advanced?.length || 0} équipes qualifiées pour le Knockout Stage
+              </div>
             </div>
           )}
         </div>
@@ -437,28 +554,30 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     );
   };
 
-  // ── Worlds Knockout ────────────────────────────────────────────────────────
+  // ── Worlds Knockout ─────────────────────────────────────────────────────────
   const renderWorldsKnockout = () => {
     const km = intl.knockout.matches || {};
     const qfDone = ["qf1","qf2","qf3","qf4"].every(id => km[id]?.winner_id);
-    const sfDone  = km.sf1?.winner_id && km.sf2?.winner_id;
+    const sfDone = km.sf1?.winner_id && km.sf2?.winner_id;
     return (
       <div>
-        <RoundLabel label="Quarts de finale" done={qfDone} />
+        <SectionHead label="Quarts de finale" done={qfDone} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 4 }}>
-          <MatchCard m={km.qf1} />
-          <MatchCard m={km.qf3} />
-          <MatchCard m={km.qf2} />
-          <MatchCard m={km.qf4} />
+          <MatchCard m={km.qf1} /> <MatchCard m={km.qf3} />
+          <MatchCard m={km.qf2} /> <MatchCard m={km.qf4} />
         </div>
-        <RoundLabel label="Demi-finales" done={sfDone} />
+        <SectionHead label="Demi-finales" done={sfDone} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 4 }}>
-          <MatchCard m={km.sf1} />
-          <MatchCard m={km.sf2} />
+          <MatchCard m={km.sf1} /> <MatchCard m={km.sf2} />
         </div>
-        <div style={{ maxWidth: 420, margin: "20px auto 0" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: "var(--secondary)", textAlign: "center", borderBottom: "2px solid var(--secondary)", paddingBottom: 6, marginBottom: 10, textTransform: "uppercase" }}>
-            Grande Finale
+        <div style={{ maxWidth: 460, margin: "24px auto 0" }}>
+          <div style={{ textAlign: "center", marginBottom: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 3,
+              color: C.gold, textTransform: "uppercase",
+              background: C.goldDim, padding: "4px 14px", borderRadius: 12,
+              border: `1px solid ${C.goldBorder}` }}>
+              ★ Grande Finale ★
+            </span>
           </div>
           <MatchCard m={km.gf} />
         </div>
@@ -466,39 +585,59 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     );
   };
 
-  // ── Winner banner ──────────────────────────────────────────────────────────
+  // ── Winner banner ────────────────────────────────────────────────────────────
   const renderWinner = () => {
     if (!intl?.completed) return null;
     const allTeams = intl.type === "msi"
       ? [...(intl.bracket?.teams || []), ...(intl.play_in?.teams || [])]
-      : [...(intl.knockout?.teams || []), ...(intl.play_in?.teams || [])];
+      : [...(intl.knockout?.teams || []), ...(intl.play_in?.teams || []),
+         ...(intl.swiss?.teams || [])];
     const wt = allTeams.find(t => t.id === intl.winner);
+    const isUserWinner = wt?.id === uc;
+    const lColor = wt ? (LEAGUE_COLOR[wt.league] || C.muted) : C.muted;
+
     return (
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-        style={{ textAlign: "center", padding: "24px 0 20px", borderBottom: "1px solid var(--border)", marginBottom: 20 }}>
-        <Trophy size={48} weight="fill" style={{ color: "var(--secondary)", marginBottom: 8 }} />
-        <div className="font-heading" style={{ fontSize: 22, color: "var(--secondary)", marginBottom: 10 }}>
-          Champion — {intl.name} 2026
-        </div>
-        {wt && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, padding: "10px 20px", background: "var(--surface)", borderRadius: 8 }}>
-            <TeamLogo teamId={wt.id} abbr={wt.abbr} size={44} noClick />
-            <div style={{ textAlign: "left" }}>
-              <div className="font-heading" style={{ fontSize: 18 }}>{wt.name}</div>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{LEAGUE_FLAG[wt.league] || ""} {wt.league}</div>
-            </div>
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+        style={{
+          background: isUserWinner
+            ? `linear-gradient(135deg, rgba(255,184,0,.15) 0%, rgba(255,184,0,.04) 100%)`
+            : `linear-gradient(135deg, rgba(79,195,247,.08) 0%, rgba(79,195,247,.02) 100%)`,
+          border: `1px solid ${isUserWinner ? C.goldBorder : "rgba(79,195,247,.2)"}`,
+          borderRadius: 8, padding: "20px 24px", marginBottom: 20,
+          display: "flex", alignItems: "center", gap: 20,
+        }}>
+        <Trophy size={44} weight="fill"
+          style={{ color: isUserWinner ? C.gold : C.blue, flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2,
+            color: isUserWinner ? C.gold : C.blue, textTransform: "uppercase", marginBottom: 4 }}>
+            Champion — {intl.name} 2026
           </div>
-        )}
-        {wt?.id === uc && (
-          <div style={{ marginTop: 12, display: "inline-block", padding: "6px 18px", background: "rgba(255,184,0,.15)", border: "1px solid var(--secondary)", borderRadius: 20, color: "var(--secondary)", fontWeight: 700, fontSize: 13 }}>
-            🎉 Votre équipe est championne !
+          {wt ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <TeamLogo teamId={wt.id} abbr={wt.abbr} size={40} noClick />
+              <div>
+                <div className="font-heading" style={{ fontSize: 20, color: C.text }}>{wt.name}</div>
+                <div style={{ fontSize: 12, color: lColor, fontWeight: 600 }}>
+                  {LEAGUE_FLAG[wt.league] || ""} {wt.league}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        {isUserWinner && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            <Star size={20} weight="fill" style={{ color: C.gold }} />
+            <span style={{ fontSize: 11, fontWeight: 800, color: C.gold, textAlign: "center", letterSpacing: .5 }}>
+              Votre équipe<br />est championne !
+            </span>
           </div>
         )}
       </motion.div>
     );
   };
 
-  // ── Tab content dispatcher ─────────────────────────────────────────────────
+  // ── Tab + content ────────────────────────────────────────────────────────────
   const isMSI = intl?.type === "msi";
   const tabs = isMSI
     ? [
@@ -519,12 +658,12 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
       if (activeTab === "playin")  return renderWorldsPlayIn();
       if (activeTab === "swiss") {
         if (!intl.play_in.completed)
-          return <div style={{ textAlign: "center", padding: 48, color: "var(--text-secondary)" }}>En attente de la fin du Play-In...</div>;
+          return <EmptyState label="En attente de la fin du Play-In..." />;
         return renderWorldsSwiss();
       }
       if (activeTab === "knockout") {
         if (!intl.swiss?.completed)
-          return <div style={{ textAlign: "center", padding: 48, color: "var(--text-secondary)" }}>En attente du Swiss Stage...</div>;
+          return <EmptyState label="En attente du Swiss Stage..." />;
         return renderWorldsKnockout();
       }
     }
@@ -533,21 +672,24 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
 
   const pendingCount = intl ? collectPending(intl).length : 0;
 
-  // ── Loading / error states ─────────────────────────────────────────────────
+  // ── Loading / error / draft overlay ─────────────────────────────────────────
   if (loading) return (
     <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div style={{ color: "var(--text-secondary)", fontSize: 15 }}>Chargement du tournoi...</div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+        <ArrowsClockwise size={28} style={{ color: C.blue, animation: "spin 1.2s linear infinite" }} />
+        <span style={{ color: C.muted, fontSize: 13 }}>Chargement du tournoi...</span>
+      </div>
     </motion.div>
   );
 
   if (error) return (
     <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="card" style={{ textAlign: "center", padding: 48, maxWidth: 360 }}>
-        <Globe size={40} style={{ color: "var(--text-secondary)", marginBottom: 12 }} />
-        <div style={{ color: "var(--danger)", marginBottom: 20, fontSize: 14 }}>{error}</div>
-        <button className="btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={fetchIntl}>
-          <ArrowsClockwise size={14} />
-          Réessayer
+      <div style={{ background: "var(--bg-dark)", border: `1px solid ${C.border}`,
+        borderRadius: 8, padding: "40px 48px", textAlign: "center", maxWidth: 360 }}>
+        <Globe size={36} style={{ color: C.muted, marginBottom: 12 }} />
+        <div style={{ color: C.danger, marginBottom: 20, fontSize: 13 }}>{error}</div>
+        <button style={btnStyle("ghost")} onClick={fetchIntl}>
+          <ArrowsClockwise size={13} /> Réessayer
         </button>
       </div>
     </motion.div>
@@ -555,84 +697,190 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
 
   if (!intl) return null;
 
-  if (showDraft) {
-    return (
-      <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <DraftSystem
-          champions={champions}
-          matchId={null}
-          onComplete={(completed) => {
-            setShowDraft(false);
-            setPendingDraft({
-              picks: completed.user_picks || [],
-              bans: completed.user_bans || [],
-              enemy_picks: completed.enemy_picks || [],
-              enemy_bans: completed.enemy_bans || [],
-            });
-          }}
-          onCancel={() => setShowDraft(false)}
-        />
-      </motion.div>
-    );
-  }
+  if (showDraft) return (
+    <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <DraftSystem
+        champions={champions}
+        matchId={null}
+        onComplete={(completed) => {
+          setShowDraft(false);
+          setPendingDraft({
+            picks: completed.user_picks || [],
+            bans:  completed.user_bans  || [],
+            enemy_picks: completed.enemy_picks || [],
+            enemy_bans:  completed.enemy_bans  || [],
+          });
+        }}
+        onCancel={() => setShowDraft(false)}
+      />
+    </motion.div>
+  );
+
+  // ── MAIN RENDER ──────────────────────────────────────────────────────────────
+  const tourneyColor = isMSI ? C.blue : C.gold;
+  const stageLabel   = {
+    play_in:   "Play-In",
+    bracket:   "Bracket Stage",
+    swiss:     "Swiss Stage",
+    knockout:  "Knockout Stage",
+    completed: "Terminé",
+  }[intl.stage] || intl.stage;
 
   return (
     <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-        style={{ background: "var(--bg-dark)", width: "95%", maxWidth: 900, maxHeight: "90vh", borderRadius: 6, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          background: "var(--bg-dark)",
+          width: "95%", maxWidth: 920, maxHeight: "90vh",
+          borderRadius: 8, display: "flex", flexDirection: "column",
+          overflow: "hidden",
+          border: `1px solid ${C.border}`,
+          boxShadow: `0 24px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04)`,
+        }}>
 
-        {/* Header */}
-        <div style={{ padding: "16px 24px 12px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-          <Globe size={22} style={{ color: "var(--secondary)" }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: "var(--secondary)", textTransform: "uppercase", marginBottom: 2 }}>
-              Tournoi International
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <div style={{
+          padding: "0 0 0 0",
+          flexShrink: 0,
+          background: `linear-gradient(135deg, rgba(10,12,24,1) 0%, rgba(14,20,40,1) 100%)`,
+          borderBottom: `1px solid ${C.border}`,
+          position: "relative", overflow: "hidden",
+        }}>
+          {/* Decorative glow */}
+          <div style={{ position: "absolute", top: -40, right: -40,
+            width: 160, height: 160, borderRadius: "50%",
+            background: `${tourneyColor}18`, filter: "blur(40px)", pointerEvents: "none" }} />
+
+          <div style={{ position: "relative", padding: "14px 20px 12px",
+            display: "flex", alignItems: "center", gap: 14 }}>
+
+            {/* Tournament badge */}
+            <div style={{
+              width: 44, height: 44, borderRadius: 8, flexShrink: 0,
+              background: `linear-gradient(135deg, ${tourneyColor}22, ${tourneyColor}08)`,
+              border: `1px solid ${tourneyColor}40`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {isMSI
+                ? <Globe size={22} style={{ color: tourneyColor }} />
+                : <Trophy size={22} weight="fill" style={{ color: tourneyColor }} />
+              }
             </div>
-            <h2 className="font-heading" style={{ fontSize: 20, margin: 0 }}>{intl.name} 2026</h2>
+
+            {/* Title block */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3,
+                color: tourneyColor, textTransform: "uppercase", marginBottom: 1 }}>
+                Tournoi International 2026
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                <h2 className="font-heading" style={{ fontSize: 20, margin: 0, color: C.text }}>
+                  {intl.name}
+                </h2>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: tourneyColor,
+                  background: `${tourneyColor}18`, padding: "2px 8px", borderRadius: 10,
+                  border: `1px solid ${tourneyColor}30`,
+                }}>
+                  {stageLabel}
+                </span>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              {!intl.completed && pendingCount > 0 && (
+                <button onClick={simulateAll}
+                  disabled={simAllActive || !!simming}
+                  style={btnStyle("ghost", simAllActive)}>
+                  <ArrowsClockwise size={13}
+                    style={{ animation: simAllActive ? "spin 1s linear infinite" : "none" }} />
+                  {simAllActive ? "Simulation..." : `Simuler tout (${pendingCount})`}
+                </button>
+              )}
+              {intl.completed && (
+                <button onClick={onComplete} style={btnStyle("gold")}>
+                  Continuer →
+                </button>
+              )}
+            </div>
           </div>
-          {!intl.completed && pendingCount > 0 && (
-            <button className="btn-secondary"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 14px", flexShrink: 0 }}
-              disabled={simAllActive || !!simming}
-              onClick={simulateAll}
-            >
-              <ArrowsClockwise size={13} />
-              Simuler tout ({pendingCount})
-            </button>
-          )}
-          {intl.completed && (
-            <button className="btn-primary" style={{ fontSize: 13, padding: "8px 20px", flexShrink: 0 }} onClick={onComplete}>
-              Continuer →
-            </button>
-          )}
         </div>
 
-        {/* Tab bar */}
-        <div style={{ display: "flex", borderBottom: "1px solid var(--border)", paddingLeft: 12, flexShrink: 0 }}>
-          {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: "9px 16px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
-                background: "transparent", outline: "none",
-                borderBottom: activeTab === tab.id ? "2px solid var(--primary)" : "2px solid transparent",
-                color: activeTab === tab.id ? "var(--primary)" : tab.done ? "var(--success)" : "var(--text-secondary)",
+        {/* ── Tab bar ─────────────────────────────────────────────────────── */}
+        <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`,
+          paddingLeft: 8, background: "rgba(0,0,0,.2)", flexShrink: 0 }}>
+          {tabs.map(tab => {
+            const active = activeTab === tab.id;
+            return (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+                padding: "10px 18px", fontSize: 12, fontWeight: 700,
+                border: "none", cursor: "pointer", background: "transparent",
+                outline: "none", letterSpacing: .5,
+                borderBottom: active ? `2px solid ${C.blue}` : "2px solid transparent",
+                color: active ? C.blue : tab.done ? C.success : C.muted,
                 marginBottom: -1, transition: "color .15s",
               }}>
-              {tab.label}{tab.done ? " ✓" : ""}
-            </button>
-          ))}
+                {tab.done ? "✓ " : ""}{tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Body */}
-        <div style={{ padding: "16px 24px 28px", flex: 1, overflowY: "auto" }}>
+        {/* ── Body ────────────────────────────────────────────────────────── */}
+        <div style={{ padding: "16px 20px 28px", flex: 1, overflowY: "auto" }}>
           <UserStatus />
           {renderWinner()}
-          {renderTabContent()}
+          <AnimatePresence mode="wait">
+            <motion.div key={activeTab}
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
+              {renderTabContent()}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
       </motion.div>
+
+      {/* Inline keyframes */}
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes shimmer {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </motion.div>
   );
 };
+
+// ── Shared button factory ──────────────────────────────────────────────────────
+function btnStyle(variant, disabled) {
+  const base = {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "7px 14px", fontSize: 12, fontWeight: 700,
+    borderRadius: 5, cursor: disabled ? "not-allowed" : "pointer",
+    border: "1px solid", letterSpacing: .5,
+    transition: "opacity .15s", opacity: disabled ? .5 : 1,
+    outline: "none",
+  };
+  if (variant === "gold") return { ...base,
+    background: "rgba(255,184,0,.15)", borderColor: "rgba(255,184,0,.4)", color: "#FFB800" };
+  if (variant === "primary") return { ...base,
+    background: "rgba(79,195,247,.12)", borderColor: "rgba(79,195,247,.3)", color: "#4FC3F7" };
+  return { ...base,
+    background: "rgba(255,255,255,.04)", borderColor: "rgba(255,255,255,.1)", color: "#687080" };
+}
+
+// ── Empty state ────────────────────────────────────────────────────────────────
+function EmptyState({ label }) {
+  return (
+    <div style={{ textAlign: "center", padding: "48px 0", color: "#687080" }}>
+      <Globe size={32} style={{ marginBottom: 10, opacity: .3 }} />
+      <div style={{ fontSize: 13 }}>{label}</div>
+    </div>
+  );
+}
 
 export default InternationalModal;
