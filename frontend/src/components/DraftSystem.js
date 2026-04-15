@@ -332,7 +332,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
               border: "1px solid var(--border-subtle)",
               borderRadius: 2
             }}>
-              {filteredChampions.map(champ => {
+              {visibleChampions.map(champ => {
                 const ddKey = toDDragonKey(champ.name);
                 const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${ddKey}.png`;
                 const unavailable = isUnavailable(champ.name);
