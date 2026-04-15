@@ -5337,6 +5337,8 @@ async def advance_to_next_split():
     update_meta_from_split_stats()
     GAME_STATE["champion_stats"] = {}
     GAME_STATE["total_games_played"] = 0
+    # Clear the completed international tournament so the next split starts fresh
+    GAME_STATE["international"] = None
     generate_schedule()
     save_state()
 
