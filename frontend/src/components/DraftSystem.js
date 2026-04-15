@@ -382,6 +382,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                     <img
                       src={imgUrl}
                       alt={champ.name}
+                      loading="lazy"
                       onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.nextSibling.style.display = "block"; }}
                       style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 2, display: "block", margin: "0 auto 2px" }}
                     />
