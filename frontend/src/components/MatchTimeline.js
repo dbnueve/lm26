@@ -5,9 +5,9 @@ import { _ddVersion, toDDragonKey } from "./ddHelpers";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const SPEEDS = [
-  { label: "1×", ms: 1400 },
-  { label: "2×", ms: 650 },
-  { label: "4×", ms: 280 },
+  { label: "1×", ms: 2400 },
+  { label: "2×", ms: 1100 },
+  { label: "4×", ms: 450 },
 ];
 
 const PHASE_ICON = { "Early Game": "🌅", "Mid Game": "⚔️", "Late Game": "🏰" };
