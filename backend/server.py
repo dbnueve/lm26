@@ -2551,7 +2551,13 @@ def _match_loser(match: dict) -> str:
 def start_playoffs():
     """Initialize playoffs bracket (6-team default, 10-team for LPL)."""
     teams = list(GAME_STATE["teams"].values())
-    teams.sort(key=lambda t: (-t["wins"], t["losses"]))
+    # Tiebreaker: wins (desc), losses (asc), head-to-head wins (desc), then stable team id
+    h2h = GAME_STATE.get("head_to_head", {})
+    def _sort_key(t):
+        tid = t["id"]
+        h2h_wins = sum(1 for opp_id, record in h2h.get(tid, {}).items() if record.get("wins", 0) > record.get("losses", 0))
+        return (-t.get("wins", 0), t.get("losses", 0), -h2h_wins, tid)
+    teams.sort(key=_sort_key)
     n = _playoffs_qualifier_count()
     qualified = [t["id"] for t in teams[:n]]
 
