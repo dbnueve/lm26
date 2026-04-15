@@ -5226,6 +5226,65 @@ def _simulate_intl_week(week: int):
     )
 
 
+# ── Youth scouting report ─────────────────────────────────────────────────────
+
+_POS_ICON = {"TOP": "🛡️", "JUNGLE": "🌲", "MID": "⚡", "ADC": "🏹", "SUPPORT": "💊"}
+
+
+def _generate_youth_scouting_report(week: int):
+    """Periodic scouting report highlighting top young prospects from the ERL pool."""
+    user_id = GAME_STATE.get("user_team")
+    if not user_id:
+        return
+    user_league = GAME_STATE.get("league", "LEC")
+    erl = GAME_STATE.get("erl_players", {})
+    if not erl:
+        return
+
+    # Select top prospects: young (≤22), high potential, not already on user roster
+    user_roster_ids = set(GAME_STATE["teams"].get(user_id, {}).get("roster", []))
+    prospects = [
+        p for p in erl.values()
+        if p.get("age", 99) <= 22
+        and p.get("potential", 0) >= 75
+        and p["id"] not in user_roster_ids
+    ]
+    if not prospects:
+        prospects = [p for p in erl.values() if p.get("age", 99) <= 23 and p["id"] not in user_roster_ids]
+    if not prospects:
+        return
+
+    # Sort by potential desc, pick top 5
+    prospects.sort(key=lambda p: (-p.get("potential", 0), p.get("age", 99)))
+    top = prospects[:5]
+
+    lines = [f"Rapport de scouting — Semaine {week}", ""]
+    lines.append("Les talents suivants méritent votre attention pour le prochain mercato :\n")
+    for p in top:
+        icon = _POS_ICON.get(p.get("position", "MID"), "⭐")
+        nat  = p.get("nationality", "")
+        age  = p.get("age", "?")
+        rat  = p.get("rating", "?")
+        pot  = p.get("potential", "?")
+        team = p.get("current_team") or p.get("league") or "Free Agent"
+        pos  = p.get("position", "?")
+        lines.append(
+            f"{icon} {p.get('name','?')} ({nat}, {age} ans) — {pos}\n"
+            f"   Rating {rat} · Potentiel {pot} · {team}"
+        )
+
+    # Flavour notes
+    notes = [
+        "\nCes joueurs sont disponibles via la fenêtre de transferts en offseason.",
+        "\nSuivez leur progression — certains pourraient franchir un palier dès le prochain split.",
+        "\nNote : les transferts sur ces profils seront plus accessibles financièrement que des joueurs établis.",
+    ]
+    lines.append(random.choice(notes))
+
+    body = "\n".join(lines)
+    _add_inbox_message("board", "Cellule de Recrutement", f"Rapport jeunes talents — Semaine {week}", body, week)
+
+
 # ── Transfer recap ────────────────────────────────────────────────────────────
 
 def _generate_transfer_recap_message():
