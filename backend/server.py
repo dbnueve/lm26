@@ -3291,7 +3291,11 @@ async def simulate_match(request: SimulateMatchRequest):
         if GAME_STATE["current_week"] > 9 and GAME_STATE["phase"] == "regular":
             start_playoffs()
         elif GAME_STATE["phase"] == "regular":
-            _generate_weekly_board_message(GAME_STATE["current_week"])
+            new_week = GAME_STATE["current_week"]
+            _generate_weekly_board_message(new_week)
+            # Youth scouting report at weeks 3 and 7
+            if new_week in (3, 7):
+                _generate_youth_scouting_report(new_week)
 
     GAME_STATE["draft_state"] = {
         "step": 0,
