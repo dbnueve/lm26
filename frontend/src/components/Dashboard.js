@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Trophy, Calendar, GameController, Play } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
 import TeamLogo from "./TeamLogo";
 import PlayerCard from "./PlayerCard";
 import PlayerDetailModal from "./PlayerDetailModal";
