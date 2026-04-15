@@ -521,7 +521,10 @@ function App() {
               await loadUserTeam(gameState.userTeam);
               await loadSplitStatus(gameState.userTeam);
             }}
-            onSplitEnd={() => loadSplitStatus(gameState.userTeam)}
+            onSplitEnd={async () => {
+              setActivePlayoffMatch(null);
+              await loadSplitStatus(gameState.userTeam);
+            }}
           />
         )}
       </AnimatePresence>
