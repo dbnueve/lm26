@@ -306,7 +306,8 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
                       <button className="btn-secondary" style={{ marginTop: 10, width: "100%" }}
                         onClick={async () => {
                           setOfferAmount(negotiationResult.counter_offer.amount);
-                          const playerToSwap = userTeam.players.find(p => p.position === selectedPlayer.position);
+                          const playerToSwap = userTeam.players.find(p => p.position === selectedPlayer.position && p.is_starter)
+                            || userTeam.players.find(p => p.position === selectedPlayer.position);
                           const result = await onMakeOffer(selectedPlayer.id, negotiationResult.counter_offer.amount, contractYears, playerToSwap?.id, true);
                           setNegotiationResult(result);
                           if (result.accepted) setSelectedPlayer(null);
