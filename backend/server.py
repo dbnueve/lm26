@@ -1836,6 +1836,7 @@ def apply_match_result_updates(
 
     # Post-match training reset: form_bonus decays, training slot reopens + auto-plan
     user_team_id = GAME_STATE.get("user_team")
+    budget_fallback_players = []
     for tid in (winner_id, loser_id):
         team = GAME_STATE["teams"].get(tid, {})
         for pid in team.get("roster", []):
@@ -1845,7 +1846,23 @@ def apply_match_result_updates(
                 p["training_done_this_week"] = False
                 # Auto-apply recurring plan for user's team
                 if tid == user_team_id and p.get("training_plan"):
-                    _execute_training_plan(p, team)
+                    intended = p["training_plan"]
+                    applied = _execute_training_plan(p, team)
+                    if applied == "rest" and intended != "rest":
+                        budget_fallback_players.append(p.get("name", "Joueur"))
+
+    # Notify user if budget fallback occurred for any player
+    if budget_fallback_players:
+        names = ", ".join(budget_fallback_players)
+        _add_inbox_message(
+            "board",
+            "Manager Financier",
+            "Budget insuffisant — entraînement réduit",
+            f"Budget insuffisant cette semaine pour {names}. "
+            f"Leur programme a été remplacé par du repos. "
+            f"Rechargez votre budget pour reprendre les sessions prévues.",
+            week,
+        )
 
     return elo_summary
 
