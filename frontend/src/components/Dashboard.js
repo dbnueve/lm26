@@ -8,13 +8,8 @@ import PlayerCard from "./PlayerCard";
 import PlayerDetailModal from "./PlayerDetailModal";
 
 // Dashboard Component
-const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, onPlayMatch, onPlayPlayoffMatch, onSeasonStart }) => {
-  const [playoffsData, setPlayoffsData] = useState(null);
+const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, playoffsData, onPlayMatch, onPlayPlayoffMatch, onSeasonStart }) => {
   const [detailPlayer, setDetailPlayer] = useState(null);
-
-  useEffect(() => {
-    axios.get(API + "/playoffs").then(r => setPlayoffsData(r.data)).catch(() => {});
-  }, []);
 
   const nextRegularMatch = useMemo(() =>
     schedule.find(m => !m.played && (m.team1 === userTeam.id || m.team2 === userTeam.id)),
