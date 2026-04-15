@@ -166,9 +166,9 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
 
   const lastEntry = history && history.length > 0 ? history[history.length - 1] : null;
 
-  // Detect user's league from other_regions (most reliable) or fall back to label parsing
-  const userLeague = Object.keys(other_regions || {}).find(lg => other_regions[lg]?.is_user_league)
-    || splitStatus.current_split?.label?.match(/\b(LEC|LCK|LPL|LCS|CBLOL)\b/)?.[0]
+  // Detect user's league — prefer explicit field, then other_regions flag, then team data
+  const userLeague = splitStatus.league
+    || Object.keys(other_regions || {}).find(lg => other_regions[lg]?.is_user_league)
     || userTeam?.league || "LEC";
 
   // Replace "LEC" in backend labels with the real league name
