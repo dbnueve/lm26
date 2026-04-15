@@ -4712,11 +4712,28 @@ def get_roster_changes_preview(user_team_id: str, next_split_data: dict) -> list
     return changes
 
 def _simulate_league_champion(league_name: str, season: int, split_number: int) -> dict | None:
-    """Simulate a deterministic champion for a given league using team ratings."""
+    """Return the champion (1st place) for a given league.
+
+    Priority:
+    1. intl_standings (already simulated this season) — consistent with MSI/Worlds bracket
+    2. Deterministic random fallback based on team ratings
+    """
     import random as _rng
     teams = LEAGUES_DATA.get(league_name, {}).get("teams", [])
     if not teams:
         return None
+
+    # Use intl_standings if available — keeps split-end overlay consistent with MSI/Worlds seeds
+    intl_table = GAME_STATE.get("intl_standings", {}).get(league_name)
+    if intl_table:
+        sorted_table = sorted(intl_table, key=lambda x: (-x["wins"], x["losses"]))
+        if sorted_table:
+            abbr_map = {t.get("abbr", "").upper(): t for t in teams}
+            top_team = abbr_map.get(sorted_table[0]["team"].upper())
+            if top_team:
+                return {"id": top_team["id"], "name": top_team["name"], "abbr": top_team["abbr"]}
+
+    # Fallback: deterministic random weighted by rating
     seed = hash((league_name, season, split_number)) & 0xFFFFFFFF
     rnd = _rng.Random(seed)
     weights = [t.get("rating", 50) ** 2 for t in teams]
