@@ -128,8 +128,10 @@ def save_state():
         return
     try:
         path = get_save_path(ACTIVE_SLOT)
-        with open(path, "w", encoding="utf-8") as f:
+        tmp = path.with_suffix(".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(GAME_STATE, f)
+        tmp.replace(path)  # atomic on same filesystem — prevents corruption on crash
         _WORKER_STATE_MTIME = path.stat().st_mtime
     except Exception as e:
         logging.error(f"Failed to save slot {ACTIVE_SLOT}: {e}")
