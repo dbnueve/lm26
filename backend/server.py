@@ -5208,13 +5208,24 @@ def _simulate_intl_week(week: int):
             table[loser]["losses"] += 1
 
         # Sort by wins desc, then losses asc
+        prev_leader = table[0]["team"] if table else None
         table.sort(key=lambda x: (-x["wins"], x["losses"]))
+        new_leader  = table[0]["team"] if table else None
 
         top5 = table[:5]
         lines = [f"{flag} {league_id}"]
         for i, row in enumerate(top5):
             medal = ["🥇", "🥈", "🥉", "4.", "5."][i]
             lines.append(f"  {medal} {row['team']:<8} {row['wins']}V-{row['losses']}D")
+
+        # Narrative highlight
+        if new_leader and prev_leader and new_leader != prev_leader:
+            lines.append(f"  ⚡ {new_leader} prend la tête — {prev_leader} détrôné.")
+        elif new_leader and table[0]["wins"] >= 4:
+            lines.append(f"  🔥 {new_leader} en grande forme ({table[0]['wins']}V-{table[0]['losses']}D).")
+        elif len(table) >= 2 and table[0]["wins"] == table[1]["wins"]:
+            lines.append(f"  ⚖️ {table[0]['team']} et {table[1]['team']} à égalité en tête.")
+
         blocks.append("\n".join(lines))
 
     if not blocks:
