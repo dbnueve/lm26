@@ -607,25 +607,20 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
             </div>
           )}
 
-          {phase === "timeline" && matchResult?.match_details && (() => {
-            // Toujours afficher userTeam à gauche (team1) et l'adversaire à droite (team2)
-            const md = matchResult.match_details;
-            const uStats = isTeam1 ? (md.team1_stats || []) : (md.team2_stats || []);
-            const oStats = isTeam1 ? (md.team2_stats || []) : (md.team1_stats || []);
-            return (
-              <MatchTimeline
-                phases={md.phases || []}
-                events={md.events || []}
-                team1Abbr={userTeam.abbr}
-                team2Abbr={opponentTeam?.abbr}
-                team1Stats={uStats}
-                team2Stats={oStats}
-                duration={md.duration}
-                winnerTeam={matchResult.winner === userTeam.id ? 1 : 2}
-                onContinue={() => setPhase("result")}
-              />
-            );
-          })()}
+          {phase === "timeline" && matchResult?.match_details && (
+            <MatchTimeline
+              phases={matchResult.match_details.phases || []}
+              events={matchResult.match_details.events || []}
+              team1Abbr={isTeam1 ? userTeam.abbr : opponentTeam?.abbr}
+              team2Abbr={isTeam1 ? opponentTeam?.abbr : userTeam.abbr}
+              team1Stats={matchResult.match_details.team1_stats || []}
+              team2Stats={matchResult.match_details.team2_stats || []}
+              duration={matchResult.match_details.duration}
+              winnerTeam={matchResult.match_details.winner}
+              userIsTeam1={isTeam1}
+              onContinue={() => setPhase("result")}
+            />
+          )}
 
           {phase === "result" && matchResult?.match_details && renderScoreboard()}
         </div>
