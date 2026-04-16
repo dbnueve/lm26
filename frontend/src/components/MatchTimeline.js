@@ -292,17 +292,7 @@ const MatchTimeline = ({
             <div style={{ fontSize: 10, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
               {rightAbbr}
             </div>
-            <AnimatePresence mode="popLayout">
-              <motion.div
-                key={rightKills}
-                initial={{ scale: 1.5, color: "#f87171" }}
-                animate={{ scale: 1, color: "var(--danger)" }}
-                transition={{ duration: 0.3 }}
-                style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}
-              >
-                {rightKills}
-              </motion.div>
-            </AnimatePresence>
+            <KillCounter value={rightKills} color="var(--danger)" />
           </div>
 
         </div>
