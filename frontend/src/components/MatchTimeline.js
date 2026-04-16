@@ -34,6 +34,44 @@ function calcNote(p, duration, won) {
   return Math.round((kdaScore + csScore + (won ? 2.0 : 0.0)) * 10) / 10;
 }
 
+// ── KillCounter : compte progressivement de prev → value ─────────────────────
+function KillCounter({ value, color }) {
+  const [displayed, setDisplayed] = useState(0);
+  const timerRef   = useRef(null);
+  const currentRef = useRef(0);
+
+  useEffect(() => {
+    const target = value;
+    if (currentRef.current === target) return;
+
+    // Nettoyer l'animation précédente
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    const diff = target - currentRef.current;
+    if (diff <= 0) { currentRef.current = target; setDisplayed(target); return; }
+
+    // ~800ms max total, min 40ms par kill
+    const ms = Math.max(40, Math.min(120, 800 / diff));
+
+    timerRef.current = setInterval(() => {
+      currentRef.current += 1;
+      setDisplayed(currentRef.current);
+      if (currentRef.current >= target) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }, ms);
+
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <span style={{ fontSize: 44, fontWeight: 800, lineHeight: 1, color }}>
+      {displayed}
+    </span>
+  );
+}
+
 function buildObjectives(ph) {
   const items = [];
   if (ph.first_blood)  items.push({ label: "First Blood", team: ph.first_blood });
