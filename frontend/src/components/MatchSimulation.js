@@ -611,6 +611,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
             <MatchTimeline
               phases={matchResult.match_details.phases || []}
               events={matchResult.match_details.events || []}
+              goldTimeline={matchResult.match_details.gold_timeline || []}
               team1Abbr={isTeam1 ? userTeam.abbr : opponentTeam?.abbr}
               team2Abbr={isTeam1 ? opponentTeam?.abbr : userTeam.abbr}
               team1Stats={matchResult.match_details.team1_stats || []}
