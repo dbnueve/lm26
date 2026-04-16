@@ -1758,6 +1758,8 @@ def generate_detailed_events(phases: list, team1_stats: list, team2_stats: list,
             last_drake_min = drake_min
 
     # ── Early kills (~25% of remaining) ─────────────────────────────────────
+    # Aucun kill ne peut précéder le first blood
+    early_kill_start = fb_min_f + 0.1
     remaining = sum(_sum_budget(kills_budget[t]) for t in (1, 2))
     early_target = max(0, int(round(total_kills_game * 0.22)) - 1)  # -1 for first_blood
     for _ in range(min(early_target, remaining)):
@@ -1768,7 +1770,7 @@ def generate_detailed_events(phases: list, team1_stats: list, team2_stats: list,
         t = random.choices([1, 2], weights=[max(1, t1_left), max(1, t2_left)])[0]
         if _sum_budget(kills_budget[t]) == 0:
             t = 3 - t
-        add_kill(random.uniform(3.5, 13.8), t, "kill")
+        add_kill(random.uniform(early_kill_start, 13.8), t, "kill")
 
     # ── Mid objectives ──────────────────────────────────────────────────────
     if len(phases) >= 2:
