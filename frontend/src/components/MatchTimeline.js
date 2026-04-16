@@ -410,12 +410,12 @@ const MatchTimeline = ({
               />
             </div>
 
-            {/* Label gold diff */}
+            {/* Label gold diff permanent */}
             <div style={{
               fontSize: 10, color: "var(--text-secondary)",
               marginTop: 3, minHeight: 14,
             }}>
-              {goldDiff > 800 && (
+              {goldDiff > 200 ? (
                 <span>
                   <span style={{
                     fontWeight: 700,
@@ -425,6 +425,8 @@ const MatchTimeline = ({
                   </span>
                   {" "}+{(goldDiff / 1000).toFixed(1)}k gold
                 </span>
+              ) : (
+                <span>Égalité</span>
               )}
             </div>
           </div>
