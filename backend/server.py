@@ -1877,12 +1877,23 @@ def generate_detailed_events(phases: list, team1_stats: list, team2_stats: list,
                 last_ev["type"] = label
                 k_name = last_ev.get("killer") or ""
                 k_champ = last_ev.get("killer_champion") or ""
-                last_ev["description"] = (
-                    f"DOUBLE KILL — {k_name} ({k_champ}) !" if label == "double_kill" else
-                    f"TRIPLE KILL — {k_name} ({k_champ}) !" if label == "triple_kill" else
-                    f"QUADRA KILL — {k_name} ({k_champ}) !!" if label == "quadra_kill" else
-                    f"PENTAKILL — {k_name} ({k_champ}) !!!"
-                )
+                # Collecter les victimes de tous les kills du streak
+                victims_parts = []
+                for idx in streak_idx:
+                    v = events[idx].get("victim") or ""
+                    vc = events[idx].get("victim_champion") or ""
+                    if v:
+                        victims_parts.append(f"{v} ({vc})" if vc else v)
+                victims_str = ", ".join(victims_parts)
+                killed_suffix = f" — tue {victims_str}" if victims_str else ""
+                prefix = {
+                    "double_kill": "DOUBLE KILL",
+                    "triple_kill": "TRIPLE KILL",
+                    "quadra_kill": "QUADRA KILL",
+                    "penta_kill":  "PENTAKILL",
+                }[label]
+                bang = "!!!" if label == "penta_kill" else ("!!" if label == "quadra_kill" else "!")
+                last_ev["description"] = f"{prefix} — {k_name} ({k_champ}){killed_suffix}{bang}"
             i = (streak_idx[-1] if streak_idx else i) + 1
         else:
             i += 1
