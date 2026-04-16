@@ -440,25 +440,6 @@ const MatchTimeline = ({
           </div>
         </div>
 
-        {/* Phase badge */}
-        {currentPhase && (
-          <div style={{
-            textAlign: "center",
-            marginTop: 6,
-            fontSize: 11,
-            color: "var(--text-secondary)",
-          }}>
-            {{ "Early Game": "🌅", "Mid Game": "⚔️", "Late Game": "🏰" }[currentPhase.name] || "📍"}{" "}
-            <span style={{ fontWeight: 600 }}>{currentPhase.name}</span>
-            {currentPhase.gold_diff > 0 && (
-              <span style={{
-                marginLeft: 8, color: tc(currentPhase.advantage), fontWeight: 700,
-              }}>
-                {tn(currentPhase.advantage)} +{(currentPhase.gold_diff / 1000).toFixed(1)}k
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
       {/* ── Contrôles ─────────────────────────────────────────────────── */}
