@@ -253,17 +253,7 @@ const MatchTimeline = ({
             <div style={{ fontSize: 10, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
               {leftAbbr}
             </div>
-            <AnimatePresence mode="popLayout">
-              <motion.div
-                key={leftKills}
-                initial={{ scale: 1.5, color: "#4ade80" }}
-                animate={{ scale: 1, color: "var(--primary)" }}
-                transition={{ duration: 0.3 }}
-                style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}
-              >
-                {leftKills}
-              </motion.div>
-            </AnimatePresence>
+            <KillCounter value={leftKills} color="var(--primary)" />
           </div>
 
           {/* Centre : barre gold bicolore */}
