@@ -149,7 +149,7 @@ const MatchTimeline = ({
     const incs = items.map(() => [0, 0]);
     let rem1 = tK1, rem2 = tK2;
 
-    // First blood
+    // First blood : +1 kill à l'équipe qui l'obtient
     items.forEach((it, i) => {
       if (it._kind === "event" && it.type === "first_blood") {
         if (it.team === 1) { incs[i][0] += 1; rem1 = Math.max(0, rem1 - 1); }
@@ -157,21 +157,24 @@ const MatchTimeline = ({
       }
     });
 
-    // Teamfights
-    const tf1 = items.map((it, i) =>
-      (it._kind === "event" && it.type === "teamfight" && it.team === 1) ? i : -1
-    ).filter(x => x >= 0);
-    const tf2 = items.map((it, i) =>
-      (it._kind === "event" && it.type === "teamfight" && it.team === 2) ? i : -1
-    ).filter(x => x >= 0);
+    // Teamfights : distribuer les kills des DEUX équipes sur TOUS les teamfights
+    // (même quand une équipe domine, l'adversaire a quand même quelques kills)
+    const allTF = items
+      .map((it, i) => (it._kind === "event" && it.type === "teamfight") ? i : -1)
+      .filter(x => x >= 0);
 
-    if (tf1.length) {
-      const per = Math.floor(rem1 / tf1.length);
-      tf1.forEach((idx, i) => { incs[idx][0] += i === tf1.length - 1 ? rem1 - per * i : per; });
-    }
-    if (tf2.length) {
-      const per = Math.floor(rem2 / tf2.length);
-      tf2.forEach((idx, i) => { incs[idx][1] += i === tf2.length - 1 ? rem2 - per * i : per; });
+    if (allTF.length > 0) {
+      const per1 = Math.floor(rem1 / allTF.length);
+      const per2 = Math.floor(rem2 / allTF.length);
+      allTF.forEach((idx, i) => {
+        const last = i === allTF.length - 1;
+        incs[idx][0] += last ? rem1 - per1 * i : per1;
+        incs[idx][1] += last ? rem2 - per2 * i : per2;
+      });
+    } else {
+      // Pas de teamfight : vider les kills restants sur le dernier item
+      const lastIdx = items.length - 1;
+      if (lastIdx >= 0) { incs[lastIdx][0] += rem1; incs[lastIdx][1] += rem2; }
     }
 
     return { tl: items, killIncs: incs, totalK1: tK1, totalK2: tK2 };
