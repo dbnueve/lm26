@@ -1745,12 +1745,17 @@ def generate_detailed_events(phases: list, team1_stats: list, team2_stats: list,
     add_kill(fb_min_f, fb_team, "first_blood")
 
     # ── Early objectives ────────────────────────────────────────────────────
+    # Tracker pour respecter le spawn timer des drakes (≥ 4 min d'écart)
+    last_drake_min: float = 0.0
+
     if phases:
         ph1 = phases[0]
         if ph1.get("first_tower") in (1, 2):
             add_obj(random.uniform(8, 13.5), ph1["first_tower"], "first_tower", "Première tour détruite")
         if ph1.get("first_drake") in (1, 2):
-            add_obj(random.uniform(6, 13.5), ph1["first_drake"], "drake", "Premier Drake sécurisé")
+            drake_min = random.uniform(5.0, 9.5)
+            add_obj(drake_min, ph1["first_drake"], "drake", "Premier Drake sécurisé")
+            last_drake_min = drake_min
 
     # ── Early kills (~25% of remaining) ─────────────────────────────────────
     remaining = sum(_sum_budget(kills_budget[t]) for t in (1, 2))
@@ -1775,11 +1780,26 @@ def generate_detailed_events(phases: list, team1_stats: list, team2_stats: list,
             n = towers.get(tn) or towers.get(str(tn)) or 0
             for _ in range(int(n)):
                 add_obj(random.uniform(14, 24.6), tn, "tower", "Tour détruite")
+
+        # Drakes mid-game : respecter ≥ 4 min entre chaque spawn
+        DRAKE_MIN_GAP = 4.0  # minutes
         drakes = ph2.get("drakes") or {}
+        # Flatten en liste ordonnée (peu importe l'équipe) pour assigner les timestamps
+        drake_entries: list[tuple[int, int]] = []  # (team_num, drake_index)
         for tn in (1, 2):
             n = drakes.get(tn) or drakes.get(str(tn)) or 0
-            for _ in range(int(n)):
-                add_obj(random.uniform(12, 24.5), tn, "drake", "Drake sécurisé")
+            for i in range(int(n)):
+                drake_entries.append((tn, i))
+        # Trier aléatoirement pour mélanger les équipes
+        random.shuffle(drake_entries)
+        for tn_d, _ in drake_entries:
+            earliest = max(last_drake_min + DRAKE_MIN_GAP, 12.0)
+            latest   = 24.5
+            if earliest >= latest:
+                earliest = latest - 0.5
+            drake_min = random.uniform(earliest, latest)
+            add_obj(drake_min, tn_d, "drake", "Drake sécurisé")
+            last_drake_min = drake_min
 
     # ── Mid kills (~45%) ────────────────────────────────────────────────────
     mid_target = int(round(total_kills_game * 0.45))
