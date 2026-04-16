@@ -1602,6 +1602,340 @@ def generate_kill_totals(duration: int, team1_won: bool):
     return (w_kills, l_kills) if team1_won else (l_kills, w_kills)
 
 
+def generate_detailed_events(phases: list, team1_stats: list, team2_stats: list,
+                              duration: int, winner: int, base_events: list) -> tuple[list, list]:
+    """
+    Build a dense, chronologically-ordered event timeline + per-minute gold snapshots
+    consistent with phases and team stats.
+
+    Returns:
+        (events, gold_timeline)
+        events: list of dicts {time "MM:SS", type, team, description, [killer, victim, ...]}
+        gold_timeline: list of dicts {minute, g1, g2}
+    """
+    events: list[dict] = []
+
+    # ── Kill / death budgets (by team-number and position) ──────────────────
+    kills_budget = {
+        1: {p["position"]: int(p.get("kills", 0)) for p in team1_stats},
+        2: {p["position"]: int(p.get("kills", 0)) for p in team2_stats},
+    }
+    deaths_budget = {
+        1: {p["position"]: int(p.get("deaths", 0)) for p in team1_stats},
+        2: {p["position"]: int(p.get("deaths", 0)) for p in team2_stats},
+    }
+    players = {
+        1: {p["position"]: p for p in team1_stats},
+        2: {p["position"]: p for p in team2_stats},
+    }
+
+    def _sum_budget(budget_team: dict) -> int:
+        return sum(budget_team.values())
+
+    def pick_weighted(budget_team: dict):
+        pool = [(pos, v) for pos, v in budget_team.items() if v > 0]
+        if not pool:
+            return None
+        positions, weights = zip(*pool)
+        return random.choices(positions, weights=weights)[0]
+
+    def pinfo(team: int, pos: str) -> dict:
+        return players[team].get(pos, {}) if pos else {}
+
+    def mmss(minute_f: float) -> tuple[str, int]:
+        mm = max(0, int(minute_f))
+        ss = max(0, min(59, int((minute_f - mm) * 60)))
+        return f"{mm}:{ss:02d}", mm * 60 + ss
+
+    def add_kill(minute_f: float, team: int, evt_type: str = "kill"):
+        """Append a kill-type event, consuming from the budgets. Returns the event or None."""
+        killer_pos = pick_weighted(kills_budget[team])
+        if not killer_pos:
+            return None
+        victim_pos = pick_weighted(deaths_budget[3 - team])
+        kills_budget[team][killer_pos] -= 1
+        if victim_pos:
+            deaths_budget[3 - team][victim_pos] -= 1
+
+        k = pinfo(team, killer_pos)
+        v = pinfo(3 - team, victim_pos) if victim_pos else {}
+        k_name = k.get("player_name") or killer_pos
+        k_champ = k.get("champion") or killer_pos
+        v_name = v.get("player_name") or ""
+        v_champ = v.get("champion") or ""
+
+        if evt_type == "first_blood":
+            desc = (f"First Blood ! {k_name} ({k_champ}) élimine {v_name}"
+                    + (f" ({v_champ})" if v_champ else "")) if v_name else f"First Blood pour {k_name} ({k_champ}) !"
+        elif evt_type == "double_kill":
+            desc = f"DOUBLE KILL — {k_name} ({k_champ}) !"
+        elif evt_type == "triple_kill":
+            desc = f"TRIPLE KILL — {k_name} ({k_champ}) !"
+        elif evt_type == "quadra_kill":
+            desc = f"QUADRA KILL — {k_name} ({k_champ}) !!"
+        elif evt_type == "penta_kill":
+            desc = f"PENTAKILL ! {k_name} ({k_champ}) !!!"
+        else:
+            if v_name:
+                desc = f"{k_name} ({k_champ}) élimine {v_name}" + (f" ({v_champ})" if v_champ else "")
+            else:
+                desc = f"{k_name} ({k_champ}) signe un kill"
+
+        time_str, sec = mmss(minute_f)
+        ev = {
+            "time": time_str,
+            "_sec": sec,
+            "type": evt_type,
+            "team": team,
+            "description": desc,
+            "killer": k_name,
+            "killer_champion": k_champ,
+            "killer_position": killer_pos,
+            "victim": v_name,
+            "victim_champion": v_champ,
+            "victim_position": victim_pos or "",
+        }
+        events.append(ev)
+        return ev
+
+    def add_obj(minute_f: float, team: int, evt_type: str, description: str):
+        time_str, sec = mmss(minute_f)
+        events.append({
+            "time": time_str,
+            "_sec": sec,
+            "type": evt_type,
+            "team": team,
+            "description": description,
+        })
+
+    # ── Preserve base first_blood timing if any ─────────────────────────────
+    fb_time = next((e["time"] for e in (base_events or []) if e.get("type") == "first_blood"), None)
+    if fb_time and ":" in fb_time:
+        try:
+            mm, ss = fb_time.split(":")
+            fb_min_f = int(mm) + int(ss) / 60.0
+        except Exception:
+            fb_min_f = random.uniform(3, 8)
+    else:
+        fb_min_f = random.uniform(3, 8)
+
+    fb_team = phases[0].get("first_blood") if phases else random.choice([1, 2])
+    if fb_team not in (1, 2):
+        fb_team = random.choice([1, 2])
+
+    end_time = next((e["time"] for e in (base_events or []) if e.get("type") == "game_end"), None)
+    if end_time and ":" in end_time:
+        try:
+            mm, ss = end_time.split(":")
+            end_sec = int(mm) * 60 + int(ss)
+        except Exception:
+            end_sec = duration * 60
+    else:
+        end_sec = duration * 60
+    if end_sec <= 0:
+        end_sec = max(duration, 20) * 60
+
+    # Cap all events a bit before nexus
+    latest_allowed = max(60, end_sec - 20)
+    latest_min = latest_allowed / 60.0
+
+    total_kills_game = sum(_sum_budget(kills_budget[t]) for t in (1, 2))
+
+    # ── First Blood ─────────────────────────────────────────────────────────
+    add_kill(fb_min_f, fb_team, "first_blood")
+
+    # ── Early objectives ────────────────────────────────────────────────────
+    if phases:
+        ph1 = phases[0]
+        if ph1.get("first_tower") in (1, 2):
+            add_obj(random.uniform(8, 13.5), ph1["first_tower"], "first_tower", "Première tour détruite")
+        if ph1.get("first_drake") in (1, 2):
+            add_obj(random.uniform(6, 13.5), ph1["first_drake"], "drake", "Premier Drake sécurisé")
+
+    # ── Early kills (~25% of remaining) ─────────────────────────────────────
+    remaining = sum(_sum_budget(kills_budget[t]) for t in (1, 2))
+    early_target = max(0, int(round(total_kills_game * 0.22)) - 1)  # -1 for first_blood
+    for _ in range(min(early_target, remaining)):
+        t1_left = _sum_budget(kills_budget[1])
+        t2_left = _sum_budget(kills_budget[2])
+        if t1_left + t2_left == 0:
+            break
+        t = random.choices([1, 2], weights=[max(1, t1_left), max(1, t2_left)])[0]
+        if _sum_budget(kills_budget[t]) == 0:
+            t = 3 - t
+        add_kill(random.uniform(3.5, 13.8), t, "kill")
+
+    # ── Mid objectives ──────────────────────────────────────────────────────
+    if len(phases) >= 2:
+        ph2 = phases[1]
+        if ph2.get("rift_herald") in (1, 2):
+            add_obj(random.uniform(9, 13), ph2["rift_herald"], "herald", "Rift Herald capturé")
+        towers = ph2.get("towers_destroyed") or {}
+        for tn in (1, 2):
+            n = towers.get(tn) or towers.get(str(tn)) or 0
+            for _ in range(int(n)):
+                add_obj(random.uniform(14, 24.6), tn, "tower", "Tour détruite")
+        drakes = ph2.get("drakes") or {}
+        for tn in (1, 2):
+            n = drakes.get(tn) or drakes.get(str(tn)) or 0
+            for _ in range(int(n)):
+                add_obj(random.uniform(12, 24.5), tn, "drake", "Drake sécurisé")
+
+    # ── Mid kills (~45%) ────────────────────────────────────────────────────
+    mid_target = int(round(total_kills_game * 0.45))
+    for _ in range(mid_target):
+        t1_left = _sum_budget(kills_budget[1])
+        t2_left = _sum_budget(kills_budget[2])
+        if t1_left + t2_left == 0:
+            break
+        t = random.choices([1, 2], weights=[max(1, t1_left), max(1, t2_left)])[0]
+        if _sum_budget(kills_budget[t]) == 0:
+            t = 3 - t
+        if _sum_budget(kills_budget[t]) == 0:
+            break
+        add_kill(random.uniform(14, 24.8), t, "kill")
+
+    # ── Late objectives ─────────────────────────────────────────────────────
+    if len(phases) >= 3:
+        ph3 = phases[2]
+        if ph3.get("baron") in (1, 2):
+            add_obj(random.uniform(25, max(26, min(duration - 2, 38))), ph3["baron"], "baron", "Baron Nashor !")
+        if ph3.get("elder_drake") in (1, 2):
+            add_obj(random.uniform(max(32, duration - 8), max(32, duration - 2)),
+                    ph3["elder_drake"], "elder", "Elder Dragon !")
+        inhibs = ph3.get("inhibitors_destroyed") or {}
+        for tn in (1, 2):
+            n = inhibs.get(tn) or inhibs.get(str(tn)) or 0
+            for _ in range(int(n)):
+                add_obj(random.uniform(28, max(29, duration - 1)), tn, "inhibitor", "Inhibiteur détruit")
+
+    # ── Late kills (whatever is left) ───────────────────────────────────────
+    safety = 400
+    while safety > 0 and sum(_sum_budget(kills_budget[t]) for t in (1, 2)) > 0:
+        safety -= 1
+        t1_left = _sum_budget(kills_budget[1])
+        t2_left = _sum_budget(kills_budget[2])
+        t = random.choices([1, 2], weights=[max(1, t1_left), max(1, t2_left)])[0]
+        if _sum_budget(kills_budget[t]) == 0:
+            t = 3 - t
+            if _sum_budget(kills_budget[t]) == 0:
+                break
+        late_start = 25.0
+        late_end = max(26.0, min(latest_min, float(duration) - 0.5))
+        if late_end <= late_start:
+            late_end = late_start + 0.5
+        add_kill(random.uniform(late_start, late_end), t, "kill")
+
+    # ── Sort chronologically ────────────────────────────────────────────────
+    events.sort(key=lambda e: e["_sec"])
+
+    # Clamp any stray event above latest_allowed
+    for e in events:
+        if e["_sec"] > latest_allowed:
+            e["_sec"] = latest_allowed
+            e["time"] = f"{latest_allowed // 60}:{latest_allowed % 60:02d}"
+
+    # ── Multi-kill promotion: same killer within 12s window ────────────────
+    i = 0
+    while i < len(events):
+        e = events[i]
+        if e.get("type") in ("kill", "first_blood") and e.get("killer"):
+            streak_idx = [i]
+            j = i + 1
+            while j < len(events) and (events[j]["_sec"] - events[streak_idx[-1]]["_sec"]) <= 12:
+                if events[j].get("type") == "kill" and events[j].get("killer") == e["killer"]:
+                    streak_idx.append(j)
+                    j += 1
+                else:
+                    j += 1
+            if len(streak_idx) >= 2:
+                n = min(len(streak_idx), 5)
+                label = {2: "double_kill", 3: "triple_kill", 4: "quadra_kill", 5: "penta_kill"}[n]
+                last_ev = events[streak_idx[-1]]
+                last_ev["type"] = label
+                k_name = last_ev.get("killer") or ""
+                k_champ = last_ev.get("killer_champion") or ""
+                last_ev["description"] = (
+                    f"DOUBLE KILL — {k_name} ({k_champ}) !" if label == "double_kill" else
+                    f"TRIPLE KILL — {k_name} ({k_champ}) !" if label == "triple_kill" else
+                    f"QUADRA KILL — {k_name} ({k_champ}) !!" if label == "quadra_kill" else
+                    f"PENTAKILL — {k_name} ({k_champ}) !!!"
+                )
+            i = (streak_idx[-1] if streak_idx else i) + 1
+        else:
+            i += 1
+
+    # ── Final Nexus event ───────────────────────────────────────────────────
+    events.append({
+        "time": f"{end_sec // 60}:{end_sec % 60:02d}",
+        "_sec": end_sec,
+        "type": "game_end",
+        "team": winner,
+        "description": "Nexus détruit — fin de la partie !",
+    })
+    events.sort(key=lambda e: e["_sec"])
+
+    # Drop internal _sec before returning
+    for e in events:
+        e.pop("_sec", None)
+
+    # ── Gold timeline (per minute) ──────────────────────────────────────────
+    # Keyframes from phases. Base income per team ≈ 1700 gold/min.
+    START_G = 2500
+    kf: list[tuple[int, int, int]] = [(0, START_G, START_G)]
+
+    def _kf_at(minute: int, gold_diff: int, adv: int):
+        base = START_G + int(minute * 1700)
+        if adv == 1:
+            return (minute, base + gold_diff // 2, base - gold_diff // 2)
+        if adv == 2:
+            return (minute, base - gold_diff // 2, base + gold_diff // 2)
+        return (minute, base, base)
+
+    if phases:
+        ph1 = phases[0]
+        kf.append(_kf_at(15, int(ph1.get("gold_diff") or 0), ph1.get("advantage") or 0))
+    if len(phases) >= 2:
+        ph2 = phases[1]
+        kf.append(_kf_at(25, int(ph2.get("gold_diff") or 0), ph2.get("advantage") or 0))
+    if len(phases) >= 3:
+        ph3 = phases[2]
+        kf.append(_kf_at(max(26, duration), int(ph3.get("gold_diff") or 0), ph3.get("advantage") or 0))
+    else:
+        kf.append(_kf_at(max(duration, 26), 0, 0))
+
+    # De-duplicate keyframe minutes (keep last)
+    kf_by_min: dict[int, tuple[int, int, int]] = {}
+    for k in kf:
+        kf_by_min[k[0]] = k
+    kf_sorted = sorted(kf_by_min.values(), key=lambda x: x[0])
+
+    def interp(m: int) -> tuple[int, int]:
+        prev = kf_sorted[0]
+        nxt = kf_sorted[-1]
+        for idx in range(len(kf_sorted) - 1):
+            if kf_sorted[idx][0] <= m <= kf_sorted[idx + 1][0]:
+                prev = kf_sorted[idx]
+                nxt = kf_sorted[idx + 1]
+                break
+        if nxt[0] == prev[0]:
+            return prev[1], prev[2]
+        t = (m - prev[0]) / float(nxt[0] - prev[0])
+        g1 = int(prev[1] + (nxt[1] - prev[1]) * t)
+        g2 = int(prev[2] + (nxt[2] - prev[2]) * t)
+        return g1, g2
+
+    gold_timeline: list[dict] = []
+    for m in range(int(duration) + 1):
+        g1, g2 = interp(m)
+        # Light per-minute noise so the bar breathes
+        g1 += random.randint(-250, 250)
+        g2 += random.randint(-250, 250)
+        gold_timeline.append({"minute": m, "g1": max(0, g1), "g2": max(0, g2)})
+
+    return events, gold_timeline
+
+
 def generate_auto_bans(n: int = 10) -> list:
     """Pick n champions as simulated bans using weighted random selection from meta pool."""
     meta = get_meta_champions()
