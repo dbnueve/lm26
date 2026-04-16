@@ -3576,6 +3576,18 @@ async def simulate_match(request: SimulateMatchRequest):
     user_bans  = (request.user_draft or {}).get("bans", [])
     enemy_bans = (GAME_STATE.get("draft_state") or {}).get("enemy_bans", [])
     all_bans   = user_bans + enemy_bans
+
+    # Dense event feed + per-minute gold snapshots for the animated timeline
+    detailed_events, gold_timeline = generate_detailed_events(
+        phases=result.get("phases", []),
+        team1_stats=team1_stats,
+        team2_stats=team2_stats,
+        duration=result.get("duration", 30),
+        winner=result.get("winner", 1),
+        base_events=result.get("events", []),
+    )
+    result = {**result, "events": detailed_events, "gold_timeline": gold_timeline}
+
     match["match_details"] = {**result, "team1_stats": team1_stats, "team2_stats": team2_stats, "bans": all_bans}
     update_champ_stats(team1_stats, team2_stats, winner_id, match["team1"], all_bans)
 
