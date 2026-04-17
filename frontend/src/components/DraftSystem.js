@@ -14,19 +14,32 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
   const [ddVersion, setDdVersionState] = useState("16.7.1");
   const [prevSplitStats, setPrevSplitStats] = useState({});  // {champName: {pick_rate, ban_rate, win_rate}}
   const [apiSuggestions, setApiSuggestions] = useState([]);
+  const completeTimeoutRef = useRef(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    fetch("https://ddragon.leagueoflegends.com/api/versions.json")
+    mountedRef.current = true;
+    const controller = new AbortController();
+    fetch("https://ddragon.leagueoflegends.com/api/versions.json", { signal: controller.signal })
       .then(r => r.json())
-      .then(versions => { if (versions[0]) { setDdVersionState(versions[0]); setDdVersion(versions[0]); } })
+      .then(versions => {
+        if (!mountedRef.current) return;
+        if (versions[0]) { setDdVersionState(versions[0]); setDdVersion(versions[0]); }
+      })
       .catch(() => {});
     // Load last split's champion stats for overlay
-    axios.get(API + "/stats/champions", { params: { split: "last" } })
+    axios.get(API + "/stats/champions", { params: { split: "last" }, signal: controller.signal })
       .then(r => {
+        if (!mountedRef.current) return;
         const map = {};
         (r.data.champions || []).forEach(c => { map[c.name] = c; });
         setPrevSplitStats(map);
       }).catch(() => {});
+    return () => {
+      mountedRef.current = false;
+      controller.abort();
+      if (completeTimeoutRef.current) clearTimeout(completeTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
