@@ -5,27 +5,7 @@ import axios from "axios";
 import { API } from "../shared";
 import TeamLogo from "./TeamLogo";
 import DraftSystem from "./DraftSystem";
-
-// ── League identity ────────────────────────────────────────────────────────────
-const LEAGUE_FLAG  = { LEC: "🇪🇺", LCK: "🇰🇷", LPL: "🇨🇳", LCS: "🇺🇸", CBLOL: "🇧🇷" };
-const LEAGUE_COLOR = { LEC: "#0BC4FA", LCK: "#FF0844", LPL: "#FF6B00", LCS: "#1DA1F2", CBLOL: "#00D65C" };
-
-// ── Design tokens (local) ──────────────────────────────────────────────────────
-const C = {
-  gold:      "#FFB800",
-  goldDim:   "rgba(255,184,0,.12)",
-  goldBorder:"rgba(255,184,0,.35)",
-  blue:      "#4FC3F7",
-  blueDim:   "rgba(79,195,247,.10)",
-  danger:    "#FF3366",
-  success:   "#00D65C",
-  surface:   "rgba(255,255,255,.04)",
-  surfaceHov:"rgba(255,255,255,.07)",
-  border:    "rgba(255,255,255,.09)",
-  borderSub: "rgba(255,255,255,.05)",
-  text:      "#E8ECF4",
-  muted:     "#687080",
-};
+import { LEAGUE_FLAG, LEAGUE_COLOR, C, btnStyle, EmptyState } from "./intlConstants";
 
 // ══════════════════════════════════════════════════════════════════════════════
 const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
