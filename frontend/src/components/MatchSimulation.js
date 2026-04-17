@@ -50,7 +50,8 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
         match_id: match.id,
         user_draft: userDraft
       }, { timeout: 15000 });
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
         setMatchResult(response.data);
         setPhase("timeline");
         setSimulating(false);
@@ -59,6 +60,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
     } catch (e) {
       console.error("Error simulating match:", e);
       const msg = e.response?.data?.detail || (e.code === "ECONNABORTED" ? "Délai dépassé. Réessaye." : "Erreur de simulation. Réessaye.");
+      if (!mountedRef.current) return;
       setSimError(msg);
       setPhase("pre");
       setSimulating(false);
