@@ -151,6 +151,18 @@ def _refresh_erl_pool_on_load():
     random.setstate(_rng_state)
 
 
+def _refresh_champion_pools_on_load():
+    """Overwrite champion pools for all loaded players using CSV data."""
+    for player in GAME_STATE.get("players", {}).values():
+        csv_pool = CSV_CHAMPION_POOLS.get((player.get("name") or "").lower(), [])
+        if csv_pool:
+            player["champion_pool"] = csv_pool[:6]
+    for player in GAME_STATE.get("erl_players", {}).values():
+        csv_pool = CSV_CHAMPION_POOLS.get((player.get("name") or "").lower(), [])
+        if csv_pool:
+            player["champion_pool"] = csv_pool[:6]
+
+
 def sync_base_stats():
     """Sync team ratings/budget/prestige and player KDA from updated constants (non-destructive)."""
     league = GAME_STATE.get("league", "LEC")
