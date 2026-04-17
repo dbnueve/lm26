@@ -2649,14 +2649,13 @@ async def get_leagues():
 @api_router.delete("/saves/{slot}")
 async def delete_save_slot(slot: int):
     """Delete a save slot."""
-    global ACTIVE_SLOT
     if slot not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Slot invalide (1-3)")
     path = get_save_path(slot)
     if path.exists():
         path.unlink()
-    if ACTIVE_SLOT == slot:
-        ACTIVE_SLOT = None
+    if state.active_slot == slot:
+        state.active_slot = None
         GAME_STATE["initialized"] = False
         try:
             (ROOT_DIR / "active_slot.txt").unlink(missing_ok=True)
