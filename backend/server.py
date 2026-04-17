@@ -157,7 +157,6 @@ def _refresh_champion_pools_on_load():
 
 def _sync_state_if_stale():
     """If the active save file was written by another worker, reload it."""
-    global ACTIVE_SLOT
     slot = _read_active_slot_file()
     if slot is None:
         return
@@ -166,8 +165,8 @@ def _sync_state_if_stale():
         return
     try:
         mtime = path.stat().st_mtime
-        if slot != ACTIVE_SLOT or mtime > _WORKER_STATE_MTIME:
-            ACTIVE_SLOT = slot
+        if slot != state.active_slot or mtime > state.worker_mtime:
+            state.active_slot = slot
             load_state()
     except Exception as e:
         logging.debug(f"_sync_state_if_stale: {e}")
