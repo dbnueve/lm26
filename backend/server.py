@@ -1225,29 +1225,7 @@ def generate_erl_player(erl_data: dict):
         "scouting_for": erl_data.get("scouting_for", "LEC"),
     }
 
-# Game state - in memory
-GAME_STATE = {
-    "initialized": False,
-    "user_team": None,
-    "teams": {},
-    "players": {},
-    "erl_players": {},  # ERL/Academy players for scouting
-    "schedule": [],
-    "current_week": 0,
-    "current_split": 1,
-    "season": 2026,
-    "phase": "regular",  # regular, playoffs
-    "playoffs_bracket": None,
-    "history": [],
-    "negotiations": [],
-    "draft_state": None,
-    "champion_stats": {},   # {champ_name: {picks, wins, bans}}
-    "meta_champions": None, # Dynamic meta updated after each split; None = use static META_CHAMPIONS
-    "total_games_played": 0,
-    "league": "LEC",        # Active league: LEC/LCK/LPL/LCS/CBLOL
-    "tactics": None,        # User tactics (strategy, lanes, coherence)
-    "inbox": [],            # In-game messages (board + soloq)
-}
+# GAME_STATE importé depuis app_state.py (refactor étape 2)
 
 def initialize_game(league: str = "LEC"):
     """Initialize all game data"""
