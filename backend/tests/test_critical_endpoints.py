@@ -247,7 +247,13 @@ class TestTacticsTraining:
     def test_inbox(self, fresh_game):
         r = fresh_game.get("/api/inbox")
         assert r.status_code == 200
-        assert isinstance(r.json(), list)
+        data = r.json()
+        # Retourne soit une liste, soit un objet {messages: [...], unread_*: int}
+        if isinstance(data, list):
+            pass  # ancienne API
+        else:
+            assert "messages" in data
+            assert isinstance(data["messages"], list)
 
     def test_inbox_read_all(self, fresh_game):
         r = fresh_game.post("/api/inbox/read-all")
