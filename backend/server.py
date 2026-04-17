@@ -90,8 +90,8 @@ def _build_csv_champion_pools() -> dict:
                     if name not in counts:
                         counts[name] = _Counter()
                     counts[name][champ] += 1
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"_build_csv_champion_pools: échec parsing CSV: {e}")
     return {name: [c for c, _ in ctr.most_common(6)] for name, ctr in counts.items()}
 
 CSV_CHAMPION_POOLS: dict = _build_csv_champion_pools()
