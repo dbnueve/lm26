@@ -82,7 +82,9 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
       setSelectedPosition(null);
 
       if (response.data.phase === "complete") {
-        setTimeout(() => onComplete(response.data), 1000);
+        completeTimeoutRef.current = setTimeout(() => {
+          if (mountedRef.current) onComplete(response.data);
+        }, 1000);
       } else if (response.data.current_turn === "user") {
         fetchSuggestions();
       }
