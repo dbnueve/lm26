@@ -117,6 +117,9 @@ def _read_active_slot_file() -> int | None:
         return None
 
 def _write_active_slot_file(slot: int):
+    if slot not in (1, 2, 3):
+        logging.error(f"_write_active_slot_file: slot invalide {slot}")
+        return
     try:
         (ROOT_DIR / "active_slot.txt").write_text(str(slot))
     except Exception as e:
