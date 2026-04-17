@@ -2626,14 +2626,13 @@ class NewGameRequest(BaseModel):
 @api_router.post("/saves/{slot}/new")
 async def new_game_slot(slot: int, body: Optional[NewGameRequest] = None):
     """Start a new game in a specific slot."""
-    global ACTIVE_SLOT
     if body is None:
         body = NewGameRequest()
     if slot not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Slot invalide (1-3)")
     if body.league not in LEAGUES_DATA:
         raise HTTPException(status_code=400, detail=f"Ligue invalide: {body.league}")
-    ACTIVE_SLOT = slot
+    state.active_slot = slot
     initialize_game(body.league)
     save_state()
     _write_active_slot_file(slot)
