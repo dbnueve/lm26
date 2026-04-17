@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { formatMoney } from "../shared";
 import { motion } from "framer-motion";
 import {
