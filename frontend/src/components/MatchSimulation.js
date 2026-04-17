@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Lightning, GameController, Shield, Star, Sword } from "@phosphor-icons/react";
 import axios from "axios";
