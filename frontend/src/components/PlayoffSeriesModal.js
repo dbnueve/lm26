@@ -21,6 +21,17 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
   const simLock = useRef(false);
   const playingGameNumRef = useRef(1);
   const pendingScoreRef = useRef(null); // {t1, t2} — applied only when user clicks "Voir le résultat"
+  const timeoutsRef = useRef([]);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      timeoutsRef.current.forEach(t => clearTimeout(t));
+      timeoutsRef.current = [];
+    };
+  }, []);
 
   const isTeam1 = match.team1 === userTeam.id;
   const oppId = isTeam1 ? match.team2 : match.team1;
