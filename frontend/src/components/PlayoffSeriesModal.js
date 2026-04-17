@@ -70,18 +70,24 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
       const seriesCompleted = res.data.series_completed;
       const seriesWinnerVal = res.data.series_winner;
       const isChampion = !!res.data.champion;
-      setTimeout(() => {
+      const t1 = setTimeout(() => {
+        if (!mountedRef.current) return;
         setPhase("timeline");
         simLock.current = false;
         if (seriesCompleted) {
           setSeriesWinner(seriesWinnerVal);
           if (isChampion) {
             showToast("Champion couronné!", "success");
-            if (onSplitEnd) setTimeout(() => onSplitEnd(), 2500);
+            if (onSplitEnd) {
+              const t2 = setTimeout(() => { if (mountedRef.current) onSplitEnd(); }, 2500);
+              timeoutsRef.current.push(t2);
+            }
           }
         }
       }, 2000);
+      timeoutsRef.current.push(t1);
     } catch (e) {
+      if (!mountedRef.current) return;
       setSimError(e.response?.data?.detail || "Erreur");
       setPhase("pre");
       simLock.current = false;
