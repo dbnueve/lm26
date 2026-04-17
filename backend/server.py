@@ -104,26 +104,8 @@ CSV_CHAMPION_POOLS: dict = _build_csv_champion_pools()
 ACTIVE_SLOT = None   # int 1-3 or None
 _WORKER_STATE_MTIME: float = 0.0  # mtime of the save file this worker last loaded
 
-def get_save_path(slot: int) -> Path:
-    return ROOT_DIR / f"game_save_{slot}.json"
-
-def _read_active_slot_file() -> int | None:
-    try:
-        p = ROOT_DIR / "active_slot.txt"
-        if p.exists():
-            v = int(p.read_text().strip())
-            return v if v in (1, 2, 3) else None
-    except Exception:
-        return None
-
-def _write_active_slot_file(slot: int):
-    if slot not in (1, 2, 3):
-        logging.error(f"_write_active_slot_file: slot invalide {slot}")
-        return
-    try:
-        (ROOT_DIR / "active_slot.txt").write_text(str(slot))
-    except Exception as e:
-        logging.error(f"Failed to write active_slot.txt: {e}")
+# I/O helpers extraits dans save_paths.py (refactor étape 1)
+from save_paths import get_save_path, _read_active_slot_file, _write_active_slot_file  # noqa: E402
 
 def save_state():
     global _WORKER_STATE_MTIME
