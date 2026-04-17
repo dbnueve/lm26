@@ -10,6 +10,16 @@ const PlayoffsPage = ({ userTeam, onPlayPlayoffMatch, showToast, onSplitEnd, onS
   const [playoffsData, setPlayoffsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [simSeason, setSimSeason] = useState(false);
+  const splitEndTimeoutRef = useRef(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (splitEndTimeoutRef.current) clearTimeout(splitEndTimeoutRef.current);
+    };
+  }, []);
 
   const fetchPlayoffs = useCallback(async () => {
     try {
