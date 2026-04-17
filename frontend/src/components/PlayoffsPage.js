@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Trophy, ArrowsClockwise } from "@phosphor-icons/react";
 import axios from "axios";
