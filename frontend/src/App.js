@@ -66,8 +66,14 @@ function App() {
 
   // Fetch lolesports player headshots + team logos once on mount
   useEffect(() => {
-    axios.get(API + "/player-images").then(r => setPlayerImages(r.data)).catch(() => {});
-    axios.get(API + "/team-logos").then(r => setTeamLogos(r.data)).catch(() => {});
+    const controller = new AbortController();
+    axios.get(API + "/player-images", { signal: controller.signal })
+      .then(r => setPlayerImages(r.data))
+      .catch(e => { if (!axios.isCancel(e)) console.error("player-images:", e); });
+    axios.get(API + "/team-logos", { signal: controller.signal })
+      .then(r => setTeamLogos(r.data))
+      .catch(e => { if (!axios.isCancel(e)) console.error("team-logos:", e); });
+    return () => controller.abort();
   }, []);
 
   const loadGameData = useCallback(async () => {
