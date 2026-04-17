@@ -39,7 +39,11 @@ const PlayoffsPage = ({ userTeam, onPlayPlayoffMatch, showToast, onSplitEnd, onS
       const res = await axios.post(API + "/playoffs/simulate-match", { match_id: matchId });
       fetchPlayoffs();
       showToast(`Série simulée: ${res.data.series_score.team1}-${res.data.series_score.team2}`, "info");
-      if (res.data.champion && onSplitEnd) setTimeout(() => onSplitEnd(), 1800);
+      if (res.data.champion && onSplitEnd) {
+        splitEndTimeoutRef.current = setTimeout(() => {
+          if (mountedRef.current) onSplitEnd();
+        }, 1800);
+      }
     } catch (e) {
       showToast(e.response?.data?.detail || "Erreur", "error");
     }
