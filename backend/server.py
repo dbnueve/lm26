@@ -422,6 +422,11 @@ def _rebuild_meta_lookup():
                 "presence": round((c["picks"] + c["bans"]) / max(all_picks / 5, 1) * 100, 1)
             }
 
+# Enregistrement des hooks post-chargement (refactor étape 3)
+register_post_load_hook(_rebuild_meta_lookup)
+register_post_load_hook(_refresh_erl_pool_on_load)
+register_post_load_hook(_refresh_champion_pools_on_load)
+
 # Player stats from Oracle's Elixir LEC 2026 CSV (avg per game)
 PLAYER_META_STATS = {
     "BrokenBlade": {"kda": 4.26, "k": 1.9, "d": 2.0, "a": 6.8, "csm": 8.6, "dpm": 599},
