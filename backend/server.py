@@ -101,11 +101,10 @@ CSV_CHAMPION_POOLS: dict = _build_csv_champion_pools()
 # The active slot is remembered in active_slot.txt so backend restarts
 # can auto-restore the last session without frontend involvement.
 
-ACTIVE_SLOT = None   # int 1-3 or None
-_WORKER_STATE_MTIME: float = 0.0  # mtime of the save file this worker last loaded
-
 # I/O helpers extraits dans save_paths.py (refactor étape 1)
 from save_paths import get_save_path, _read_active_slot_file, _write_active_slot_file  # noqa: E402
+# État global extrait dans app_state.py (refactor étape 2)
+from app_state import GAME_STATE, state  # noqa: E402
 
 def save_state():
     global _WORKER_STATE_MTIME
