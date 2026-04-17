@@ -107,23 +107,21 @@ from save_paths import get_save_path, _read_active_slot_file, _write_active_slot
 from app_state import GAME_STATE, state  # noqa: E402
 
 def save_state():
-    global _WORKER_STATE_MTIME
-    if ACTIVE_SLOT is None:
+    if state.active_slot is None:
         return
     try:
-        path = get_save_path(ACTIVE_SLOT)
+        path = get_save_path(state.active_slot)
         tmp = path.with_suffix(".tmp")
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(GAME_STATE, f)
         tmp.replace(path)  # atomic on same filesystem — prevents corruption on crash
-        _WORKER_STATE_MTIME = path.stat().st_mtime
+        state.worker_mtime = path.stat().st_mtime
     except Exception as e:
-        logging.error(f"Failed to save slot {ACTIVE_SLOT}: {e}")
+        logging.error(f"Failed to save slot {state.active_slot}: {e}")
 
 def load_state() -> bool:
     """Load state from the active slot (or last known slot on restart)."""
-    global ACTIVE_SLOT, _WORKER_STATE_MTIME
-    slot = ACTIVE_SLOT if ACTIVE_SLOT is not None else _read_active_slot_file()
+    slot = state.active_slot if state.active_slot is not None else _read_active_slot_file()
     if slot is None:
         return False
     path = get_save_path(slot)
@@ -134,8 +132,8 @@ def load_state() -> bool:
             data = json.load(f)
         GAME_STATE.update(data)
         GAME_STATE["meta_champions"] = None  # Force league-specific baseline on next access
-        ACTIVE_SLOT = slot
-        _WORKER_STATE_MTIME = path.stat().st_mtime
+        state.active_slot = slot
+        state.worker_mtime = path.stat().st_mtime
         _rebuild_meta_lookup()  # Rebuild META_LOOKUP for the loaded league
         _refresh_erl_pool_on_load()  # Rebuild erl_players with correct scouting_for
         _refresh_champion_pools_on_load()  # Update champion pools from CSV data
