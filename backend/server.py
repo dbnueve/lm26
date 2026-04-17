@@ -2596,14 +2596,13 @@ async def list_saves():
 @api_router.post("/saves/{slot}/load")
 async def load_save_slot(slot: int):
     """Load a specific save slot into active memory."""
-    global ACTIVE_SLOT
     if slot not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Slot invalide (1-3)")
     path = get_save_path(slot)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Sauvegarde introuvable")
     try:
-        ACTIVE_SLOT = slot
+        state.active_slot = slot
         if not load_state():
             raise HTTPException(status_code=500, detail="Erreur lors du chargement")
         _write_active_slot_file(slot)
