@@ -1,7 +1,7 @@
 """
 Fixtures partagées.
 Isolation : toutes les sauvegardes sont redirigées vers un tmp_path par test.
-GAME_STATE et ACTIVE_SLOT sont réinitialisés entre chaque test.
+GAME_STATE et state sont réinitialisés entre chaque test.
 """
 from __future__ import annotations
 
@@ -16,6 +16,8 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 import server  # noqa: E402
+import persistence  # noqa: E402
+import app_state  # noqa: E402
 
 
 @pytest.fixture
@@ -39,16 +41,20 @@ def isolated_saves(tmp_path, monkeypatch):
             return
         (tmp_path / "active_slot.txt").write_text(str(slot))
 
+    # Patcher dans server (pour les endpoints qui appellent directement)
     monkeypatch.setattr(server, "get_save_path", fake_get_save_path)
     monkeypatch.setattr(server, "_read_active_slot_file", fake_read_active_slot)
     monkeypatch.setattr(server, "_write_active_slot_file", fake_write_active_slot)
+    # Patcher dans persistence (save_state/load_state/_sync_state_if_stale utilisent ces refs)
+    monkeypatch.setattr(persistence, "get_save_path", fake_get_save_path)
+    monkeypatch.setattr(persistence, "_read_active_slot_file", fake_read_active_slot)
 
-    # Reset état global
-    server.ACTIVE_SLOT = None
-    server._WORKER_STATE_MTIME = 0.0
-    for k in list(server.GAME_STATE.keys()):
-        server.GAME_STATE[k] = None if k != "initialized" else False
-    server.GAME_STATE.update({
+    # Reset état global (app_state.state remplace ACTIVE_SLOT/_WORKER_STATE_MTIME)
+    app_state.state.active_slot = None
+    app_state.state.worker_mtime = 0.0
+    for k in list(app_state.GAME_STATE.keys()):
+        app_state.GAME_STATE[k] = None if k != "initialized" else False
+    app_state.GAME_STATE.update({
         "initialized": False,
         "teams": {}, "players": {}, "erl_players": {},
         "schedule": [], "history": [], "negotiations": [],
