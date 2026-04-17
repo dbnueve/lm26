@@ -76,9 +76,15 @@ const TrainingPage = ({ userTeam, onSetTrainingPlan }) => {
     [userTeam.players]
   );
 
+  const notifyTimeoutRef = useRef(null);
+  useEffect(() => () => {
+    if (notifyTimeoutRef.current) clearTimeout(notifyTimeoutRef.current);
+  }, []);
+
   const notify = (msg, ok = true) => {
     setNotification({ msg, ok });
-    setTimeout(() => setNotification(null), 3500);
+    if (notifyTimeoutRef.current) clearTimeout(notifyTimeoutRef.current);
+    notifyTimeoutRef.current = setTimeout(() => setNotification(null), 3500);
   };
 
   const handleSetPlan = async (player, trainingType) => {
