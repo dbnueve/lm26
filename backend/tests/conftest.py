@@ -71,9 +71,11 @@ def client(isolated_saves):
 
 @pytest.fixture
 def fresh_game(client):
-    """Slot 1 initialisé (LEC), équipe g2 sélectionnée, prêt à jouer."""
+    """Slot 1 initialisé (LEC), équipe g2 sélectionnée, saison démarrée."""
     r = client.post("/api/saves/1/new", json={"league": "LEC"})
     assert r.status_code == 200, r.text
     r = client.post("/api/teams/select/g2")
+    assert r.status_code == 200, r.text
+    r = client.post("/api/season/start")
     assert r.status_code == 200, r.text
     return client
