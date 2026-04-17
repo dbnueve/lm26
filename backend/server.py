@@ -1391,14 +1391,21 @@ def generate_schedule():
 
 def calculate_team_power(team_id: str, draft_advantage: float = 0, apply_tactics: bool = False) -> float:
     """Calculate team power with position-weighted contributions and player form."""
-    team = GAME_STATE["teams"][team_id]
+    team = GAME_STATE["teams"].get(team_id)
+    if team is None:
+        logging.error(f"calculate_team_power: team_id introuvable: {team_id}")
+        return 50.0
     starters_by_pos = {}
-    for pid in team["roster"]:
-        p = GAME_STATE["players"][pid]
-        if p["is_starter"]:
+    for pid in team.get("roster", []):
+        p = GAME_STATE["players"].get(pid)
+        if p and p.get("is_starter"):
             starters_by_pos[p["position"]] = p
 
     if not starters_by_pos:
+        logging.warning(
+            f"calculate_team_power: team '{team.get('name', team_id)}' n'a aucun starter — "
+            f"roster de {len(team.get('roster', []))} joueurs. Power par défaut=50."
+        )
         return 50.0
 
     # Position carry-weight (higher = more influence on game outcome)
