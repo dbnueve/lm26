@@ -15,6 +15,16 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
   const [simError, setSimError] = useState(null);
   const [simulating, setSimulating] = useState(false);
   const simLockRef = useRef(false);
+  const timeoutRef = useRef(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const opponent = match.team1 === userTeam.id ? match.team2 : match.team1;
   const opponentTeam = teams.find(t => t.id === opponent);
