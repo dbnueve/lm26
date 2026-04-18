@@ -380,6 +380,7 @@ const MatchTimeline = ({
           <ChampionPanel
             stats={rightStats}
             visibleEvents={visibleEvents}
+            matchSec={matchSec}
             teamNum={rightNum}
             side="right"
             tc={tc}
