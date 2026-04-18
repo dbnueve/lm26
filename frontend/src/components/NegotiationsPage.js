@@ -73,12 +73,12 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
         <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 8 }}>
           Saison lancée !
         </h2>
-        <div style={{ color: "var(--text-secondary)", marginBottom: 24, fontSize: 14 }}>
+        <div style={{ color: "var(--text-2)", marginBottom: 24, fontSize: 14 }}>
           Les équipes adverses ont effectué leurs mouvements de transfert.
         </div>
 
         {aiTransfers.length === 0 ? (
-          <div style={{ padding: "24px 20px", background: "var(--surface)", borderRadius: 4, color: "var(--text-secondary)", textAlign: "center" }}>
+          <div style={{ padding: "24px 20px", background: "var(--surface-1)", borderRadius: 4, color: "var(--text-2)", textAlign: "center" }}>
             Aucun transfert IA cette période d'offseason.
           </div>
         ) : (
@@ -87,19 +87,19 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
               <div key={i} style={{
                 display: "grid", gridTemplateColumns: "80px 1fr 32px 1fr 60px",
                 alignItems: "center", gap: 12, padding: "12px 16px",
-                background: "var(--surface)", borderRadius: 4,
-                border: "1px solid var(--border-subtle)"
+                background: "var(--surface-1)", borderRadius: 4,
+                border: "1px solid var(--border)"
               }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-2)", textTransform: "uppercase" }}>
                   {t.team_abbr}
                 </span>
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1 }}>Départ</div>
+                  <div style={{ fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1 }}>Départ</div>
                   <div style={{ fontWeight: 600, fontSize: 13, color: "var(--danger)" }}>{t.out}</div>
                 </div>
-                <ArrowRight size={16} style={{ color: "var(--text-secondary)" }} />
+                <ArrowRight size={16} style={{ color: "var(--text-2)" }} />
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1 }}>Arrivée</div>
+                  <div style={{ fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1 }}>Arrivée</div>
                   <div style={{ fontWeight: 600, fontSize: 13, color: "var(--success)" }}>{t.in}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -131,24 +131,24 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
         </h2>
         <div style={{
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          padding: "60px 40px", background: "var(--surface)", borderRadius: 4,
-          border: "1px solid var(--border-subtle)", textAlign: "center", gap: 16
+          padding: "60px 40px", background: "var(--surface-1)", borderRadius: 4,
+          border: "1px solid var(--border)", textAlign: "center", gap: 16
         }}>
-          <Lock size={48} style={{ color: "var(--text-secondary)", opacity: 0.5 }} />
+          <Lock size={48} style={{ color: "var(--text-2)", opacity: 0.5 }} />
           <div>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
               Mercato fermé
             </div>
-            <div style={{ color: "var(--text-secondary)", fontSize: 14, maxWidth: 400 }}>
+            <div style={{ color: "var(--text-2)", fontSize: 14, maxWidth: 400 }}>
               Les négociations de transfert ne sont disponibles que pendant la période d'offseason,
               avant le début de chaque saison.
             </div>
           </div>
           <div style={{
-            marginTop: 8, padding: "8px 16px", background: "var(--bg-dark)",
-            borderRadius: 2, fontSize: 12, color: "var(--text-secondary)", fontFamily: "monospace"
+            marginTop: 8, padding: "8px 16px", background: "var(--bg)",
+            borderRadius: 2, fontSize: 12, color: "var(--text-2)", fontFamily: "monospace"
           }}>
-            Phase actuelle : <strong style={{ color: "var(--primary)" }}>{phase}</strong>
+            Phase actuelle : <strong style={{ color: "var(--accent)" }}>{phase}</strong>
           </div>
         </div>
       </div>
@@ -191,7 +191,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
       </div>
 
       {loadingPlayers ? (
-        <div style={{ padding: 40, textAlign: "center", color: "var(--text-secondary)" }}>
+        <div style={{ padding: 40, textAlign: "center", color: "var(--text-2)" }}>
           Chargement des joueurs disponibles...
         </div>
       ) : (
@@ -213,7 +213,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "var(--surface-1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>
                       {imgUrl
                         ? <img loading="lazy" src={imgUrl} alt={player.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display="none"; }} />
                         : player.name.substring(0, 2).toUpperCase()
@@ -224,7 +224,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
                         {player.name}
                         <span style={{ fontSize: 14 }}>{toFlag(player.nationality)}</span>
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                      <div style={{ fontSize: 12, color: "var(--text-2)" }}>
                         {getTeamName(player.team_id)}
                       </div>
                     </div>
@@ -232,12 +232,12 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
                   <span className={"pos-badge pos-" + player.position}>{player.position}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div className="font-stats" style={{ fontSize: 24, fontWeight: 700, color: "var(--primary)" }}>
+                  <div className="font-stats" style={{ fontSize: 24, fontWeight: 700, color: "var(--accent)" }}>
                     {player.rating}
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Valeur estimée</div>
-                    <div className="font-stats" style={{ color: "var(--secondary)" }}>
+                    <div style={{ fontSize: 12, color: "var(--text-2)" }}>Valeur estimée</div>
+                    <div className="font-stats" style={{ color: "var(--amber)" }}>
                       {formatMoney(player.transfer_value)} EUR
                     </div>
                   </div>
@@ -256,10 +256,10 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
             actions={
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {/* Offer slider */}
-                <div style={{ background: "var(--surface)", borderRadius: 2, padding: "14px 16px" }}>
+                <div style={{ background: "var(--surface-1)", borderRadius: 2, padding: "14px 16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Montant de l'offre</span>
-                    <span className="font-stats" style={{ fontSize: 20, fontWeight: 700, color: "var(--secondary)" }}>
+                    <span style={{ fontSize: 13, color: "var(--text-2)" }}>Montant de l'offre</span>
+                    <span className="font-stats" style={{ fontSize: 20, fontWeight: 700, color: "var(--amber)" }}>
                       {formatMoney(offerAmount)} EUR
                     </span>
                   </div>
@@ -271,7 +271,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
                     style={{ width: "100%" }}
                     data-testid="offer-slider"
                   />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-2)", marginTop: 4 }}>
                     <span>Min: {formatMoney(selectedPlayer.transfer_value * 0.5)}</span>
                     <span>Budget: {formatMoney(userTeam.budget)}</span>
                   </div>
@@ -279,7 +279,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
 
                 {/* Contract duration */}
                 <div>
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>Durée du contrat</div>
+                  <div style={{ fontSize: 12, color: "var(--text-2)", marginBottom: 8 }}>Durée du contrat</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[1, 2, 3].map(years => (
                       <button key={years}

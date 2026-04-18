@@ -20,17 +20,17 @@ export default function TimelineScoreboard({
     >
       <div style={{
         fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-        letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 8,
+        letterSpacing: 1, color: "var(--text-2)", marginBottom: 8,
       }}>
         Scoreboard
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {blocks.map(({ stats, won, abbr }, teamIdx) => (
-          <div key={teamIdx} style={{ background: "var(--surface)", borderRadius: 6, overflow: "hidden" }}>
+          <div key={teamIdx} style={{ background: "var(--surface-1)", borderRadius: 6, overflow: "hidden" }}>
             <div style={{
               padding: "6px 12px", fontWeight: 700, fontSize: 12,
-              background: won ? "var(--primary)" : "var(--danger)",
+              background: won ? "var(--accent)" : "var(--danger)",
               color: won ? "black" : "white",
             }}>
               {abbr} — {won ? "Victoire ✓" : "Défaite"}
@@ -38,7 +38,7 @@ export default function TimelineScoreboard({
             <div style={{
               display: "grid", gridTemplateColumns: "26px 1fr 70px 36px 44px 46px",
               padding: "5px 10px", gap: 2,
-              fontSize: 10, color: "var(--text-secondary)", fontWeight: 600, textTransform: "uppercase",
+              fontSize: 10, color: "var(--text-2)", fontWeight: 600, textTransform: "uppercase",
             }}>
               <span /><span>Joueur</span>
               <span style={{ textAlign: "center" }}>K/D/A</span>
@@ -53,7 +53,7 @@ export default function TimelineScoreboard({
                 <div key={i} style={{
                   display: "grid", gridTemplateColumns: "26px 1fr 70px 36px 44px 46px",
                   padding: "5px 10px", gap: 2,
-                  borderTop: "1px solid var(--border-subtle)", alignItems: "center",
+                  borderTop: "1px solid var(--border)", alignItems: "center",
                 }}>
                   {p.champion ? (
                     <img loading="lazy"
@@ -68,21 +68,21 @@ export default function TimelineScoreboard({
                   </span>
                   <span style={{ textAlign: "center", fontSize: 11, fontWeight: 700 }}>
                     <span style={{ color: "var(--success)" }}>{p.kills}</span>
-                    <span style={{ color: "var(--text-secondary)" }}>/</span>
+                    <span style={{ color: "var(--text-2)" }}>/</span>
                     <span style={{ color: "var(--danger)" }}>{p.deaths}</span>
-                    <span style={{ color: "var(--text-secondary)" }}>/</span>
-                    <span style={{ color: "var(--primary)" }}>{p.assists}</span>
+                    <span style={{ color: "var(--text-2)" }}>/</span>
+                    <span style={{ color: "var(--accent)" }}>{p.assists}</span>
                   </span>
                   <span style={{
                     textAlign: "center", fontSize: 11, fontWeight: 700,
-                    color: isGood ? "var(--success)" : isBad ? "var(--danger)" : "var(--primary)",
+                    color: isGood ? "var(--success)" : isBad ? "var(--danger)" : "var(--accent)",
                   }}>
                     {note.toFixed(1)}
                   </span>
                   <span style={{ textAlign: "center", fontSize: 11 }}>
                     {duration ? (p.cs / Math.max(1, duration)).toFixed(1) : "-"}
                   </span>
-                  <span style={{ textAlign: "right", fontSize: 11, color: "var(--secondary)" }}>
+                  <span style={{ textAlign: "right", fontSize: 11, color: "var(--amber)" }}>
                     {p.damage ? (p.damage / 1000).toFixed(1) + "k" : "-"}
                   </span>
                 </div>

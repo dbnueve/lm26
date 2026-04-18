@@ -40,12 +40,12 @@ const TeamDetailModal = ({ team, onClose }) => {
       <motion.div
         initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         onClick={e => e.stopPropagation()}
-        style={{ background: "var(--bg-dark)", width: "95%", maxWidth: 680, maxHeight: "90vh", overflow: "auto", borderRadius: 4 }}
+        style={{ background: "var(--bg)", width: "95%", maxWidth: 680, maxHeight: "90vh", overflow: "auto", borderRadius: 4 }}
       >
         {/* Header */}
-        <div style={{ background: "linear-gradient(135deg, var(--surface), var(--bg-dark))", padding: "24px 24px 16px", borderBottom: "1px solid var(--border-subtle)", position: "relative" }}>
+        <div style={{ background: "linear-gradient(135deg, var(--surface-1), var(--bg))", padding: "24px 24px 16px", borderBottom: "1px solid var(--border)", position: "relative" }}>
           
-          <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: 20 }}>✕</button>
+          <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "var(--text-2)", cursor: "pointer", fontSize: 20 }}>✕</button>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <TeamLogo teamId={team.id} abbr={team.abbr || (teamData?.abbr)} size={64} noClick />
             <div style={{ flex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -53,7 +53,7 @@ const TeamDetailModal = ({ team, onClose }) => {
       <div className="font-heading" style={{ fontSize: 28, lineHeight: 1.2 }}>
         {team.name || teamData?.name || team.abbr}
       </div>
-      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
+      <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 2 }}>
         {team.abbr || teamData?.abbr}
       </div>
       {qualified && (
@@ -65,8 +65,8 @@ const TeamDetailModal = ({ team, onClose }) => {
 
     {/* L'Elo aligné à droite du nom */}
     <div style={{ textAlign: "right", marginRight: 40, }}> {/* marginRight pour ne pas coller au bouton X */}
-      <div style={{ fontSize: 10, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1 }}>Elo</div>
-      <div className="font-stats" style={{ fontSize: 24, fontWeight: 800, color: "var(--primary)" }}>
+      <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1 }}>Elo</div>
+      <div className="font-stats" style={{ fontSize: 24, fontWeight: 800, color: "var(--accent)" }}>
         {elo}
       </div>
     </div>
@@ -79,11 +79,11 @@ const TeamDetailModal = ({ team, onClose }) => {
               { label: "Victoires", value: wins, color: "var(--success)" },
               { label: "Défaites", value: losses, color: "var(--danger)" },
               { label: "Win Rate", value: `${winRate}%`, color: winRate >= 50 ? "var(--success)" : "var(--danger)" },
-              { label: "Rating", value: rating || "—", color: "var(--primary)" },
+              { label: "Rating", value: rating || "—", color: "var(--accent)" },
               
             ].map(({ label, value, color }) => (
-              <div key={label} style={{ background: "var(--surface)", borderRadius: 2, padding: "10px 12px", textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>{label}</div>
+              <div key={label} style={{ background: "var(--surface-1)", borderRadius: 2, padding: "10px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 4 }}>{label}</div>
                 <div className="font-stats" style={{ fontWeight: 700, fontSize: 20, color }}>{value}</div>
               </div>
             ))}
@@ -92,11 +92,11 @@ const TeamDetailModal = ({ team, onClose }) => {
 
         {/* Roster */}
         <div style={{ padding: 24 }}>
-  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", marginBottom: 12 }}>
+  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-2)", marginBottom: 12 }}>
     Composition
   </div>
   {!teamData ? (
-    <div style={{ textAlign: "center", padding: 40, color: "var(--text-secondary)" }}>Chargement...</div>
+    <div style={{ textAlign: "center", padding: 40, color: "var(--text-2)" }}>Chargement...</div>
   ) : (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {positions.map(pos => {
@@ -114,24 +114,24 @@ const TeamDetailModal = ({ team, onClose }) => {
               alignItems: "center", 
               gap: 12, 
               padding: "8px 14px",
-              background: "var(--surface)", 
+              background: "var(--surface-1)", 
               borderRadius: 3,
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid var(--border)",
               cursor: "pointer", 
               transition: "border-color 0.15s",
             }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = "var(--primary)"}
-            onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border-subtle)"}
+            onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"}
+            onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
           >
             {/* 1. POSITION */}
-            <span style={{ background: posColor[pos] || "var(--surface)", color: "white", padding: "2px 8px", borderRadius: 2, fontSize: 10, fontWeight: 700, textAlign: "center" }}>
+            <span style={{ background: posColor[pos] || "var(--surface-1)", color: "white", padding: "2px 8px", borderRadius: 2, fontSize: 10, fontWeight: 700, textAlign: "center" }}>
               {pos}
             </span>
 
            {/* AVATAR BOX */}
             <div style={{ 
-              width: 40, height: 40, borderRadius: "50%", background: "var(--bg-dark)", 
-              border: "1px solid var(--border-subtle)", display: "flex", 
+              width: 40, height: 40, borderRadius: "50%", background: "var(--bg)", 
+              border: "1px solid var(--border)", display: "flex", 
               alignItems: "center", justifyContent: "center", overflow: "hidden" 
             }}>
               {imageUrl ? (
@@ -145,7 +145,7 @@ const TeamDetailModal = ({ team, onClose }) => {
                   }} 
                 />
               ) : (
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-2)" }}>
                   {player.name.substring(0, 2).toUpperCase()}
                 </span>
               )}
@@ -155,15 +155,15 @@ const TeamDetailModal = ({ team, onClose }) => {
 
             {/* 4. NOTE (Rating) */}
            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: "var(--text-secondary)", textTransform: "uppercase" }}>Rating</div>
-              <div className="font-stats" style={{ fontWeight: 700, fontSize: 13 ,color: "var(--primary)"}}>
+              <div style={{ fontSize: 9, color: "var(--text-2)", textTransform: "uppercase" }}>Rating</div>
+              <div className="font-stats" style={{ fontWeight: 700, fontSize: 13 ,color: "var(--accent)"}}>
                 {player.rating || "—"}
               </div>
             </div>
 
             {/* 5. AVG PERF (Remplacement KDA/CS par une valeur de perf moyenne) */}
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: "var(--text-secondary)", textTransform: "uppercase" }}>Avg Perf</div>
+              <div style={{ fontSize: 9, color: "var(--text-2)", textTransform: "uppercase" }}>Avg Perf</div>
               <div className="font-stats" style={{ fontWeight: 700, fontSize: 13 }}>
                 {player.avg_perf || "—"}
               </div>
@@ -171,15 +171,15 @@ const TeamDetailModal = ({ team, onClose }) => {
 
             {/* 6. POTENTIEL */}
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: "var(--text-secondary)", textTransform: "uppercase" }}>Potentiel</div>
-              <div className="font-stats" style={{ fontWeight: 700, fontSize: 13, color: player.potential >= 90 ? "var(--secondary)" : "var(--text-primary)" }}>
+              <div style={{ fontSize: 9, color: "var(--text-2)", textTransform: "uppercase" }}>Potentiel</div>
+              <div className="font-stats" style={{ fontWeight: 700, fontSize: 13, color: player.potential >= 90 ? "var(--amber)" : "var(--text-1)" }}>
                 {player.potential}
               </div>
             </div>
 
             {/* 7. CONTRACT YEARS */}
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: "var(--text-secondary)", textTransform: "uppercase" }}>Contrat</div>
+              <div style={{ fontSize: 9, color: "var(--text-2)", textTransform: "uppercase" }}>Contrat</div>
               <div className="font-stats" style={{ fontWeight: 700, fontSize: 13 }}>
                 {player.contract_years || 1}y
               </div>
@@ -198,18 +198,18 @@ const TeamDetailModal = ({ team, onClose }) => {
               {/* Picks */}
               {teamData.champion_stats.picks?.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)" }}>Picks</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-2)" }}>Picks</div>
                     <div style={{ display: "flex", gap: 24 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>WR</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>Games</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-2)" }}>WR</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-2)" }}>Games</span>
                     </div>
                   </div>
                   {teamData.champion_stats.picks.map((c, i) => {
                     const key = toDDragonKey(c.name);
                     const maxPicks = teamData.champion_stats.picks[0]?.picks || 1;
                     const barPct = Math.round((c.picks / maxPicks) * 100);
-                    const wrColor = c.wr >= 55 ? "var(--success)" : c.wr <= 45 ? "var(--danger)" : "var(--text-primary)";
+                    const wrColor = c.wr >= 55 ? "var(--success)" : c.wr <= 45 ? "var(--danger)" : "var(--text-1)";
                     return (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                         <img
@@ -220,12 +220,12 @@ const TeamDetailModal = ({ team, onClose }) => {
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
-                          <div style={{ height: 3, background: "var(--border-subtle)", borderRadius: 2, marginTop: 4 }}>
-                            <div style={{ width: `${barPct}%`, height: "100%", background: "var(--primary)", borderRadius: 2 }} />
+                          <div style={{ height: 3, background: "var(--border)", borderRadius: 2, marginTop: 4 }}>
+                            <div style={{ width: `${barPct}%`, height: "100%", background: "var(--accent)", borderRadius: 2 }} />
                           </div>
                         </div>
                         <div style={{ fontWeight: 700, fontSize: 13, color: wrColor, minWidth: 40, textAlign: "right" }}>{c.wr}%</div>
-                        <div style={{ fontSize: 13, color: "var(--text-secondary)", minWidth: 24, textAlign: "right" }}>{c.picks}</div>
+                        <div style={{ fontSize: 13, color: "var(--text-2)", minWidth: 24, textAlign: "right" }}>{c.picks}</div>
                       </div>
                     );
                   })}
@@ -235,12 +235,12 @@ const TeamDetailModal = ({ team, onClose }) => {
               {/* Bans */}
               {teamData.champion_stats.bans?.length > 0 && (
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border-subtle)" }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)" }}>Bans</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-2)" }}>Bans</div>
                     <div style={{ display: "flex", gap: 24 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: "#60a5fa" }}>Blue</span>
                       <span style={{ fontSize: 10, fontWeight: 700, color: "#f87171" }}>Red</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>Total</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-2)" }}>Total</span>
                     </div>
                   </div>
                   {teamData.champion_stats.bans.map((c, i) => {

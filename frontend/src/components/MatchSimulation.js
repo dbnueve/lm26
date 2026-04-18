@@ -71,7 +71,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
     <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <motion.div
         style={{
-          background: "var(--bg-dark)", width: "95%", maxWidth: 1200,
+          background: "var(--bg)", width: "95%", maxWidth: 1200,
           maxHeight: "90vh", overflow: "auto", borderRadius: 4,
         }}
         initial={{ scale: 0.9 }}
@@ -79,10 +79,10 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
       >
         <div className="match-header">
           <div className="match-team">
-            <div className="abbr" style={{ color: isTeam1 ? "var(--primary)" : "var(--text-primary)" }}>
+            <div className="abbr" style={{ color: isTeam1 ? "var(--accent)" : "var(--text-1)" }}>
               <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={44} />
             </div>
-            <div style={{ color: "var(--text-secondary)" }}>{userTeam.name}</div>
+            <div style={{ color: "var(--text-2)" }}>{userTeam.name}</div>
           </div>
 
           {phase === "result" && matchResult ? (
@@ -90,7 +90,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
               <span className={matchResult.winner === userTeam.id ? "winner" : "loser"}>
                 {isTeam1 ? matchResult.score1 : matchResult.score2}
               </span>
-              <span style={{ color: "var(--text-secondary)" }}>-</span>
+              <span style={{ color: "var(--text-2)" }}>-</span>
               <span className={matchResult.winner !== userTeam.id ? "winner" : "loser"}>
                 {isTeam1 ? matchResult.score2 : matchResult.score1}
               </span>
@@ -100,10 +100,10 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
           )}
 
           <div className="match-team">
-            <div className="abbr" style={{ color: !isTeam1 ? "var(--primary)" : "var(--text-primary)" }}>
+            <div className="abbr" style={{ color: !isTeam1 ? "var(--accent)" : "var(--text-1)" }}>
               <TeamLogo teamId={opponentTeam?.id} abbr={opponentTeam?.abbr || ""} size={44} />
             </div>
-            <div style={{ color: "var(--text-secondary)" }}>{opponentTeam?.name}</div>
+            <div style={{ color: "var(--text-2)" }}>{opponentTeam?.name}</div>
           </div>
         </div>
 
@@ -140,7 +140,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
               <h3 className="font-heading" style={{ fontSize: 24, marginBottom: 12, color: "var(--success)" }}>
                 Draft Terminée!
               </h3>
-              <p style={{ color: "var(--text-secondary)", marginBottom: 24 }}>
+              <p style={{ color: "var(--text-2)", marginBottom: 24 }}>
                 Les équipes sont prêtes. Lancez le match!
               </p>
               <button
@@ -162,10 +162,10 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               >
-                <Lightning size={64} style={{ color: "var(--secondary)" }} />
+                <Lightning size={64} style={{ color: "var(--amber)" }} />
               </motion.div>
               <h3 className="font-heading" style={{ fontSize: 24, marginTop: 24 }}>Match en cours...</h3>
-              <p style={{ color: "var(--text-secondary)", marginTop: 8 }}>
+              <p style={{ color: "var(--text-2)", marginTop: 8 }}>
                 Simulation des phases de jeu
               </p>
             </div>

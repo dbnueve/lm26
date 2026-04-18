@@ -38,7 +38,7 @@ const SchedulePage = ({ schedule, teams, userTeam, onSimulateSeason }) => {
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {Object.entries(groupedByWeek).map(([week, matches]) => (
           <div key={week} className="card" style={{ padding: 20 }}>
-            <h4 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)" }}>
+            <h4 className="font-heading" style={{ marginBottom: 16, color: "var(--text-2)" }}>
               Semaine {week}
             </h4>
             {matches.map(match => (
@@ -49,7 +49,7 @@ const SchedulePage = ({ schedule, teams, userTeam, onSimulateSeason }) => {
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: "12px 0",
-                  borderBottom: "1px solid var(--border-subtle)"
+                  borderBottom: "1px solid var(--border)"
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1 }}>
@@ -63,7 +63,7 @@ const SchedulePage = ({ schedule, teams, userTeam, onSimulateSeason }) => {
                   padding: "8px 16px",
                   background: match.played ?
                     (match.winner === userTeam.id ? "rgba(0, 230, 118, 0.1)" : "rgba(255, 51, 102, 0.1)") :
-                    "var(--surface-hover)",
+                    "var(--surface-2)",
                   borderRadius: 2
                 }}>
                   {match.played ? (
@@ -71,13 +71,13 @@ const SchedulePage = ({ schedule, teams, userTeam, onSimulateSeason }) => {
                       <span className="font-stats" style={{ fontSize: 20, fontWeight: 700 }}>
                         {match.score1}
                       </span>
-                      <span style={{ color: "var(--text-secondary)" }}>-</span>
+                      <span style={{ color: "var(--text-2)" }}>-</span>
                       <span className="font-stats" style={{ fontSize: 20, fontWeight: 700 }}>
                         {match.score2}
                       </span>
                     </>
                   ) : (
-                    <span style={{ color: "var(--text-secondary)" }}>A jouer</span>
+                    <span style={{ color: "var(--text-2)" }}>A jouer</span>
                   )}
                 </div>
 

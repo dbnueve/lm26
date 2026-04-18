@@ -47,7 +47,7 @@ const SENDER_COLORS = {
 };
 
 const getAvatar = (sender) => SENDER_AVATARS[sender] || sender.substring(0, 2).toUpperCase();
-const getColor  = (sender) => SENDER_COLORS[sender]  || "var(--primary)";
+const getColor  = (sender) => SENDER_COLORS[sender]  || "var(--accent)";
 
 const MessageRow = ({ msg, selected, onClick }) => {
   const color = getColor(msg.sender);
@@ -58,8 +58,8 @@ const MessageRow = ({ msg, selected, onClick }) => {
         display: "flex", alignItems: "flex-start", gap: 12,
         padding: "12px 16px", cursor: "pointer",
         background: selected ? "rgba(10,132,255,0.08)" : "transparent",
-        borderLeft: selected ? "2px solid var(--primary)" : "2px solid transparent",
-        borderBottom: "1px solid var(--border-subtle)",
+        borderLeft: selected ? "2px solid var(--accent)" : "2px solid transparent",
+        borderBottom: "1px solid var(--border)",
         transition: "background 0.12s",
       }}
     >
@@ -76,24 +76,24 @@ const MessageRow = ({ msg, selected, onClick }) => {
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-          <span style={{ fontSize: 13, fontWeight: msg.read ? 500 : 700, color: msg.read ? "var(--text-secondary)" : "var(--text-primary)" }}>
+          <span style={{ fontSize: 13, fontWeight: msg.read ? 500 : 700, color: msg.read ? "var(--text-2)" : "var(--text-1)" }}>
             {msg.sender}
           </span>
-          <span style={{ fontSize: 10, color: "var(--text-secondary)", flexShrink: 0, marginLeft: 8 }}>
+          <span style={{ fontSize: 10, color: "var(--text-2)", flexShrink: 0, marginLeft: 8 }}>
             S{msg.week}
           </span>
         </div>
-        <div style={{ fontSize: 13, fontWeight: msg.read ? 400 : 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: msg.read ? "var(--text-secondary)" : "var(--text-primary)" }}>
+        <div style={{ fontSize: 13, fontWeight: msg.read ? 400 : 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: msg.read ? "var(--text-2)" : "var(--text-1)" }}>
           {msg.subject}
         </div>
-        <div style={{ fontSize: 11, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: "var(--text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
           {msg.body.substring(0, 80)}…
         </div>
       </div>
 
       {/* Unread dot */}
       {!msg.read && (
-        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--primary)", flexShrink: 0, marginTop: 6 }} />
+        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", flexShrink: 0, marginTop: 6 }} />
       )}
     </div>
   );
@@ -117,7 +117,7 @@ const IntlStandingsBody = ({ body }) => {
         const highlight = lines.slice(1).find(isNarrativeLine);
         return (
           <div key={bi} style={{
-            background: "var(--surface-hover)",
+            background: "var(--surface-2)",
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: "14px 16px",
@@ -127,7 +127,7 @@ const IntlStandingsBody = ({ body }) => {
               fontSize: 13, fontWeight: 800, letterSpacing: "0.06em",
               marginBottom: 12, paddingBottom: 8,
               borderBottom: "1px solid var(--border)",
-              color: "var(--text-primary)",
+              color: "var(--text-1)",
             }}>
               {header}
             </div>
@@ -152,13 +152,13 @@ const IntlStandingsBody = ({ body }) => {
                     background: isTop3 ? (mc + "11") : "transparent",
                   }}>
                     <span style={{ width: 22, fontSize: 13, flexShrink: 0, textAlign: "center" }}>{medal}</span>
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: isTop3 ? 600 : 400, color: isTop3 ? "var(--text-primary)" : "var(--text-secondary)" }}>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: isTop3 ? 600 : 400, color: isTop3 ? "var(--text-1)" : "var(--text-2)" }}>
                       {team}
                     </span>
                     {record && (
                       <span style={{ fontSize: 12, flexShrink: 0 }}>
                         <span style={{ color: "var(--success)", fontWeight: 700 }}>{wins}V</span>
-                        <span style={{ color: "var(--text-secondary)" }}>-</span>
+                        <span style={{ color: "var(--text-2)" }}>-</span>
                         <span style={{ color: "var(--danger)", fontWeight: 700 }}>{losses}D</span>
                       </span>
                     )}
@@ -172,7 +172,7 @@ const IntlStandingsBody = ({ body }) => {
               <div style={{
                 marginTop: 10, padding: "6px 10px",
                 background: "rgba(255,184,0,0.07)", borderRadius: 4,
-                fontSize: 11, color: "var(--text-secondary)", fontStyle: "italic",
+                fontSize: 11, color: "var(--text-2)", fontStyle: "italic",
               }}>
                 {highlight.trim()}
               </div>
@@ -210,16 +210,16 @@ const ScoutingReportBody = ({ body }) => {
 
   return (
     <div>
-      {intro && <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 18 }}>{intro}</div>}
+      {intro && <div style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 18 }}>{intro}</div>}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {prospects.map((p, i) => {
-          const posColor = POS_COLORS[p.pos] || "var(--primary)";
+          const posColor = POS_COLORS[p.pos] || "var(--accent)";
           return (
             <div key={i} style={{
               display: "flex", alignItems: "center", gap: 14,
               padding: "12px 16px",
-              background: "var(--surface-hover)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)",
               borderLeft: `3px solid ${posColor}`,
               borderRadius: 6,
             }}>
@@ -227,14 +227,14 @@ const ScoutingReportBody = ({ body }) => {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
                   <span style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</span>
-                  <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.nat} · {p.age} ans</span>
+                  <span style={{ fontSize: 11, color: "var(--text-2)" }}>{p.nat} · {p.age} ans</span>
                   <span style={{
                     fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 3,
                     background: posColor + "22", color: posColor,
                   }}>{p.pos}</span>
                 </div>
                 {p.detail && (
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                  <div style={{ fontSize: 12, color: "var(--text-2)" }}>
                     {p.detail.split("·").map((part, j) => (
                       <span key={j}>
                         {j > 0 && <span style={{ margin: "0 6px", opacity: 0.4 }}>·</span>}
@@ -252,7 +252,7 @@ const ScoutingReportBody = ({ body }) => {
         <div style={{
           marginTop: 16, padding: "10px 14px",
           background: "rgba(6,214,160,0.06)", border: "1px solid rgba(6,214,160,0.2)",
-          borderRadius: 6, fontSize: 12, color: "var(--text-secondary)", fontStyle: "italic",
+          borderRadius: 6, fontSize: 12, color: "var(--text-2)", fontStyle: "italic",
         }}>
           {footer}
         </div>
@@ -274,13 +274,13 @@ const MessageDetail = ({ msg, onBack }) => {
       {/* Back button */}
       <button
         onClick={onBack}
-        style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: 13, padding: "0 0 14px 0", width: "fit-content" }}
+        style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--text-2)", cursor: "pointer", fontSize: 13, padding: "0 0 14px 0", width: "fit-content" }}
       >
         <ArrowLeft size={14} /> Retour
       </button>
 
       {/* Header */}
-      <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border-subtle)" }}>
+      <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
         <div style={{
           width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
           background: color + "22", border: `2px solid ${color}66`,
@@ -291,7 +291,7 @@ const MessageDetail = ({ msg, onBack }) => {
         </div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 15 }}>{msg.sender}</div>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Semaine {msg.week}</div>
+          <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 2 }}>Semaine {msg.week}</div>
         </div>
       </div>
 
@@ -301,7 +301,7 @@ const MessageDetail = ({ msg, onBack }) => {
         ? <IntlStandingsBody body={msg.body} />
         : msg.sender === "Cellule de Recrutement"
         ? <ScoutingReportBody body={msg.body} />
-        : <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{msg.body}</div>
+        : <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text-2)", whiteSpace: "pre-wrap" }}>{msg.body}</div>
       }
     </motion.div>
   );
@@ -360,25 +360,25 @@ const InboxPage = () => {
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 0, height: "calc(100vh - 120px)", background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 8, overflow: "hidden" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 0, height: "calc(100vh - 120px)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
 
       {/* Left panel — list */}
-      <div style={{ display: "flex", flexDirection: "column", borderRight: "1px solid var(--border-subtle)" }}>
+      <div style={{ display: "flex", flexDirection: "column", borderRight: "1px solid var(--border)" }}>
 
         {/* Tab bar */}
-        <div style={{ display: "flex", borderBottom: "1px solid var(--border-subtle)" }}>
+        <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
           {tabs.map(t => (
             <button key={t.id} onClick={() => { setTab(t.id); setSelected(null); }} style={{
               flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
               padding: "14px 0", background: "none", border: "none", cursor: "pointer",
-              borderBottom: tab === t.id ? "2px solid var(--primary)" : "2px solid transparent",
-              color: tab === t.id ? "var(--primary)" : "var(--text-secondary)",
+              borderBottom: tab === t.id ? "2px solid var(--accent)" : "2px solid transparent",
+              color: tab === t.id ? "var(--accent)" : "var(--text-2)",
               fontSize: 13, fontWeight: 600, transition: "all 0.15s",
             }}>
               <t.icon size={16} weight={tab === t.id ? "fill" : "regular"} />
               {t.label}
               {t.unread > 0 && (
-                <span style={{ background: "var(--primary)", color: "#fff", borderRadius: 10, fontSize: 10, fontWeight: 800, padding: "1px 6px", minWidth: 18, textAlign: "center" }}>
+                <span style={{ background: "var(--accent)", color: "#fff", borderRadius: 10, fontSize: 10, fontWeight: 800, padding: "1px 6px", minWidth: 18, textAlign: "center" }}>
                   {t.unread}
                 </span>
               )}
@@ -387,13 +387,13 @@ const InboxPage = () => {
         </div>
 
         {/* Toolbar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderBottom: "1px solid var(--border-subtle)" }}>
-          <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderBottom: "1px solid var(--border)" }}>
+          <span style={{ fontSize: 11, color: "var(--text-2)" }}>
             {filtered.length} message{filtered.length !== 1 ? "s" : ""}
             {unreadCount > 0 && ` · ${unreadCount} non lu${unreadCount > 1 ? "s" : ""}`}
           </span>
           {data.unread_total > 0 && (
-            <button onClick={markAllRead} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--primary)", fontWeight: 600 }}>
+            <button onClick={markAllRead} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>
               <CheckCircle size={13} /> Tout lire
             </button>
           )}
@@ -402,9 +402,9 @@ const InboxPage = () => {
         {/* Message list */}
         <div style={{ flex: 1, overflowY: "auto" }}>
           {loading ? (
-            <div style={{ padding: 32, textAlign: "center", color: "var(--text-secondary)", fontSize: 13 }}>Chargement…</div>
+            <div style={{ padding: 32, textAlign: "center", color: "var(--text-2)", fontSize: 13 }}>Chargement…</div>
           ) : filtered.length === 0 ? (
-            <div style={{ padding: 40, textAlign: "center", color: "var(--text-secondary)" }}>
+            <div style={{ padding: 40, textAlign: "center", color: "var(--text-2)" }}>
               <Envelope size={36} style={{ opacity: 0.3, marginBottom: 10, display: "block", margin: "0 auto 10px" }} />
               <div style={{ fontSize: 13 }}>Aucun message pour l'instant</div>
               <div style={{ fontSize: 11, marginTop: 4 }}>Les messages apparaissent après vos matchs</div>
@@ -431,7 +431,7 @@ const InboxPage = () => {
             <motion.div
               key="empty"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}
+              style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--text-2)" }}
             >
               <EnvelopeOpen size={48} style={{ opacity: 0.2, marginBottom: 12 }} />
               <div style={{ fontSize: 14 }}>Sélectionnez un message</div>

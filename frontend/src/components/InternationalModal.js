@@ -664,7 +664,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
 
   if (error) return (
     <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div style={{ background: "var(--bg-dark)", border: `1px solid ${C.border}`,
+      <div style={{ background: "var(--bg)", border: `1px solid ${C.border}`,
         borderRadius: 8, padding: "40px 48px", textAlign: "center", maxWidth: 360 }}>
         <Globe size={36} style={{ color: C.muted, marginBottom: 12 }} />
         <div style={{ color: C.danger, marginBottom: 20, fontSize: 13 }}>{error}</div>
@@ -711,7 +711,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
       <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2 }}
         style={{
-          background: "var(--bg-dark)",
+          background: "var(--bg)",
           width: "95%", maxWidth: 920, maxHeight: "90vh",
           borderRadius: 8, display: "flex", flexDirection: "column",
           overflow: "hidden",

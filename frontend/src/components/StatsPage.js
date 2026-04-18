@@ -35,7 +35,7 @@ const TIER_STYLE = {
 };
 
 const TierBadge = ({ tier }) => {
-  if (!tier) return <span style={{ color: "var(--text-secondary)", fontSize: 11 }}>—</span>;
+  if (!tier) return <span style={{ color: "var(--text-2)", fontSize: 11 }}>—</span>;
   const s = TIER_STYLE[tier];
   return (
     <span style={{
@@ -51,7 +51,7 @@ const TierBadge = ({ tier }) => {
 
 // ── Role filter ───────────────────────────────────────────────────────────────
 const ROLE_META = {
-  ALL:     { label: "Tous",    color: "var(--text-secondary)" },
+  ALL:     { label: "Tous",    color: "var(--text-2)" },
   TOP:     { label: "Top",     color: "#f97316" },
   JUNGLE:  { label: "Jungle",  color: "#22c55e" },
   MID:     { label: "Mid",     color: "#a78bfa" },
@@ -60,7 +60,7 @@ const ROLE_META = {
 };
 
 const RoleFilter = ({ role, active, onClick }) => {
-  const meta = ROLE_META[role] || { label: role, color: "var(--text-secondary)" };
+  const meta = ROLE_META[role] || { label: role, color: "var(--text-2)" };
   return (
     <button
       onClick={onClick}
@@ -68,9 +68,9 @@ const RoleFilter = ({ role, active, onClick }) => {
         display: "flex", alignItems: "center", gap: 6,
         padding: "5px 14px", borderRadius: 6, cursor: "pointer",
         fontSize: 12, fontWeight: 600, transition: "all 0.15s",
-        background: active ? meta.color + "22" : "var(--surface)",
-        border: `1px solid ${active ? meta.color : "var(--border-subtle)"}`,
-        color: active ? meta.color : "var(--text-secondary)",
+        background: active ? meta.color + "22" : "var(--surface-1)",
+        border: `1px solid ${active ? meta.color : "var(--border)"}`,
+        color: active ? meta.color : "var(--text-2)",
       }}
     >
       {role !== "ALL" && (
@@ -183,14 +183,14 @@ const StatsPage = () => {
       padding: "10px 12px", textAlign: align,
       cursor: "pointer", userSelect: "none", fontSize: 11, fontWeight: 700,
       textTransform: "uppercase", letterSpacing: 1,
-      color: sortBy === col ? "var(--primary)" : "var(--text-secondary)",
+      color: sortBy === col ? "var(--accent)" : "var(--text-2)",
       whiteSpace: "nowrap",
     }}>
       {label} {sortBy === col ? (sortDir === "desc" ? "↓" : "↑") : ""}
     </th>
   );
 
-  const wrColor = (wr) => wr >= 55 ? "var(--success)" : wr <= 45 ? "var(--danger)" : "var(--text-primary)";
+  const wrColor = (wr) => wr >= 55 ? "var(--success)" : wr <= 45 ? "var(--danger)" : "var(--text-1)";
 
   // Tier counts for legend
   const tierCounts = useMemo(() => {
@@ -206,7 +206,7 @@ const StatsPage = () => {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
         <h2 className="font-heading" style={{ fontSize: 32 }}>
-          <ChartLine size={28} style={{ marginRight: 10, color: "var(--primary)" }} />
+          <ChartLine size={28} style={{ marginRight: 10, color: "var(--accent)" }} />
           Stats Champions
         </h2>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -227,16 +227,16 @@ const StatsPage = () => {
       {/* Subtitle + tier legend */}
       {data && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          <div style={{ fontSize: 13, color: "var(--text-2)" }}>
             {data.split_label} — {data.total_games} game{data.total_games !== 1 ? "s" : ""} jouée{data.total_games !== 1 ? "s" : ""}
-            {hasDelta && <span style={{ marginLeft: 8, color: "var(--text-secondary)", fontSize: 11 }}>· delta vs split précédent</span>}
+            {hasDelta && <span style={{ marginLeft: 8, color: "var(--text-2)", fontSize: 11 }}>· delta vs split précédent</span>}
           </div>
           {data.total_games > 0 && (
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {["S", "A", "B", "C"].map(t => (
                 <div key={t} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <TierBadge tier={t} />
-                  <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{tierCounts[t]}</span>
+                  <span style={{ fontSize: 11, color: "var(--text-2)" }}>{tierCounts[t]}</span>
                 </div>
               ))}
             </div>
@@ -244,13 +244,13 @@ const StatsPage = () => {
         </div>
       )}
 
-      {loading && <div style={{ textAlign: "center", padding: 60, color: "var(--text-secondary)" }}>Chargement...</div>}
+      {loading && <div style={{ textAlign: "center", padding: 60, color: "var(--text-2)" }}>Chargement...</div>}
 
       {!loading && data?.total_games === 0 && (
         <div className="card" style={{ textAlign: "center", padding: 60 }}>
-          <ChartLine size={64} style={{ color: "var(--text-secondary)", marginBottom: 16 }} />
+          <ChartLine size={64} style={{ color: "var(--text-2)", marginBottom: 16 }} />
           <h3 className="font-heading" style={{ marginBottom: 8 }}>Aucun match joué</h3>
-          <p style={{ color: "var(--text-secondary)" }}>Les stats apparaîtront au fur et à mesure des matchs.</p>
+          <p style={{ color: "var(--text-2)" }}>Les stats apparaîtront au fur et à mesure des matchs.</p>
         </div>
       )}
 
@@ -273,8 +273,8 @@ const StatsPage = () => {
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid var(--border-subtle)", background: "var(--surface)" }}>
-                <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-secondary)", width: 52 }}>Tier</th>
+              <tr style={{ borderBottom: "2px solid var(--border)", background: "var(--surface-1)" }}>
+                <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-2)", width: 52 }}>Tier</th>
                 <SortHeader col="name" label="Champion" align="left" />
                 <SortHeader col="picks" label="Picks" />
                 <SortHeader col="pick_rate" label="Pick %" />
@@ -288,10 +288,10 @@ const StatsPage = () => {
               {sorted.map((champ, i) => {
                 const tier = getTier(champ);
                 const delta = deltaMap[champ.name];
-                const roleColor = ROLE_META[champ.main_role]?.color || "var(--text-secondary)";
+                const roleColor = ROLE_META[champ.main_role]?.color || "var(--text-2)";
                 return (
                   <tr key={champ.name} style={{
-                    borderBottom: "1px solid var(--border-subtle)",
+                    borderBottom: "1px solid var(--border)",
                     background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)",
                   }}>
                     {/* Tier */}
@@ -305,7 +305,7 @@ const StatsPage = () => {
                         <img
                           src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${toDDKey(champ.name)}.png`}
                           alt={champ.name}
-                          style={{ width: 32, height: 32, borderRadius: 4, border: "1px solid var(--border-subtle)" }}
+                          style={{ width: 32, height: 32, borderRadius: 4, border: "1px solid var(--border)" }}
                           onError={e => { e.currentTarget.style.opacity = "0"; }}
                         />
                         <div>
@@ -327,7 +327,7 @@ const StatsPage = () => {
 
                     {/* Pick % */}
                     <td style={{ textAlign: "center", padding: "8px 12px" }}>
-                      <span className="font-stats" style={{ color: "var(--primary)" }}>{champ.pick_rate}%</span>
+                      <span className="font-stats" style={{ color: "var(--accent)" }}>{champ.pick_rate}%</span>
                     </td>
 
                     {/* Bans */}
@@ -343,10 +343,10 @@ const StatsPage = () => {
                     {/* Présence bar */}
                     <td style={{ textAlign: "center", padding: "8px 12px" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        <div style={{ width: 60, height: 6, background: "var(--border-subtle)", borderRadius: 3, overflow: "hidden" }}>
-                          <div style={{ width: `${Math.min(100, champ.presence)}%`, height: "100%", background: "var(--secondary)", borderRadius: 3 }} />
+                        <div style={{ width: 60, height: 6, background: "var(--border)", borderRadius: 3, overflow: "hidden" }}>
+                          <div style={{ width: `${Math.min(100, champ.presence)}%`, height: "100%", background: "var(--amber)", borderRadius: 3 }} />
                         </div>
-                        <span className="font-stats" style={{ color: "var(--secondary)", fontSize: 12 }}>{champ.presence}%</span>
+                        <span className="font-stats" style={{ color: "var(--amber)", fontSize: 12 }}>{champ.presence}%</span>
                       </div>
                     </td>
 
@@ -360,7 +360,7 @@ const StatsPage = () => {
                           <DeltaBadge delta={delta} />
                         </div>
                       ) : (
-                        <span style={{ color: "var(--text-secondary)", fontSize: 12 }}>—</span>
+                        <span style={{ color: "var(--text-2)", fontSize: 12 }}>—</span>
                       )}
                     </td>
                   </tr>

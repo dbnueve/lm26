@@ -5,7 +5,46 @@ import TeamLogo from "./TeamLogo";
 import PlayerCard from "./PlayerCard";
 import PlayerDetailModal from "./PlayerDetailModal";
 
-// Dashboard Component
+const ROUND_LABELS = {
+  ub_r1:      "UB Round 1",
+  ub_final:   "UB Finale",
+  lb_r1:      "LB Round 1",
+  lb_r2:      "LB Round 2",
+  lb_r3:      "LB Round 3",
+  lb_final:   "LB Finale",
+  grand_final: "Grande Finale",
+};
+
+/* ── Sous-composants ──────────────────────────────────────── */
+
+const StatNumber = ({ value, color, label }) => (
+  <div>
+    <div className="font-stats" style={{ fontSize: 26, fontWeight: 500, color, lineHeight: 1.1 }}>{value}</div>
+    <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 3, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+  </div>
+);
+
+const CardHeader = ({ icon: Icon, title, iconColor }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+    {Icon && <Icon size={15} style={{ color: iconColor || "var(--text-2)" }} />}
+    <span className="text-label">{title}</span>
+  </div>
+);
+
+const StatRow = ({ label, value, valueColor }) => (
+  <div style={{
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "7px 0",
+    borderBottom: "1px solid var(--border)",
+    fontSize: 13,
+  }}>
+    <span style={{ color: "var(--text-2)" }}>{label}</span>
+    <span className="font-stats" style={{ fontWeight: 500, color: valueColor || "var(--text-1)" }}>{value}</span>
+  </div>
+);
+
+/* ── Dashboard ────────────────────────────────────────────── */
+
 const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, playoffsData, onPlayMatch, onPlayPlayoffMatch, onSeasonStart }) => {
   const [detailPlayer, setDetailPlayer] = useState(null);
 
@@ -24,228 +63,180 @@ const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, playoffs
     ) ?? null;
   }, [nextRegularMatch, playoffsData, userTeam.id]);
 
-  const nextMatch = nextRegularMatch || null;
-
   const teamStanding = useMemo(() =>
     standings.find(t => t.id === userTeam.id),
     [standings, userTeam.id]
   );
+
   const starters = useMemo(() =>
     userTeam.players?.filter(p => p.is_starter) || [],
     [userTeam.players]
   );
 
-  return (
-    <div className="animate-slide-up">
-      <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 24 }}>
-        Tableau de Bord
-      </h2>
+  const avgRating = starters.length > 0
+    ? Math.round(starters.reduce((a, p) => a + p.rating, 0) / starters.length)
+    : "-";
+  const avgKda = starters.length > 0
+    ? (starters.reduce((a, p) => a + p.kda, 0) / starters.length).toFixed(2)
+    : "-";
+  const avgMoral = starters.length > 0
+    ? Math.round(starters.reduce((a, p) => a + p.moral, 0) / starters.length) + "%"
+    : "-";
 
-      <div className="grid-3" style={{ marginBottom: 24 }}>
-        <div className="card" style={{ padding: 24 }}>
-          <h3 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)" }}>
-            Aperçu de l équipe
-          </h3>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+  const currentWeek = schedule.filter(m => !m.played).length > 0
+    ? Math.min(...schedule.filter(m => !m.played).map(m => m.week))
+    : schedule.length > 0 ? Math.max(...schedule.map(m => m.week)) : 1;
+  const weekMatches = schedule.filter(m => m.week === currentWeek);
+
+  return (
+    <div className="animate-slide-up" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+      {/* Page title */}
+      <div>
+        <h2 className="font-heading" style={{ fontSize: 22, letterSpacing: "-0.02em" }}>Tableau de bord</h2>
+        <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 2 }}>
+          {splitStatus?.split_label || "Saison en cours"}
+        </div>
+      </div>
+
+      {/* Top row : Team overview / Next match / Team stats */}
+      <div className="grid-3">
+
+        {/* Team overview */}
+        <div className="card" style={{ padding: 18 }}>
+          <CardHeader title="Équipe" />
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
             <div style={{
-              width: 60,
-              height: 60,
-              background: "var(--surface-hover)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 4,
-              padding: 8
+              width: 52, height: 52,
+              background: "var(--surface-2)",
+              borderRadius: "var(--radius)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
             }}>
-              <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={44} />
+              <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={38} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 18 }}>{userTeam.name}</div>
-              <div style={{ color: "var(--text-secondary)" }}>{splitStatus?.split_label || "Saison en cours"}</div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{userTeam.name}</div>
+              <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 2 }}>
+                {userTeam.league || "LEC"}
+              </div>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-            <div>
-              <div className="font-stats" style={{ fontSize: 28, color: "var(--primary)" }}>
-                {teamStanding?.rank || "-"}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Position</div>
-            </div>
-            <div>
-              <div className="font-stats" style={{ fontSize: 28, color: "var(--success)" }}>
-                {userTeam.wins}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Victoires</div>
-            </div>
-            <div>
-              <div className="font-stats" style={{ fontSize: 28, color: "var(--danger)" }}>
-                {userTeam.losses}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Défaites</div>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+            <StatNumber value={teamStanding?.rank || "-"} color="var(--accent)" label="Position" />
+            <StatNumber value={userTeam.wins}  color="var(--success)" label="Victoires" />
+            <StatNumber value={userTeam.losses} color="var(--danger)"  label="Défaites" />
           </div>
         </div>
 
-        <div className="card" style={{ padding: 24 }}>
-          <h3 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)" }}>
-            Prochain Match
-          </h3>
+        {/* Next match */}
+        <div className="card" style={{ padding: 18 }}>
+          <CardHeader icon={GameController} title="Prochain match" iconColor="var(--accent)" />
+
           {phase === "preseason" ? (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-              style={{ textAlign: "center" }}
-            >
-              <div style={{
-                marginBottom: 16, padding: "12px 16px",
-                background: "rgba(200,155,60,0.1)",
-                border: "1px solid rgba(200,155,60,0.3)",
-                borderRadius: 4, fontSize: 13, color: "var(--secondary)"
-              }}>
-                ⏸ Pré-saison — Mercato ouvert<br />
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                  Finalisez vos transferts puis lancez la saison
-                </span>
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="chip chip-amber" style={{ marginBottom: 12, display: "block", textAlign: "center", padding: "8px 12px" }}>
+                Pré-saison — Mercato ouvert
               </div>
-              <button
-                className="btn-primary"
-                style={{ width: "100%", fontSize: 15, padding: "12px 0" }}
-                onClick={onSeasonStart}
-                data-testid="start-season-btn"
-              >
-                <Play size={20} style={{ marginRight: 8 }} />
-                Lancer la Saison
+              <div style={{ fontSize: 12, color: "var(--text-2)", marginBottom: 14, textAlign: "center" }}>
+                Finalisez vos transferts puis lancez la saison
+              </div>
+              <button className="btn-primary" style={{ width: "100%" }} onClick={onSeasonStart} data-testid="start-season-btn">
+                <Play size={16} style={{ marginRight: 6 }} />
+                Lancer la saison
               </button>
             </motion.div>
-          ) : nextMatch ? (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, marginBottom: 16 }}>
-                <div style={{ textAlign: "center" }}>
-                  <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={52} />
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>Vous</div>
+
+          ) : nextRegularMatch ? (() => {
+            const oppId = nextRegularMatch.team1 === userTeam.id ? nextRegularMatch.team2 : nextRegularMatch.team1;
+            const opp = standings.find(t => t.id === oppId);
+            return (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 16 }}>
+                  <div style={{ textAlign: "center" }}>
+                    <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={44} />
+                    <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 4 }}>Vous</div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)" }}>VS</div>
+                  <div style={{ textAlign: "center" }}>
+                    <TeamLogo teamId={oppId} abbr={opp?.abbr || oppId} size={44} />
+                    <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 4 }}>{opp?.abbr || oppId}</div>
+                  </div>
                 </div>
-                <div className="font-heading" style={{ fontSize: 24, color: "var(--text-secondary)" }}>VS</div>
-                <div style={{ textAlign: "center" }}>
-                  {(() => {
-                    const oppId = nextMatch.team1 === userTeam.id ? nextMatch.team2 : nextMatch.team1;
-                    const opp = standings.find(t => t.id === oppId);
-                    return <><TeamLogo teamId={oppId} abbr={opp?.abbr || oppId} size={52} /><div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>Adversaire</div></>;
-                  })()}
-                </div>
+                <button className="btn-primary" style={{ width: "100%" }} onClick={() => onPlayMatch(nextRegularMatch)} data-testid="play-match-btn">
+                  <GameController size={16} style={{ marginRight: 6 }} />
+                  Jouer le match
+                </button>
               </div>
-              <button
-                className="btn-primary"
-                style={{ width: "100%" }}
-                onClick={() => onPlayMatch(nextMatch)}
-                data-testid="play-match-btn"
-              >
-                <GameController size={20} style={{ marginRight: 8 }} />
-                Jouer le Match
-              </button>
-            </div>
-          ) : nextPlayoffMatch ? (
-            <div>
-              {(() => {
-                const roundLabels = {
-                  ub_r1: "UB Round 1", ub_final: "UB Finale",
-                  lb_r1: "LB Round 1", lb_r2: "LB Round 2", lb_r3: "LB Round 3",
-                  lb_final: "LB Finale", grand_final: "Grande Finale"
-                };
-                const opp = nextPlayoffMatch.team1 === userTeam.id ? nextPlayoffMatch.team2_data : nextPlayoffMatch.team1_data;
-                return (
-                  <>
-                    <div style={{ textAlign: "center", fontSize: 12, color: "var(--primary)", fontWeight: 600, marginBottom: 12 }}>
-                      PLAYOFFS — {roundLabels[nextPlayoffMatch.round] || nextPlayoffMatch.round}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, marginBottom: 16 }}>
-                      <div style={{ textAlign: "center" }}>
-                        <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={52} />
-                        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>Vous</div>
-                      </div>
-                      <div className="font-heading" style={{ fontSize: 24, color: "var(--text-secondary)" }}>VS</div>
-                      <div style={{ textAlign: "center" }}>
-                        <TeamLogo teamId={opp?.id} abbr={opp?.abbr} size={52} />
-                        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{opp?.abbr}</div>
-                      </div>
-                    </div>
-                    <button
-                      className="btn-primary"
-                      style={{ width: "100%" }}
-                      onClick={() => onPlayPlayoffMatch && onPlayPlayoffMatch(nextPlayoffMatch)}
-                      data-testid="play-match-btn"
-                    >
-                      <GameController size={20} style={{ marginRight: 8 }} />
-                      Jouer le Match (Bo5)
-                    </button>
-                  </>
-                );
-              })()}
-            </div>
-          ) : (
-            <div style={{ textAlign: "center", color: "var(--text-secondary)" }}>
+            );
+          })() : nextPlayoffMatch ? (() => {
+            const opp = nextPlayoffMatch.team1 === userTeam.id ? nextPlayoffMatch.team2_data : nextPlayoffMatch.team1_data;
+            return (
+              <div>
+                <div className="chip chip-accent" style={{ marginBottom: 12, display: "inline-flex" }}>
+                  PLAYOFFS — {ROUND_LABELS[nextPlayoffMatch.round] || nextPlayoffMatch.round}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 16 }}>
+                  <div style={{ textAlign: "center" }}>
+                    <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={44} />
+                    <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 4 }}>Vous</div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)" }}>VS</div>
+                  <div style={{ textAlign: "center" }}>
+                    <TeamLogo teamId={opp?.id} abbr={opp?.abbr} size={44} />
+                    <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 4 }}>{opp?.abbr}</div>
+                  </div>
+                </div>
+                <button className="btn-primary" style={{ width: "100%" }} onClick={() => onPlayPlayoffMatch?.(nextPlayoffMatch)} data-testid="play-match-btn">
+                  <GameController size={16} style={{ marginRight: 6 }} />
+                  Jouer le match (Bo5)
+                </button>
+              </div>
+            );
+          })() : (
+            <div style={{ textAlign: "center", color: "var(--text-2)", fontSize: 13, paddingTop: 12 }}>
               Aucun match programmé
             </div>
           )}
         </div>
 
-        <div className="card" style={{ padding: 24 }}>
-          <h3 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)" }}>
-            Statistiques d équipe
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>Rating moyen</span>
-              <span className="font-stats" style={{ fontWeight: 700, color: "var(--primary)" }}>
-                {starters.length > 0 ?
-                  Math.round(starters.reduce((a, p) => a + p.rating, 0) / starters.length) :
-                  "-"
-                }
-              </span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>KDA moyen</span>
-              <span className="font-stats" style={{ fontWeight: 700 }}>
-                {starters.length > 0 ?
-                  (starters.reduce((a, p) => a + p.kda, 0) / starters.length).toFixed(2) :
-                  "-"
-                }
-              </span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>Moral moyen</span>
-              <span className="font-stats" style={{ fontWeight: 700, color: "var(--success)" }}>
-                {starters.length > 0 ?
-                  Math.round(starters.reduce((a, p) => a + p.moral, 0) / starters.length) + "%" :
-                  "-"
-                }
-              </span>
-            </div>
-          </div>
+        {/* Team stats */}
+        <div className="card" style={{ padding: 18 }}>
+          <CardHeader title="Statistiques" />
+          <StatRow label="Rating moyen" value={avgRating} valueColor="var(--accent)" />
+          <StatRow label="KDA moyen"    value={avgKda} />
+          <StatRow label="Moral moyen"  value={avgMoral} valueColor="var(--success)" />
+          <StatRow label="Joueurs"      value={userTeam.players?.length || 0} />
         </div>
       </div>
 
-      {/* Standings + Calendar row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
+      {/* Second row : Standings + Calendar */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
         {/* Compact standings */}
-        <div className="card" style={{ padding: 24 }}>
-          <h3 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 8 }}>
-            <Trophy size={18} style={{ color: "var(--secondary)" }} /> Classement
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="card" style={{ padding: 18 }}>
+          <CardHeader icon={Trophy} title="Classement" iconColor="var(--amber)" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {standings.slice(0, 10).map((team, i) => {
               const isUser = team.id === userTeam.id;
               return (
                 <div key={team.id} style={{
                   display: "flex", alignItems: "center", gap: 10,
-                  padding: "6px 10px", borderRadius: 6,
-                  background: isUser ? "rgba(var(--primary-rgb, 200,155,60), 0.15)" : "transparent",
-                  border: isUser ? "1px solid rgba(var(--primary-rgb, 200,155,60), 0.35)" : "1px solid transparent"
+                  padding: "5px 8px",
+                  borderRadius: "var(--radius-xs)",
+                  background: isUser ? "var(--accent-dim)" : "transparent",
+                  border: isUser ? "1px solid var(--accent-border)" : "1px solid transparent",
                 }}>
-                  <span className="font-stats" style={{ width: 20, textAlign: "right", color: i < 3 ? "var(--secondary)" : "var(--text-secondary)", fontSize: 13, fontWeight: 700 }}>{i + 1}</span>
-                  <TeamLogo teamId={team.id} abbr={team.abbr} size={22} />
+                  <span className="font-stats" style={{
+                    width: 18, textAlign: "right", fontSize: 12,
+                    color: i < 3 ? "var(--amber)" : "var(--text-2)",
+                    fontWeight: 600,
+                  }}>{i + 1}</span>
+                  <TeamLogo teamId={team.id} abbr={team.abbr} size={20} />
                   <span style={{ flex: 1, fontSize: 13, fontWeight: isUser ? 700 : 400 }}>{team.abbr}</span>
-                  <span className="font-stats" style={{ fontSize: 13 }}>
+                  <span className="font-stats" style={{ fontSize: 12 }}>
                     <span style={{ color: "var(--success)" }}>{team.wins}</span>
-                    <span style={{ color: "var(--text-secondary)" }}>-</span>
+                    <span style={{ color: "var(--text-2)" }}> - </span>
                     <span style={{ color: "var(--danger)" }}>{team.losses}</span>
                   </span>
                 </div>
@@ -254,70 +245,63 @@ const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, playoffs
           </div>
         </div>
 
-        {/* Compact current-week calendar */}
-        {(() => {
-          const currentWeek = schedule.filter(m => !m.played).length > 0
-            ? Math.min(...schedule.filter(m => !m.played).map(m => m.week))
-            : (schedule.length > 0 ? Math.max(...schedule.map(m => m.week)) : 1);
-          const weekMatches = schedule.filter(m => m.week === currentWeek);
-          return (
-            <div className="card" style={{ padding: 24 }}>
-              <h3 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 8 }}>
-                <Calendar size={18} style={{ color: "var(--primary)" }} /> Semaine {currentWeek}
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {weekMatches.map((m, idx) => {
-                  const isUserMatch = m.team1 === userTeam.id || m.team2 === userTeam.id;
-                  const t1 = standings.find(t => t.id === m.team1);
-                  const t2 = standings.find(t => t.id === m.team2);
-                  return (
-                    <div key={idx} style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      padding: "6px 10px", borderRadius: 6,
-                      background: isUserMatch ? "rgba(var(--primary-rgb, 200,155,60), 0.12)" : "transparent",
-                      border: isUserMatch ? "1px solid rgba(var(--primary-rgb, 200,155,60), 0.3)" : "1px solid var(--border)"
+        {/* Calendar week */}
+        <div className="card" style={{ padding: 18 }}>
+          <CardHeader icon={Calendar} title={`Semaine ${currentWeek}`} iconColor="var(--accent)" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {weekMatches.map((m, idx) => {
+              const isUserMatch = m.team1 === userTeam.id || m.team2 === userTeam.id;
+              const t1 = standings.find(t => t.id === m.team1);
+              const t2 = standings.find(t => t.id === m.team2);
+              return (
+                <div key={idx} style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "5px 8px",
+                  borderRadius: "var(--radius-xs)",
+                  background: isUserMatch ? "var(--accent-dim)" : "transparent",
+                  border: `1px solid ${isUserMatch ? "var(--accent-border)" : "var(--border)"}`,
+                }}>
+                  <TeamLogo teamId={m.team1} abbr={t1?.abbr || m.team1} size={18} />
+                  <span style={{ fontSize: 12, fontWeight: m.team1 === userTeam.id ? 700 : 400 }}>{t1?.abbr || m.team1}</span>
+                  {m.played ? (
+                    <span className="font-stats" style={{ fontSize: 12, margin: "0 4px", color: "var(--text-2)" }}>
+                      {m.score1}–{m.score2}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, margin: "0 4px", color: "var(--text-2)" }}>vs</span>
+                  )}
+                  <TeamLogo teamId={m.team2} abbr={t2?.abbr || m.team2} size={18} />
+                  <span style={{ fontSize: 12, fontWeight: m.team2 === userTeam.id ? 700 : 400 }}>{t2?.abbr || m.team2}</span>
+                  {m.played && isUserMatch && (
+                    <span style={{
+                      marginLeft: "auto", fontSize: 11, fontWeight: 600,
+                      color: m.winner === userTeam.id ? "var(--success)" : "var(--danger)",
                     }}>
-                      <TeamLogo teamId={m.team1} abbr={t1?.abbr || m.team1} size={20} />
-                      <span style={{ fontSize: 12, fontWeight: m.team1 === userTeam.id ? 700 : 400 }}>{t1?.abbr || m.team1}</span>
-                      {m.played ? (
-                        <span className="font-stats" style={{ fontSize: 13, margin: "0 4px", color: "var(--text-secondary)" }}>
-                          {m.score1} - {m.score2}
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: 12, margin: "0 6px", color: "var(--text-secondary)" }}>vs</span>
-                      )}
-                      <TeamLogo teamId={m.team2} abbr={t2?.abbr || m.team2} size={20} />
-                      <span style={{ fontSize: 12, fontWeight: m.team2 === userTeam.id ? 700 : 400 }}>{t2?.abbr || m.team2}</span>
-                      {m.played && (
-                        <span style={{ marginLeft: "auto", fontSize: 11, color: m.winner === userTeam.id ? "var(--success)" : m.winner ? (isUserMatch ? "var(--danger)" : "var(--text-secondary)") : "var(--text-secondary)" }}>
-                          {m.winner === userTeam.id ? "Victoire" : m.winner && isUserMatch ? "Défaite" : ""}
-                        </span>
-                      )}
-                      {!m.played && isUserMatch && (
-                        <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--primary)", fontWeight: 600 }}>À jouer</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
+                      {m.winner === userTeam.id ? "Victoire" : "Défaite"}
+                    </span>
+                  )}
+                  {!m.played && isUserMatch && (
+                    <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>À jouer</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="card" style={{ padding: 24 }}>
-        <h3 className="font-heading" style={{ marginBottom: 16, color: "var(--text-secondary)" }}>
-          Composition Titulaire
-        </h3>
+      {/* Starting roster */}
+      <div className="card" style={{ padding: 18 }}>
+        <CardHeader title="Composition titulaire" />
         <div className="grid-5">
           {["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"].map(pos => {
             const player = starters.find(p => p.position === pos);
             return player ? (
               <PlayerCard key={player.id} player={player} onSelect={setDetailPlayer} />
             ) : (
-              <div key={pos} className="card" style={{ padding: 24, textAlign: "center", opacity: 0.5 }}>
+              <div key={pos} className="card" style={{ padding: 20, textAlign: "center", opacity: 0.45 }}>
                 <span className={"pos-badge pos-" + pos}>{pos}</span>
-                <div style={{ marginTop: 8 }}>Vacant</div>
+                <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-2)" }}>Vacant</div>
               </div>
             );
           })}

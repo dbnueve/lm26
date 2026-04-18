@@ -49,7 +49,7 @@ const SaveSelectionPage = ({ onLoad, onNew }) => {
       </motion.div>
 
       {loading ? (
-        <div style={{ textAlign: "center", color: "var(--text-secondary)", marginTop: 40 }}>Chargement...</div>
+        <div style={{ textAlign: "center", color: "var(--text-2)", marginTop: 40 }}>Chargement...</div>
       ) : (
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginTop: 32 }}>
           {saves.map((s, idx) => (
@@ -63,7 +63,7 @@ const SaveSelectionPage = ({ onLoad, onNew }) => {
               }}
             >
               <div>
-                <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
+                <div style={{ color: "var(--text-2)", fontSize: 12, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
                   Slot {s.slot}
                 </div>
                 {s.exists ? (
@@ -71,11 +71,11 @@ const SaveSelectionPage = ({ onLoad, onNew }) => {
                     <div style={{ marginBottom: 8 }}>
                       <TeamLogo teamId={s.user_team} abbr={s.team_abbr} size={56} />
                     </div>
-                    <div style={{ color: "var(--text-primary)", fontWeight: 600, marginBottom: 4 }}>{s.team_name}</div>
-                    <div style={{ color: "var(--text-secondary)", fontSize: 13 }}>
+                    <div style={{ color: "var(--text-1)", fontWeight: 600, marginBottom: 4 }}>{s.team_name}</div>
+                    <div style={{ color: "var(--text-2)", fontSize: 13 }}>
                       Semaine {s.week} · {phaseLabel(s.phase)}
                     </div>
-                    <div style={{ color: "var(--secondary)", fontSize: 13, marginTop: 4 }}>
+                    <div style={{ color: "var(--amber)", fontSize: 13, marginTop: 4 }}>
                       {s.wins}V – {s.losses}D
                     </div>
                     {s.league && (
@@ -91,7 +91,7 @@ const SaveSelectionPage = ({ onLoad, onNew }) => {
                     )}
                   </>
                 ) : (
-                  <div style={{ color: "var(--text-secondary)", fontSize: 15, marginTop: 16 }}>Emplacement vide</div>
+                  <div style={{ color: "var(--text-2)", fontSize: 15, marginTop: 16 }}>Emplacement vide</div>
                 )}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 20 }}>

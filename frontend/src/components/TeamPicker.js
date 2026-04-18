@@ -63,7 +63,7 @@ const TeamPicker = ({ teams, onSelectTeam, league = "LEC" }) => {
             <div className="team-abbr"><TeamLogo teamId={team.id} abbr={team.abbr} size={48} noClick /></div>
             <div className="team-name">{team.name}</div>
             <div className="team-rating">
-              <Star weight="fill" style={{ color: "var(--secondary)", marginRight: 4 }} />
+              <Star weight="fill" style={{ color: "var(--amber)", marginRight: 4 }} />
               {team.rating}
             </div>
           </motion.div>

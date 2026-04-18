@@ -86,7 +86,7 @@ const eloChartData = useMemo(() => {
 
   const getEloColor = (elo) => {
     if (elo >= 1170) return "var(--success)";
-    if (elo >= 1070) return "var(--primary)";
+    if (elo >= 1070) return "var(--accent)";
     if (elo >= 1020) return "var(--warning)";
     return "var(--danger)";
   };
@@ -95,7 +95,7 @@ const eloChartData = useMemo(() => {
   return (
     <div className="animate-slide-up">
       <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 24, display: 'flex', alignItems: 'center' }}>
-        <ChartLine size={32} style={{ marginRight: 12, color: "var(--primary)" }} />
+        <ChartLine size={32} style={{ marginRight: 12, color: "var(--accent)" }} />
         Historique & Statistiques
       </h2>
 
@@ -121,15 +121,15 @@ const eloChartData = useMemo(() => {
       {activeTab === "elo" && (
   <div className="card" style={{ padding: 24 }}>
     <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
-      <div style={{ flex: 1, padding: 20, background: "var(--surface)", borderRadius: 12 }}>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>ELO Actuel</div>
+      <div style={{ flex: 1, padding: 20, background: "var(--surface-1)", borderRadius: 12 }}>
+        <div style={{ fontSize: 12, color: "var(--text-2)" }}>ELO Actuel</div>
         <div style={{ fontSize: 32, fontWeight: 800, color: getEloColor(eloHistory?.current_team?.elo) }}>
           {/* Correction : On affiche 0 si la donnée est manquante */}
           {eloHistory?.current_team?.elo ? eloHistory.current_team.elo.toFixed(0) : "1000"}
         </div>
       </div>
-      <div style={{ flex: 1, padding: 20, background: "var(--surface)", borderRadius: 12 }}>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Winrate Global</div>
+      <div style={{ flex: 1, padding: 20, background: "var(--surface-1)", borderRadius: 12 }}>
+        <div style={{ fontSize: 12, color: "var(--text-2)" }}>Winrate Global</div>
         <div style={{ fontSize: 32, fontWeight: 800, color: "var(--success)" }}>
           {/* Correction du NaN% : On vérifie si le total des matchs est > 0 */}
           {eloHistory?.current_team?.wins + eloHistory?.current_team?.losses > 0 
@@ -154,7 +154,7 @@ const eloChartData = useMemo(() => {
       {[0, 25, 50, 75, 100].map(val => (
         <line 
           key={val} x1="0" y1={val} x2="1000" y2={val} 
-          stroke="var(--border-subtle)" strokeWidth="0.5" 
+          stroke="var(--border)" strokeWidth="0.5" 
         />
       ))}
 
@@ -162,7 +162,7 @@ const eloChartData = useMemo(() => {
       {eloChartData.length > 1 && (
         <polyline
           fill="none"
-          stroke="var(--primary)"
+          stroke="var(--accent)"
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -184,7 +184,7 @@ const eloChartData = useMemo(() => {
               cx={x}
               cy={y}
               r="5"
-              fill="var(--surface)"
+              fill="var(--surface-1)"
               stroke={getEloColor(d.elo)}
               strokeWidth="3"
             />
@@ -192,7 +192,7 @@ const eloChartData = useMemo(() => {
             <text 
               x={x} y={y - 12} 
               textAnchor="middle" 
-              fontSize="12" fill="var(--text-primary)" 
+              fontSize="12" fill="var(--text-1)" 
               fontWeight="700"
             >
               {d.elo.toFixed(0)}
@@ -202,7 +202,7 @@ const eloChartData = useMemo(() => {
       })}
     </svg>
   ) : (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-2)' }}>
       Aucune donnée d'historique disponible
     </div>
   )}
@@ -229,16 +229,16 @@ const eloChartData = useMemo(() => {
             
             {splitStats && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                    <div style={{ padding: 20, background: 'var(--surface)', borderRadius: 12, textAlign: 'center' }}>
-                        <Trophy size={32} color="var(--secondary)" />
+                    <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: 12, textAlign: 'center' }}>
+                        <Trophy size={32} color="var(--amber)" />
                         <div style={{ fontSize: 24, fontWeight: 700, marginTop: 8 }}>Rank #{splitStats.user_team?.final_rank || '?'}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Classement Final</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Classement Final</div>
                     </div>
-                    <div style={{ padding: 20, background: 'var(--surface)', borderRadius: 12, textAlign: 'center' }}>
+                    <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: 12, textAlign: 'center' }}>
                         <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--success)' }}>
                             {splitStats.user_team?.wins}V - {splitStats.user_team?.losses}D
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>Record du Split</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 8 }}>Record du Split</div>
                     </div>
                 </div>
             )}
@@ -249,11 +249,11 @@ const eloChartData = useMemo(() => {
       {activeTab === "headtohead" && (
         <div className="card" style={{ padding: 24 }}>
           <div style={{ marginBottom: 32 }}>
-            <label style={{ fontSize: 12, color: "var(--text-secondary)", display: 'block', marginBottom: 8 }}>Comparer avec :</label>
+            <label style={{ fontSize: 12, color: "var(--text-2)", display: 'block', marginBottom: 8 }}>Comparer avec :</label>
             <select
               value={selectedOpponent || ""}
               onChange={(e) => handleOpponentSelect(e.target.value)}
-              style={{ width: "100%", padding: "12px", borderRadius: 8, background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+              style={{ width: "100%", padding: "12px", borderRadius: 8, background: "var(--surface-1)", border: "1px solid var(--border)", color: "var(--text-1)" }}
             >
               <option value="">Sélectionner une équipe...</option>
               {teams.map(t => <option key={t.id} value={t.id}>{t.name} ({t.abbr})</option>)}
@@ -266,18 +266,18 @@ const eloChartData = useMemo(() => {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
                 <div style={{ textAlign: "center", flex: 1 }}>
                   <TeamLogo teamId={headToHead.team1.id} abbr={headToHead.team1.abbr} size={60} />
-                  <div style={{ fontSize: 40, fontWeight: 900, color: "var(--primary)" }}>{headToHead.record.team1_wins}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{headToHead.team1.name}</div>
+                  <div style={{ fontSize: 40, fontWeight: 900, color: "var(--accent)" }}>{headToHead.record.team1_wins}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-2)" }}>{headToHead.team1.name}</div>
                 </div>
 
                 <div style={{ textAlign: "center", padding: "0 20px" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-secondary)", background: "var(--surface)", padding: "4px 12px", borderRadius: 20 }}>VS</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-2)", background: "var(--surface-1)", padding: "4px 12px", borderRadius: 20 }}>VS</div>
                 </div>
 
                 <div style={{ textAlign: "center", flex: 1 }}>
                   <TeamLogo teamId={headToHead.team2.id} abbr={headToHead.team2.abbr} size={60} />
                   <div style={{ fontSize: 40, fontWeight: 900, color: "var(--danger)" }}>{headToHead.record.team2_wins}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{headToHead.team2.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-2)" }}>{headToHead.team2.name}</div>
                 </div>
               </div>
 
@@ -288,7 +288,7 @@ const eloChartData = useMemo(() => {
                     <span>{headToHead.record.win_probability.team1.toFixed(0)}% vs {headToHead.record.win_probability.team2.toFixed(0)}%</span>
                 </div>
                 <div style={{ height: 8, background: 'var(--border)', borderRadius: 4, display: 'flex', overflow: 'hidden' }}>
-                    <div style={{ width: `${headToHead.record.win_probability.team1}%`, background: 'var(--primary)' }} />
+                    <div style={{ width: `${headToHead.record.win_probability.team1}%`, background: 'var(--accent)' }} />
                     <div style={{ width: `${headToHead.record.win_probability.team2}%`, background: 'var(--danger)' }} />
                 </div>
               </div>
@@ -297,8 +297,8 @@ const eloChartData = useMemo(() => {
               <h4 style={{ fontSize: 14, marginBottom: 16 }}>Dernières confrontations</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {headToHead.matches.map(m => (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface)', borderRadius: 8, alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Semaine {m.week}</span>
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface-1)', borderRadius: 8, alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-2)' }}>Semaine {m.week}</span>
                     <span style={{ fontWeight: 700 }}>{m.score1} - {m.score2}</span>
                     <span style={{ 
                         fontSize: 11, 
@@ -313,7 +313,7 @@ const eloChartData = useMemo(() => {
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-secondary)" }}>
+            <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-2)" }}>
               <ArrowRight size={48} style={{ opacity: 0.2, marginBottom: 16 }} />
               <p>Sélectionnez un rival pour analyser vos duels</p>
             </div>

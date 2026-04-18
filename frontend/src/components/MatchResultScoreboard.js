@@ -41,7 +41,7 @@ function StatRow({ p, duration, won }) {
       display: "grid",
       gridTemplateColumns: "36px 1fr 80px 50px 65px 70px",
       padding: "6px 12px",
-      borderTop: "1px solid var(--border-subtle)",
+      borderTop: "1px solid var(--border)",
       alignItems: "center",
       gap: 4,
     }}>
@@ -56,21 +56,21 @@ function StatRow({ p, duration, won }) {
       <span style={{ fontWeight: 500, fontSize: 13 }}>{p.player_name || p.position}</span>
       <span className="font-stats" style={{ textAlign: "center", fontWeight: 700 }}>
         <span style={{ color: "var(--success)" }}>{p.kills}</span>
-        <span style={{ color: "var(--text-secondary)" }}>/</span>
+        <span style={{ color: "var(--text-2)" }}>/</span>
         <span style={{ color: "var(--danger)" }}>{p.deaths}</span>
-        <span style={{ color: "var(--text-secondary)" }}>/</span>
-        <span style={{ color: "var(--primary)" }}>{p.assists}</span>
+        <span style={{ color: "var(--text-2)" }}>/</span>
+        <span style={{ color: "var(--accent)" }}>{p.assists}</span>
       </span>
       <span className="font-stats" style={{
         textAlign: "center", fontWeight: 700,
-        color: isGood ? "var(--success)" : isBad ? "var(--danger)" : "var(--primary)",
+        color: isGood ? "var(--success)" : isBad ? "var(--danger)" : "var(--accent)",
       }}>
         {note.toFixed(1)}
       </span>
       <span className="font-stats" style={{ textAlign: "center" }}>
         {((p.cs || 0) / dur).toFixed(1)}
       </span>
-      <span className="font-stats" style={{ textAlign: "right", color: "var(--secondary)" }}>
+      <span className="font-stats" style={{ textAlign: "right", color: "var(--amber)" }}>
         {p.damage ? (p.damage / 1000).toFixed(1) + "k" : "-"}
       </span>
     </div>
@@ -91,7 +91,7 @@ function TeamStatsCard({ stats, title, won, headerBg, headerColor, teamId, teamA
         <div style={{
           display: "grid", gridTemplateColumns: "36px 1fr 80px 50px 65px 70px",
           padding: "8px 12px", fontSize: 11,
-          color: "var(--text-secondary)", fontWeight: 600, textTransform: "uppercase",
+          color: "var(--text-2)", fontWeight: 600, textTransform: "uppercase",
         }}>
           <span /><span>Joueur</span>
           <span style={{ textAlign: "center" }}>K/D/A</span>
@@ -131,21 +131,21 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
           background: userWon
             ? "linear-gradient(135deg, rgba(255, 184, 0, 0.15) 0%, rgba(0, 230, 118, 0.1) 100%)"
             : "linear-gradient(135deg, rgba(255, 51, 102, 0.15) 0%, rgba(139, 0, 0, 0.1) 100%)",
-          border: "2px solid " + (userWon ? "var(--secondary)" : "var(--danger)"),
+          border: "2px solid " + (userWon ? "var(--amber)" : "var(--danger)"),
           borderRadius: 4,
         }}
       >
         <Trophy size={56} weight="fill" style={{
-          color: userWon ? "var(--secondary)" : "var(--text-secondary)", marginBottom: 12,
+          color: userWon ? "var(--amber)" : "var(--text-2)", marginBottom: 12,
         }} />
         <h2 className="font-heading" style={{
           fontSize: 42,
-          color: userWon ? "var(--secondary)" : "var(--danger)",
+          color: userWon ? "var(--amber)" : "var(--danger)",
           textShadow: userWon ? "0 0 30px rgba(255, 184, 0, 0.5)" : "none",
         }}>
           {userWon ? "VICTOIRE" : "DÉFAITE"}
         </h2>
-        <div style={{ color: "var(--text-secondary)", marginTop: 8, fontSize: 16 }}>
+        <div style={{ color: "var(--text-2)", marginTop: 8, fontSize: 16 }}>
           Durée: {dur} minutes
         </div>
       </motion.div>
@@ -154,11 +154,11 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
       <div style={{
         display: "flex", justifyContent: "center", alignItems: "center",
         gap: 32, marginBottom: 32, padding: 24,
-        background: "var(--surface)", borderRadius: 4,
+        background: "var(--surface-1)", borderRadius: 4,
       }}>
         <div style={{ textAlign: "center" }}>
           <TeamLogo teamId={userTeam.id} abbr={userTeam.abbr} size={48} />
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{userTeam.name}</div>
+          <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 4 }}>{userTeam.name}</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <span className="font-stats" style={{
@@ -167,7 +167,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
           }}>
             {isTeam1 ? totalKills1 : totalKills2}
           </span>
-          <span style={{ fontSize: 24, color: "var(--text-secondary)" }}>-</span>
+          <span style={{ fontSize: 24, color: "var(--text-2)" }}>-</span>
           <span className="font-stats" style={{
             fontSize: 48, fontWeight: 900,
             color: !userWon ? "var(--success)" : "var(--danger)",
@@ -177,7 +177,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
         </div>
         <div style={{ textAlign: "center" }}>
           <TeamLogo teamId={opponentTeam?.id} abbr={opponentTeam?.abbr || ""} size={48} />
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{opponentTeam?.name}</div>
+          <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 4 }}>{opponentTeam?.name}</div>
         </div>
       </div>
 
@@ -190,18 +190,18 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
           style={{
             marginBottom: 24, padding: 20,
             background: "linear-gradient(135deg, rgba(255, 184, 0, 0.1) 0%, rgba(255, 184, 0, 0.05) 100%)",
-            border: "2px solid var(--secondary)",
+            border: "2px solid var(--amber)",
             borderRadius: 4, display: "flex", alignItems: "center", gap: 20,
           }}
         >
           <div style={{
-            width: 60, height: 60, background: "var(--secondary)",
+            width: 60, height: 60, background: "var(--amber)",
             borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <Star size={32} weight="fill" style={{ color: "black" }} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, color: "var(--secondary)", fontWeight: 700, letterSpacing: 2 }}>
+            <div style={{ fontSize: 12, color: "var(--amber)", fontWeight: 700, letterSpacing: 2 }}>
               MVP DU MATCH
             </div>
             <div className="font-heading" style={{ fontSize: 24, display: "flex", alignItems: "center", gap: 10 }}>
@@ -209,13 +209,13 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
                 <img
                   src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(mvp.champion)}.png`}
                   alt={mvp.champion}
-                  style={{ width: 36, height: 36, borderRadius: 4, border: "2px solid var(--secondary)" }}
+                  style={{ width: 36, height: 36, borderRadius: 4, border: "2px solid var(--amber)" }}
                   onError={e => { e.currentTarget.style.display = "none"; }}
                 />
               )}
               {mvp.player_name || mvp.position}
             </div>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+            <div style={{ fontSize: 12, color: "var(--text-2)" }}>
               {mvp.position}{mvp.champion ? ` · ${mvp.champion}` : ""}
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
             <div className="font-stats" style={{ fontSize: 28, fontWeight: 900, color: "var(--success)" }}>
               {mvp.kills}/{mvp.deaths}/{mvp.assists}
             </div>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+            <div style={{ fontSize: 12, color: "var(--text-2)" }}>
               KDA: {((mvp.kills + mvp.assists) / Math.max(1, mvp.deaths)).toFixed(2)}
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
           stats={userStats}
           title={userWon ? "Victoire" : "Défaite"}
           won={userWon}
-          headerBg="var(--primary)"
+          headerBg="var(--accent)"
           headerColor="black"
           teamId={userTeam.id}
           teamAbbr={userTeam.abbr}
@@ -262,7 +262,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
             borderLeft: "3px solid " + (i === 0 ? "#4FC3F7" : i === 1 ? "#FFB800" : "#FF5252"),
           }}>
             <h5 className="font-heading" style={{ marginBottom: 8 }}>{p.name}</h5>
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{p.duration}</div>
+            <div style={{ fontSize: 13, color: "var(--text-2)" }}>{p.duration}</div>
             <div style={{ marginTop: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Avantage Gold</span>
@@ -281,7 +281,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
       {matchResult?.other_results?.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <h4 className="font-heading" style={{
-            marginBottom: 12, color: "var(--text-secondary)",
+            marginBottom: 12, color: "var(--text-2)",
             fontSize: 13, textTransform: "uppercase", letterSpacing: 1,
           }}>
             Autres résultats de la semaine
@@ -297,17 +297,17 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
                 }}>
                   <span style={{
                     fontWeight: om.winner === om.team1 ? 700 : 400,
-                    color: om.winner === om.team1 ? "var(--text-primary)" : "var(--text-secondary)",
+                    color: om.winner === om.team1 ? "var(--text-1)" : "var(--text-2)",
                     minWidth: 80,
                   }}>
                     <TeamLogo teamId={t1?.id || om.team1} abbr={t1?.abbr || om.team1} size={20} />
                   </span>
-                  <span className="font-stats" style={{ color: "var(--text-secondary)", margin: "0 8px" }}>
+                  <span className="font-stats" style={{ color: "var(--text-2)", margin: "0 8px" }}>
                     {om.score1} - {om.score2}
                   </span>
                   <span style={{
                     fontWeight: om.winner === om.team2 ? 700 : 400,
-                    color: om.winner === om.team2 ? "var(--text-primary)" : "var(--text-secondary)",
+                    color: om.winner === om.team2 ? "var(--text-1)" : "var(--text-2)",
                     minWidth: 80, textAlign: "right",
                   }}>
                     <TeamLogo teamId={t2?.id || om.team2} abbr={t2?.abbr || om.team2} size={20} />

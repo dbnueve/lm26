@@ -33,7 +33,7 @@ const StandingsPage = ({ standings, userTeam }) => {
             <span className="font-stats" style={{ fontWeight: 700, fontSize: 18 }}>{index + 1}</span>
             <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <TeamLogo teamId={team.id} abbr={team.abbr} size={28} />
-              <span style={{ color: "var(--text-secondary)" }}>{team.name}</span>
+              <span style={{ color: "var(--text-2)" }}>{team.name}</span>
               {team.qualified && (
                 <span style={{
                   background: "var(--success)",
@@ -50,7 +50,7 @@ const StandingsPage = ({ standings, userTeam }) => {
             <span className="font-stats" style={{ fontWeight: 700, color: "var(--success)" }}>{team.wins}</span>
             <span className="font-stats" style={{ fontWeight: 700, color: "var(--danger)" }}>{team.losses}</span>
             <span className="font-stats" style={{ fontWeight: 700 }}>{team.win_rate}%</span>
-            <span className="font-stats" style={{ fontWeight: 700, color: "var(--primary)" }}>{team.elo}</span>
+            <span className="font-stats" style={{ fontWeight: 700, color: "var(--accent)" }}>{team.elo}</span>
           </div>
         ))}
       </div>

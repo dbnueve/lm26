@@ -168,7 +168,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
     >
       <motion.div
         style={{
-          background: "var(--bg-dark)",
+          background: "var(--bg)",
           width: "95%",
           maxWidth: 1400,
           padding: 24,
@@ -187,9 +187,9 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
             <h2 className="font-heading" style={{ fontSize: 28, marginBottom: 4 }}>
               Phase de Draft - {isBanPhase ? "BANS" : "PICKS"}
             </h2>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+            <div style={{ fontSize: 12, color: "var(--text-2)" }}>
               Tour {(draftState?.step ?? 0) + 1}/20 —{" "}
-              <span style={{ color: draftState?.current_turn === "user" ? "var(--primary)" : "var(--danger)", fontWeight: 600 }}>
+              <span style={{ color: draftState?.current_turn === "user" ? "var(--accent)" : "var(--danger)", fontWeight: 600 }}>
                 {draftState?.current_turn === "user" ? "Votre tour" : "Tour adversaire"}
               </span>
             </div>
@@ -219,15 +219,15 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
         <div style={{ display: "flex", gap: 16, flex: 1, minHeight: 0 }}>
           {/* Your Team */}
           <div style={{ width: 180, flexShrink: 0 }}>
-            <h3 style={{ color: "var(--primary)", marginBottom: 12, fontSize: 14 }}>VOTRE EQUIPE</h3>
+            <h3 style={{ color: "var(--accent)", marginBottom: 12, fontSize: 14 }}>VOTRE EQUIPE</h3>
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>BANS</div>
+              <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>BANS</div>
               {[0, 1, 2, 3, 4].map(i => {
                 const name = draftState?.user_bans[i];
                 return (
                   <div key={i} style={{
-                    background: name ? "rgba(255,51,102,0.2)" : "var(--surface)",
-                    border: "1px solid " + (name ? "var(--danger)" : "var(--border-subtle)"),
+                    background: name ? "rgba(255,51,102,0.2)" : "var(--surface-1)",
+                    border: "1px solid " + (name ? "var(--danger)" : "var(--border)"),
                     padding: "4px 8px", marginBottom: 4, borderRadius: 2,
                     fontSize: 12, display: "flex", alignItems: "center", gap: 6
                   }}>
@@ -238,14 +238,14 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
               })}
             </div>
             <div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>PICKS</div>
+              <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>PICKS</div>
               {[0, 1, 2, 3, 4].map(i => {
                 const pick = draftState?.user_picks[i];
                 const name = pick?.champion;
                 return (
                   <div key={i} style={{
-                    background: name ? "rgba(10,132,255,0.2)" : "var(--surface)",
-                    border: "1px solid " + (name ? "var(--primary)" : "var(--border-subtle)"),
+                    background: name ? "rgba(10,132,255,0.2)" : "var(--surface-1)",
+                    border: "1px solid " + (name ? "var(--accent)" : "var(--border)"),
                     padding: "4px 8px", marginBottom: 4, borderRadius: 2,
                     fontSize: 12, display: "flex", alignItems: "center", gap: 6
                   }}>
@@ -280,7 +280,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
             {/* Suggestions bar — delta-scored by backend */}
             {suggestions.length > 0 && draftState?.current_turn === "user" && (
               <div style={{ marginBottom: 10, padding: "8px 10px", background: "rgba(255,184,0,0.06)", border: "1px solid rgba(255,184,0,0.22)", borderRadius: 4 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--secondary)", marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--amber)", marginBottom: 6 }}>
                   {isBanPhase ? "⚡ À bannir" : "✦ Meilleurs picks"}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -300,8 +300,8 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                         style={{
                           display: "flex", alignItems: "center", gap: 6,
                           padding: "5px 8px 5px 4px",
-                          background: isSelected ? "rgba(255,184,0,0.18)" : "var(--surface)",
-                          border: "1px solid " + (isSelected ? "var(--secondary)" : i === 0 ? "rgba(255,184,0,0.5)" : "var(--border-subtle)"),
+                          background: isSelected ? "rgba(255,184,0,0.18)" : "var(--surface-1)",
+                          border: "1px solid " + (isSelected ? "var(--amber)" : i === 0 ? "rgba(255,184,0,0.5)" : "var(--border)"),
                           borderRadius: 3, cursor: "pointer",
                           transition: "all 0.12s ease",
                           minWidth: 110
@@ -316,15 +316,15 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.2, whiteSpace: "nowrap" }}>{name}</div>
                           <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                            {pos && <span style={{ fontSize: 9, color: "var(--text-secondary)" }}>{pos}</span>}
+                            {pos && <span style={{ fontSize: 9, color: "var(--text-2)" }}>{pos}</span>}
                             <span style={{ fontSize: 9, fontWeight: 800, color: tierColor(meta.tier || "C") }}>{meta.tier || ""}</span>
                           </div>
                           <div style={{ fontSize: 9, color: score >= 0 ? "var(--success)" : "var(--danger)", fontWeight: 700 }}>
                             Δ{score >= 0 ? "+" : ""}{score}
-                            {compGain != null && <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}> · comp+{compGain.toFixed(1)}</span>}
+                            {compGain != null && <span style={{ color: "var(--text-2)", fontWeight: 400 }}> · comp+{compGain.toFixed(1)}</span>}
                           </div>
                           {s.reason && (
-                            <div style={{ fontSize: 8, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 90 }}>
+                            <div style={{ fontSize: 8, color: "var(--text-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 90 }}>
                               {s.reason}
                             </div>
                           )}
@@ -343,8 +343,8 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
               flex: 1,
               overflow: "auto",
               padding: 8,
-              background: "var(--surface)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--surface-1)",
+              border: "1px solid var(--border)",
               borderRadius: 2
             }}>
               {visibleChampions.map(champ => {
@@ -363,10 +363,10 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                     style={{
                       background: selected   ? "rgba(255,184,0,0.2)"  :
                                   fearless   ? "rgba(255,140,0,0.08)" :
-                                  unavailable? "rgba(255,51,102,0.1)" : "var(--surface-hover)",
-                      border: "2px solid " + (selected    ? "var(--secondary)" :
+                                  unavailable? "rgba(255,51,102,0.1)" : "var(--surface-2)",
+                      border: "2px solid " + (selected    ? "var(--amber)" :
                                               fearless    ? "#FF8C00" :
-                                              unavailable ? "var(--danger)" : "var(--border-subtle)"),
+                                              unavailable ? "var(--danger)" : "var(--border)"),
                       padding: "6px 4px",
                       textAlign: "center",
                       cursor: blocked ? "not-allowed" : "pointer",
@@ -403,15 +403,15 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                     />
                     <Shield size={18} style={{ marginBottom: 2, color: tierColor(champ.tier), display: "none" }} />
                     <div style={{ fontSize: 10, fontWeight: 600, lineHeight: 1.2 }}>{champ.name}</div>
-                    <div style={{ fontSize: 9, color: "var(--text-secondary)" }}>{champ.position}</div>
+                    <div style={{ fontSize: 9, color: "var(--text-2)" }}>{champ.position}</div>
                     {prev ? (
                       <div style={{ fontSize: 8, marginTop: 2 }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: 4 }}>
-                          <span style={{ color: prev.win_rate >= 55 ? "var(--success)" : prev.win_rate <= 45 ? "var(--danger)" : "var(--text-primary)", fontWeight: 700 }}>
+                          <span style={{ color: prev.win_rate >= 55 ? "var(--success)" : prev.win_rate <= 45 ? "var(--danger)" : "var(--text-1)", fontWeight: 700 }}>
                             {prev.win_rate}%WR
                           </span>
                         </div>
-                        <div style={{ display: "flex", justifyContent: "center", gap: 4, color: "var(--text-secondary)" }}>
+                        <div style={{ display: "flex", justifyContent: "center", gap: 4, color: "var(--text-2)" }}>
                           <span>{prev.pick_rate}%P</span>
                           <span>{prev.ban_rate}%B</span>
                         </div>
@@ -421,7 +421,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
                         <span style={{ color: champ.winrate >= 50 ? "var(--success)" : "var(--danger)" }}>
                           {champ.winrate?.toFixed(0) || 0}%
                         </span>
-                        <span style={{ color: "var(--text-secondary)" }}>
+                        <span style={{ color: "var(--text-2)" }}>
                           {champ.picks || 0}P/{champ.bans || 0}B
                         </span>
                       </div>
@@ -431,7 +431,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
               })}
             </div>
             {hiddenCount > 0 && (
-              <div style={{ textAlign: "center", padding: "6px 0", fontSize: 11, color: "var(--text-secondary)" }}>
+              <div style={{ textAlign: "center", padding: "6px 0", fontSize: 11, color: "var(--text-2)" }}>
                 +{hiddenCount} champions — utilisez un filtre par position pour les afficher
               </div>
             )}
@@ -441,13 +441,13 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
           <div style={{ width: 180, flexShrink: 0 }}>
             <h3 style={{ color: "var(--danger)", marginBottom: 12, fontSize: 14 }}>ADVERSAIRE</h3>
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>BANS</div>
+              <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>BANS</div>
               {[0, 1, 2, 3, 4].map(i => {
                 const name = draftState?.enemy_bans[i];
                 return (
                   <div key={i} style={{
-                    background: name ? "rgba(255,51,102,0.2)" : "var(--surface)",
-                    border: "1px solid " + (name ? "var(--danger)" : "var(--border-subtle)"),
+                    background: name ? "rgba(255,51,102,0.2)" : "var(--surface-1)",
+                    border: "1px solid " + (name ? "var(--danger)" : "var(--border)"),
                     padding: "4px 8px", marginBottom: 4, borderRadius: 2,
                     fontSize: 12, display: "flex", alignItems: "center", gap: 6
                   }}>
@@ -458,14 +458,14 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
               })}
             </div>
             <div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>PICKS</div>
+              <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>PICKS</div>
               {[0, 1, 2, 3, 4].map(i => {
                 const pick = draftState?.enemy_picks[i];
                 const name = pick?.champion;
                 return (
                   <div key={i} style={{
-                    background: name ? "rgba(10,132,255,0.2)" : "var(--surface)",
-                    border: "1px solid " + (name ? "var(--primary)" : "var(--border-subtle)"),
+                    background: name ? "rgba(10,132,255,0.2)" : "var(--surface-1)",
+                    border: "1px solid " + (name ? "var(--accent)" : "var(--border)"),
                     padding: "4px 8px", marginBottom: 4, borderRadius: 2,
                     fontSize: 12, display: "flex", alignItems: "center", gap: 6
                   }}>

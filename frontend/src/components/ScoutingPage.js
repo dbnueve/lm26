@@ -99,14 +99,14 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
 
   const getPotentialColor = (potential) => {
     if (potential >= 90) return "var(--success)";
-    if (potential >= 80) return "var(--secondary)";
-    return "var(--text-secondary)";
+    if (potential >= 80) return "var(--amber)";
+    return "var(--text-2)";
   };
 
   if (loading) {
     return (
       <div style={{ textAlign: "center", padding: 60 }}>
-        <Lightning size={48} style={{ color: "var(--secondary)" }} />
+        <Lightning size={48} style={{ color: "var(--amber)" }} />
         <p>Chargement des talents...</p>
       </div>
     );
@@ -125,7 +125,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
   const SortIcon = ({ col }) => {
     if (!col.sortable) return null;
     if (sortBy !== col.key) return <span style={{ marginLeft: 4, opacity: 0.3 }}>↕</span>;
-    return <span style={{ marginLeft: 4, color: "var(--primary)" }}>{sortDir === "asc" ? "↑" : "↓"}</span>;
+    return <span style={{ marginLeft: 4, color: "var(--accent)" }}>{sortDir === "asc" ? "↑" : "↓"}</span>;
   };
 
   return (
@@ -135,19 +135,19 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
           <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 4 }}>
             Scouting — Toutes ligues
           </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 13 }}>
+          <p style={{ color: "var(--text-2)", fontSize: 13 }}>
             {allPlayers.length} joueurs disponibles · Les joueurs internationaux coûtent 2× plus cher
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "var(--surface)", borderRadius: 4, fontSize: 12 }}>
-          <Globe size={14} style={{ color: "var(--text-secondary)" }} />
-          <span style={{ color: "var(--text-secondary)" }}>Ligue active :</span>
-          <span style={{ fontWeight: 700, color: LEAGUE_COLORS[activeLeague] || "var(--primary)" }}>{activeLeague}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "var(--surface-1)", borderRadius: 4, fontSize: 12 }}>
+          <Globe size={14} style={{ color: "var(--text-2)" }} />
+          <span style={{ color: "var(--text-2)" }}>Ligue active :</span>
+          <span style={{ fontWeight: 700, color: LEAGUE_COLORS[activeLeague] || "var(--accent)" }}>{activeLeague}</span>
         </div>
       </div>
 
       {/* Major league tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 12 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, borderBottom: "1px solid var(--border)", paddingBottom: 12 }}>
         <button
           className={majorLeague === "ALL" ? "btn-primary" : "btn-secondary"}
           onClick={() => handleMajorLeague("ALL")}
@@ -165,9 +165,9 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
               onClick={() => handleMajorLeague(ml)}
               style={{
                 padding: "6px 14px", fontSize: 12, fontWeight: 700,
-                border: `1px solid ${isSelected ? color : "var(--border-subtle)"}`,
-                background: isSelected ? `${color}22` : "var(--surface)",
-                color: isSelected ? color : "var(--text-secondary)",
+                border: `1px solid ${isSelected ? color : "var(--border)"}`,
+                background: isSelected ? `${color}22` : "var(--surface-1)",
+                color: isSelected ? color : "var(--text-2)",
                 borderRadius: 2, cursor: "pointer",
                 transition: "all 0.15s ease"
               }}
@@ -187,7 +187,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{
-            background: "var(--surface)", border: "1px solid var(--border-subtle)",
+            background: "var(--surface-1)", border: "1px solid var(--border)",
             padding: "10px 14px", color: "white", borderRadius: 2, width: 220
           }}
         />
@@ -212,9 +212,9 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
               onClick={() => setSubLeagueFilter(sl)}
               style={{
                 padding: "4px 10px", fontSize: 11, borderRadius: 2, cursor: "pointer",
-                border: `1px solid ${subLeagueFilter === sl ? LEAGUE_COLORS[majorLeague] : "var(--border-subtle)"}`,
-                background: subLeagueFilter === sl ? `${LEAGUE_COLORS[majorLeague]}22` : "var(--surface)",
-                color: subLeagueFilter === sl ? LEAGUE_COLORS[majorLeague] : "var(--text-secondary)",
+                border: `1px solid ${subLeagueFilter === sl ? LEAGUE_COLORS[majorLeague] : "var(--border)"}`,
+                background: subLeagueFilter === sl ? `${LEAGUE_COLORS[majorLeague]}22` : "var(--surface-1)",
+                color: subLeagueFilter === sl ? LEAGUE_COLORS[majorLeague] : "var(--text-2)",
               }}
             >
               {sl === "ALL" ? "Toutes sous-ligues" : sl}
@@ -225,7 +225,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
 
       {/* Table */}
       <div className="card" style={{ overflow: "hidden" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 50px 70px 90px 100px 100px", padding: "10px 16px", background: "var(--bg-dark)", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, textTransform: "uppercase", color: "var(--text-secondary)", fontSize: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 50px 70px 90px 100px 100px", padding: "10px 16px", background: "var(--bg)", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, textTransform: "uppercase", color: "var(--text-2)", fontSize: 12 }}>
           {cols.map(col => (
             <span key={col.label}
               onClick={col.sortable ? () => handleSort(col.key) : undefined}
@@ -237,28 +237,28 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
         </div>
 
         {filteredPlayers.length === 0 ? (
-          <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-secondary)" }}>
+          <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-2)" }}>
             Aucun joueur trouvé
           </div>
         ) : filteredPlayers.map(player => {
           const imgUrl = playerImages[player.name.toLowerCase()];
           const isIntl = player.international;
-          const leagueColor = LEAGUE_COLORS[player.scouting_for] || "var(--text-secondary)";
+          const leagueColor = LEAGUE_COLORS[player.scouting_for] || "var(--text-2)";
           const displayCost = isIntl ? player.transfer_value * 2 : player.transfer_value;
 
           return (
             <motion.div key={player.id}
               style={{
                 display: "grid", gridTemplateColumns: "1fr 60px 50px 70px 90px 100px 100px",
-                padding: "10px 16px", borderBottom: "1px solid var(--border-subtle)",
+                padding: "10px 16px", borderBottom: "1px solid var(--border)",
                 alignItems: "center", cursor: "pointer",
                 borderLeft: isIntl ? `2px solid ${leagueColor}` : "2px solid transparent"
               }}
-              whileHover={{ background: "var(--surface-hover)" }}
+              whileHover={{ background: "var(--surface-2)" }}
               onClick={() => setSelectedPlayer(player)}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
+                <span style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "var(--surface-1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
                   {imgUrl
                     ? <img loading="lazy" src={imgUrl} alt={player.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display="none"; }} />
                     : player.name.substring(0, 2).toUpperCase()
@@ -271,16 +271,16 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
               </span>
               <span className={"pos-badge pos-" + player.position} style={{ fontSize: 10 }}>{player.position}</span>
               <span className="font-stats">{player.age}</span>
-              <span className="font-stats" style={{ fontWeight: 700, color: "var(--primary)" }}>{player.rating}</span>
+              <span className="font-stats" style={{ fontWeight: 700, color: "var(--accent)" }}>{player.rating}</span>
               <span className="font-stats" style={{ fontWeight: 700, color: getPotentialColor(player.potential) }}>
                 {player.potential}{player.potential >= 90 && <Star size={12} weight="fill" style={{ marginLeft: 4 }} />}
               </span>
               <span style={{ fontSize: 11 }}>
                 <span style={{ color: leagueColor, fontWeight: 700, fontSize: 10 }}>{player.scouting_for}</span>
-                <span style={{ color: "var(--text-secondary)", marginLeft: 4 }}>{player.league}</span>
+                <span style={{ color: "var(--text-2)", marginLeft: 4 }}>{player.league}</span>
               </span>
               <span style={{ display: "flex", flexDirection: "column" }}>
-                <span className="font-stats" style={{ color: isIntl ? "var(--secondary)" : "var(--text-secondary)", fontWeight: isIntl ? 700 : 400 }}>
+                <span className="font-stats" style={{ color: isIntl ? "var(--amber)" : "var(--text-2)", fontWeight: isIntl ? 700 : 400 }}>
                   {formatMoney(displayCost)}
                 </span>
                 {isIntl && <span style={{ fontSize: 9, color: leagueColor }}>intl ×2</span>}
@@ -295,7 +295,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
           const sp = selectedPlayer;
           const displayCost = sp.international ? sp.transfer_value * 2 : sp.transfer_value;
           const canAfford = displayCost <= userTeam.budget;
-          const leagueColor = LEAGUE_COLORS[sp.scouting_for] || "var(--primary)";
+          const leagueColor = LEAGUE_COLORS[sp.scouting_for] || "var(--accent)";
           return (
             <PlayerDetailModal
               player={sp}

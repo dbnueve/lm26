@@ -27,11 +27,11 @@ const LeaguePicker = ({ onSelect, onCancel }) => {
         animate={{ opacity: 1, scale: 1 }}
         style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 40, width: 560, maxWidth: "95vw" }}
       >
-        <h2 style={{ margin: "0 0 8px", color: "var(--text-primary)" }}>Choisissez une ligue</h2>
-        <p style={{ color: "var(--text-secondary)", margin: "0 0 28px", fontSize: 14 }}>Sélectionnez la ligue que vous souhaitez manager.</p>
+        <h2 style={{ margin: "0 0 8px", color: "var(--text-1)" }}>Choisissez une ligue</h2>
+        <p style={{ color: "var(--text-2)", margin: "0 0 28px", fontSize: 14 }}>Sélectionnez la ligue que vous souhaitez manager.</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 28 }}>
           {leagues.map(lg => {
-            const meta = LEAGUE_META[lg.id] || { color: "var(--secondary)", region: lg.region, flag: "🌐" };
+            const meta = LEAGUE_META[lg.id] || { color: "var(--amber)", region: lg.region, flag: "🌐" };
             const isSelected = selected === lg.id;
             return (
               <motion.div
@@ -47,14 +47,14 @@ const LeaguePicker = ({ onSelect, onCancel }) => {
               >
                 <div style={{ fontSize: 28, marginBottom: 6 }}>{meta.flag}</div>
                 <div style={{ fontWeight: 700, color: meta.color, fontSize: 18 }}>{lg.id}</div>
-                <div style={{ color: "var(--text-primary)", fontSize: 13, fontWeight: 500 }}>{lg.full_name}</div>
-                <div style={{ color: "var(--text-secondary)", fontSize: 12, marginTop: 4 }}>{meta.region} · {lg.team_count} équipes</div>
+                <div style={{ color: "var(--text-1)", fontSize: 13, fontWeight: 500 }}>{lg.full_name}</div>
+                <div style={{ color: "var(--text-2)", fontSize: 12, marginTop: 4 }}>{meta.region} · {lg.team_count} équipes</div>
               </motion.div>
             );
           })}
         </div>
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-          <button onClick={onCancel} style={{ background: "none", border: "1px solid var(--border)", color: "var(--text-secondary)", borderRadius: 6, padding: "10px 20px", cursor: "pointer" }}>
+          <button onClick={onCancel} style={{ background: "none", border: "1px solid var(--border)", color: "var(--text-2)", borderRadius: 6, padding: "10px 20px", cursor: "pointer" }}>
             Annuler
           </button>
           <button

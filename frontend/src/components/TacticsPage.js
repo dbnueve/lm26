@@ -31,8 +31,8 @@ const OptionCard = ({ label, icon: Icon, selected, onClick, disabled }) => (
   <div
     onClick={() => !disabled && onClick()}
     style={{
-      background: selected ? "rgba(10,132,255,0.18)" : "var(--surface)",
-      border: `2px solid ${selected ? "var(--primary)" : "var(--border-subtle)"}`,
+      background: selected ? "rgba(10,132,255,0.18)" : "var(--surface-1)",
+      border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
       borderRadius: 6,
       padding: "14px 10px",
       textAlign: "center",
@@ -43,8 +43,8 @@ const OptionCard = ({ label, icon: Icon, selected, onClick, disabled }) => (
       minWidth: 90,
     }}
   >
-    {Icon && <Icon size={22} weight={selected ? "fill" : "regular"} style={{ color: selected ? "var(--primary)" : "var(--text-secondary)", marginBottom: 6 }} />}
-    <div style={{ fontSize: 12, fontWeight: selected ? 700 : 500, color: selected ? "var(--primary)" : "var(--text-primary)" }}>
+    {Icon && <Icon size={22} weight={selected ? "fill" : "regular"} style={{ color: selected ? "var(--accent)" : "var(--text-2)", marginBottom: 6 }} />}
+    <div style={{ fontSize: 12, fontWeight: selected ? 700 : 500, color: selected ? "var(--accent)" : "var(--text-1)" }}>
       {label}
     </div>
   </div>
@@ -52,10 +52,10 @@ const OptionCard = ({ label, icon: Icon, selected, onClick, disabled }) => (
 
 // ── Section card ─────────────────────────────────────────────────────────────
 const Section = ({ icon: Icon, title, tag, children }) => (
-  <div style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+  <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-      {Icon && <Icon size={18} style={{ color: "var(--text-secondary)" }} />}
-      <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)" }}>{title}</span>
+      {Icon && <Icon size={18} style={{ color: "var(--text-2)" }} />}
+      <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)" }}>{title}</span>
       {tag && (
         <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 3, background: tag === "STRONG" ? "rgba(0,230,118,0.15)" : "rgba(255,51,102,0.15)", color: tag === "STRONG" ? "var(--success)" : "var(--danger)", letterSpacing: 1 }}>
           {tag}
@@ -70,31 +70,31 @@ const Section = ({ icon: Icon, title, tag, children }) => (
 const CoherencePanel = ({ coherence, players }) => {
   if (!coherence) return null;
   const net = coherence.net ?? 0;
-  const netColor = net > 0 ? "var(--success)" : net < 0 ? "var(--danger)" : "var(--text-secondary)";
+  const netColor = net > 0 ? "var(--success)" : net < 0 ? "var(--danger)" : "var(--text-2)";
   const checks = (coherence.checks || []).filter(c => c.passed);
 
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 20 }}>
+    <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, padding: 20 }}>
       {/* Players impact */}
       {players && players.length > 0 && (
         <>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 12 }}>Impact Preview</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)", marginBottom: 12 }}>Impact Preview</div>
           {players.map((p, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                <PlayerAvatar name={p.name} size={40} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
-                <div style={{ fontSize: 10, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
+                <div style={{ fontSize: 10, color: "var(--text-2)" }}>{p.rating} OVR</div>
               </div>
             </div>
           ))}
-          <div style={{ height: 1, background: "var(--border-subtle)", margin: "14px 0" }} />
+          <div style={{ height: 1, background: "var(--border)", margin: "14px 0" }} />
         </>
       )}
 
       {/* Coherence */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)" }}>Cohérence</span>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)" }}>Cohérence</span>
         <span style={{ fontSize: 18, fontWeight: 900, color: netColor }}>{net > 0 ? "+" : ""}{net.toFixed(1)}</span>
       </div>
       {checks.map((c, i) => (
@@ -103,22 +103,22 @@ const CoherencePanel = ({ coherence, players }) => {
             ? <CheckCircle size={13} weight="fill" style={{ color: "var(--success)", flexShrink: 0, marginTop: 1 }} />
             : <XCircle size={13} weight="fill" style={{ color: "var(--danger)", flexShrink: 0, marginTop: 1 }} />
           }
-          <span style={{ color: "var(--text-secondary)", lineHeight: 1.4 }}>{c.description}</span>
+          <span style={{ color: "var(--text-2)", lineHeight: 1.4 }}>{c.description}</span>
           <span style={{ marginLeft: "auto", fontWeight: 700, color: c.delta > 0 ? "var(--success)" : "var(--danger)", flexShrink: 0 }}>
             {c.delta > 0 ? "+" : ""}{c.delta.toFixed(1)}
           </span>
         </div>
       ))}
       {checks.length === 0 && (
-        <div style={{ fontSize: 11, color: "var(--text-secondary)", fontStyle: "italic" }}>Aucune synergie active</div>
+        <div style={{ fontSize: 11, color: "var(--text-2)", fontStyle: "italic" }}>Aucune synergie active</div>
       )}
 
-      <div style={{ height: 1, background: "var(--border-subtle)", margin: "14px 0" }} />
+      <div style={{ height: 1, background: "var(--border)", margin: "14px 0" }} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)" }}>Net Modifier</span>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)" }}>Net Modifier</span>
         <span style={{ fontSize: 22, fontWeight: 900, color: netColor }}>{net > 0 ? "+" : ""}{(net * 1.5).toFixed(1)}</span>
       </div>
-      <div style={{ fontSize: 10, color: "var(--text-secondary)", marginTop: 4 }}>Points de puissance ajoutés lors des simulations de matchs.</div>
+      <div style={{ fontSize: 10, color: "var(--text-2)", marginTop: 4 }}>Points de puissance ajoutés lors des simulations de matchs.</div>
     </div>
   );
 };
@@ -154,7 +154,7 @@ const LaneSection = ({ pos, label, icon: Icon, tactics, onUpdate, tag }) => {
     <Section icon={Icon} title={label} tag={tag}>
       {laneStyleOptions && (
         <>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 }}>Lane Style</div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)", marginBottom: 8 }}>Lane Style</div>
           <div style={{ display: "flex", gap: 8, marginBottom: tpOptions ? 16 : 0 }}>
             {laneStyleOptions.map(o => (
               <OptionCard key={o.id} label={o.label} icon={o.icon} selected={lane.lane_style === o.id}
@@ -165,7 +165,7 @@ const LaneSection = ({ pos, label, icon: Icon, tactics, onUpdate, tag }) => {
       )}
       {tpOptions && (
         <>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 }}>TP Usage</div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)", marginBottom: 8 }}>TP Usage</div>
           <div style={{ display: "flex", gap: 8 }}>
             {tpOptions.map(o => (
               <OptionCard key={o.id} label={o.label} icon={o.icon} selected={lane.tp_usage === o.id}
@@ -176,7 +176,7 @@ const LaneSection = ({ pos, label, icon: Icon, tactics, onUpdate, tag }) => {
       )}
       {roamOptions && (
         <>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 }}>Roaming</div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)", marginBottom: 8 }}>Roaming</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {roamOptions.map(o => (
               <OptionCard key={o.id} label={o.label} icon={o.icon} selected={lane.roaming === o.id}
@@ -273,7 +273,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
   ];
 
   if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-secondary)", gap: 10 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-2)", gap: 10 }}>
       <Spinner size={20} style={{ animation: "spin 1s linear infinite" }} /> Chargement des tactiques...
     </div>
   );
@@ -334,7 +334,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
 
   const renderMatchPrep = () => {
     if (!oppTeam) return (
-      <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-secondary)" }}>
+      <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-2)" }}>
         <Eye size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
         <div>Aucun match programmé</div>
       </div>
@@ -344,17 +344,17 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
 
     return (
       <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, padding: 16, background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, padding: 16, background: "var(--surface-1)", borderRadius: 8, border: "1px solid var(--border)" }}>
           <TeamLogo teamId={oppTeam.id} abbr={oppTeam.abbr} size={48} noClick />
           <div>
             <div style={{ fontWeight: 700, fontSize: 20 }}>{oppTeam.name}</div>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 2 }}>
               {nextMatch?.week ? `Semaine ${nextMatch.week}` : "Prochain match"} · {oppTeam.wins ?? 0}V – {oppTeam.losses ?? 0}D
             </div>
           </div>
         </div>
 
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)", marginBottom: 12 }}>
           Roster Adverse &amp; Signature Picks
         </div>
 
@@ -374,15 +374,15 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
             : (p.champion_pool || []).slice(0, 3).map(champ => ({ champ, games: null, wr: null }));
 
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 6, marginBottom: 6 }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 6, marginBottom: 6 }}>
               <PlayerAvatar name={p.name} size={40} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
-                <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.rating} OVR</div>
+                <div style={{ fontSize: 11, color: "var(--text-2)" }}>{p.rating} OVR</div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 {displayChamps.map(({ champ, games, wr }, ci) => {
-                  const wrColor = wr !== null ? (wr >= 60 ? "var(--success)" : wr >= 45 ? "var(--secondary)" : "var(--danger)") : "var(--text-secondary)";
+                  const wrColor = wr !== null ? (wr >= 60 ? "var(--success)" : wr >= 45 ? "var(--amber)" : "var(--danger)") : "var(--text-2)";
                   return (
                     <div key={ci} style={{ textAlign: "center" }}>
                       <img
@@ -410,20 +410,20 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
       {/* Left panel */}
       <div style={{ minWidth: 0 }}>
         {/* Tab bar */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 0 }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--border)", paddingBottom: 0 }}>
           {tabs.map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
               style={{
                 padding: "8px 18px", fontSize: 13, fontWeight: 600,
                 background: "transparent", border: "none", cursor: "pointer", outline: "none",
-                borderBottom: activeTab === t.id ? "2px solid var(--primary)" : "2px solid transparent",
-                color: activeTab === t.id ? "var(--primary)" : "var(--text-secondary)",
+                borderBottom: activeTab === t.id ? "2px solid var(--accent)" : "2px solid transparent",
+                color: activeTab === t.id ? "var(--accent)" : "var(--text-2)",
                 marginBottom: -1, transition: "color .15s",
               }}>
               {t.label}
             </button>
           ))}
-          {saving && <div style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4, paddingBottom: 8 }}>
+          {saving && <div style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-2)", display: "flex", alignItems: "center", gap: 4, paddingBottom: 8 }}>
             <Spinner size={12} /> Sauvegarde...
           </div>}
         </div>

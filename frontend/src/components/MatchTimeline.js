@@ -34,7 +34,7 @@ const MatchTimeline = ({
   const rightStats = userIsTeam1 ? team2Stats : team1Stats;
   const userWon = winnerTeam === leftNum;
 
-  const tc = useCallback((n) => n === 1 ? "var(--primary)" : "var(--danger)", []);
+  const tc = useCallback((n) => n === 1 ? "var(--accent)" : "var(--danger)", []);
   const tn = useCallback((n) => n === 1 ? team1Abbr : team2Abbr, [team1Abbr, team2Abbr]);
 
   const endSec = useMemo(() => {
@@ -132,21 +132,21 @@ const MatchTimeline = ({
 
       {/* Scoreboard header */}
       <div style={{
-        background: "var(--surface)", borderRadius: 8, padding: "12px 16px",
+        background: "var(--surface-1)", borderRadius: 8, padding: "12px 16px",
         border: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
           <div style={{ textAlign: "center", minWidth: 72 }}>
-            <div style={{ fontSize: 10, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
+            <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
               {leftAbbr}
             </div>
-            <TimelineKillCounter value={leftKills} color="var(--primary)" />
+            <TimelineKillCounter value={leftKills} color="var(--accent)" />
           </div>
 
           <div style={{ flex: 1, textAlign: "center", padding: "0 12px" }}>
             <div style={{
               fontFamily: "monospace", fontSize: 28, fontWeight: 900,
-              color: done ? "var(--secondary)" : "var(--text-primary)",
+              color: done ? "var(--amber)" : "var(--text-1)",
               letterSpacing: 2, marginBottom: 6, fontVariantNumeric: "tabular-nums",
             }}>
               {fmtTime(matchSec)}
@@ -166,18 +166,18 @@ const MatchTimeline = ({
               <motion.div
                 animate={{ width: `${leftWidth}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                style={{ height: "100%", background: "var(--primary)", borderRadius: "4px 0 0 4px" }}
+                style={{ height: "100%", background: "var(--accent)", borderRadius: "4px 0 0 4px" }}
               />
             </div>
 
             <div style={{
-              fontSize: 10, color: "var(--text-secondary)", marginTop: 3, minHeight: 14,
+              fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 14,
             }}>
               {goldDiff > 200 ? (
                 <span>
                   <span style={{
                     fontWeight: 700,
-                    color: goldLeader === "left" ? "var(--primary)" : "var(--danger)",
+                    color: goldLeader === "left" ? "var(--accent)" : "var(--danger)",
                   }}>
                     {goldLeader === "left" ? leftAbbr : rightAbbr}
                   </span>
@@ -190,7 +190,7 @@ const MatchTimeline = ({
           </div>
 
           <div style={{ textAlign: "center", minWidth: 72 }}>
-            <div style={{ fontSize: 10, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
+            <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
               {rightAbbr}
             </div>
             <TimelineKillCounter value={rightKills} color="var(--danger)" />
@@ -205,9 +205,9 @@ const MatchTimeline = ({
             onClick={() => { setSpeedIdx(i); if (!done) setPlaying(true); }}
             style={{
               padding: "4px 13px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer",
-              border: `1px solid ${speedIdx === i ? "var(--secondary)" : "rgba(255,255,255,0.14)"}`,
+              border: `1px solid ${speedIdx === i ? "var(--amber)" : "rgba(255,255,255,0.14)"}`,
               background: speedIdx === i ? "rgba(255,184,0,0.12)" : "transparent",
-              color: speedIdx === i ? "var(--secondary)" : "var(--text-secondary)",
+              color: speedIdx === i ? "var(--amber)" : "var(--text-2)",
               transition: "all 0.15s",
             }}
           >
@@ -218,7 +218,7 @@ const MatchTimeline = ({
           <button onClick={() => setPlaying(p => !p)}
             style={{
               padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: "pointer",
-              border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "var(--text-secondary)",
+              border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "var(--text-2)",
             }}
           >
             {playing ? "⏸" : "▶"}
@@ -229,7 +229,7 @@ const MatchTimeline = ({
             padding: "4px 13px", borderRadius: 20, fontSize: 12, fontWeight: 700,
             cursor: done ? "default" : "pointer",
             border: "1px solid rgba(255,255,255,0.14)", background: "transparent",
-            color: done ? "rgba(255,255,255,0.2)" : "var(--text-secondary)",
+            color: done ? "rgba(255,255,255,0.2)" : "var(--text-2)",
           }}
         >
           ⏭ Skip
@@ -258,7 +258,7 @@ const MatchTimeline = ({
         {!done && playing && (
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 10px", color: "var(--text-secondary)", fontSize: 11,
+            padding: "6px 10px", color: "var(--text-2)", fontSize: 11,
           }}>
             <motion.span
               animate={{ opacity: [0.2, 1, 0.2] }}

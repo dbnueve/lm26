@@ -13,8 +13,8 @@ const LEAGUE_META = {
 };
 
 const posColors = {
-  TOP: "var(--secondary)", JUNGLE: "var(--success)",
-  MID: "var(--primary)", ADC: "var(--danger)", SUPPORT: "#7B5CF5",
+  TOP: "var(--amber)", JUNGLE: "var(--success)",
+  MID: "var(--accent)", ADC: "var(--danger)", SUPPORT: "#7B5CF5",
 };
 
 // ── sub-components ────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ function RegionCard({ league, data, isHighlighted }) {
       style={{
         background: isHighlighted
           ? `linear-gradient(135deg, rgba(255,184,0,.12) 0%, rgba(255,184,0,.04) 100%)`
-          : "var(--surface)",
+          : "var(--surface-1)",
         border: `1px solid ${isHighlighted ? "rgba(255,184,0,.45)" : "rgba(255,255,255,.08)"}`,
         borderRadius: 6,
         padding: "14px 12px",
@@ -54,7 +54,7 @@ function RegionCard({ league, data, isHighlighted }) {
       <div style={{
         fontFamily: "'Barlow Condensed', sans-serif",
         fontSize: 11, fontWeight: 800, letterSpacing: 2,
-        color: isHighlighted ? "var(--secondary)" : "var(--text-secondary)",
+        color: isHighlighted ? "var(--amber)" : "var(--text-2)",
         textTransform: "uppercase", marginBottom: 10,
       }}>{meta.label}</div>
 
@@ -84,7 +84,7 @@ function RegionCard({ league, data, isHighlighted }) {
       <div style={{
         fontFamily: "'Barlow Condensed', sans-serif",
         fontSize: 13, fontWeight: 700,
-        color: isHighlighted ? "var(--secondary)" : "var(--text-primary)",
+        color: isHighlighted ? "var(--amber)" : "var(--text-1)",
         lineHeight: 1.2,
       }}>
         {champ?.name || "—"}
@@ -136,7 +136,7 @@ function InternationalBanner({ result }) {
         <div style={{
           fontFamily: "'Barlow Condensed', sans-serif",
           fontSize: 20, fontWeight: 900,
-          color: isWorlds ? "var(--secondary)" : "var(--primary)",
+          color: isWorlds ? "var(--amber)" : "var(--accent)",
         }}>
           {result.winner.name}
         </div>
@@ -211,16 +211,16 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
           <h1 style={{
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 34, fontWeight: 900,
-            color: "var(--secondary)", letterSpacing: 4,
+            color: "var(--amber)", letterSpacing: 4,
             textTransform: "uppercase", marginBottom: 4,
           }}>
             FIN — {currentLabel?.toUpperCase()}
           </h1>
           {lastEntry && (
-            <p style={{ color: "var(--text-secondary)", fontSize: 13 }}>
+            <p style={{ color: "var(--text-2)", fontSize: 13 }}>
               {lastEntry.playoffs_result}
               {champion && (
-                <span style={{ color: "var(--secondary)", marginLeft: 8 }}>
+                <span style={{ color: "var(--amber)", marginLeft: 8 }}>
                   · Champion : {champion.name}
                 </span>
               )}
@@ -238,7 +238,7 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
           <div style={{ marginBottom: 20 }}>
             <div style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 11, color: "var(--text-secondary)",
+              fontSize: 11, color: "var(--text-2)",
               letterSpacing: 2, textTransform: "uppercase",
               marginBottom: 10,
             }}>
@@ -274,9 +274,9 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
                 fontFamily: "'Barlow Condensed', sans-serif",
                 border: "none", cursor: "pointer",
                 borderRadius: "4px 4px 0 0",
-                background: activeTab === key ? "var(--surface)" : "transparent",
-                color: activeTab === key ? "var(--text-primary)" : "var(--text-secondary)",
-                borderBottom: activeTab === key ? "2px solid var(--secondary)" : "2px solid transparent",
+                background: activeTab === key ? "var(--surface-1)" : "transparent",
+                color: activeTab === key ? "var(--text-1)" : "var(--text-2)",
+                borderBottom: activeTab === key ? "2px solid var(--amber)" : "2px solid transparent",
               }}
             >
               {label}
@@ -305,16 +305,16 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
                     { label: "Prestige",   value: lastEntry.prestige ?? userTeam?.prestige ?? "—" },
                   ].map(s => (
                     <div key={s.label} style={{
-                      background: "var(--surface)",
+                      background: "var(--surface-1)",
                       border: "1px solid rgba(255,184,0,.2)",
                       borderRadius: 4, padding: "12px 8px", textAlign: "center",
                     }}>
                       <div style={{
                         fontFamily: "'Barlow Condensed',sans-serif",
-                        fontSize: 22, fontWeight: 700, color: "var(--secondary)",
+                        fontSize: 22, fontWeight: 700, color: "var(--amber)",
                       }}>{s.value}</div>
                       <div style={{
-                        fontSize: 10, color: "var(--text-secondary)",
+                        fontSize: 10, color: "var(--text-2)",
                         letterSpacing: 1, textTransform: "uppercase", marginTop: 2,
                       }}>{s.label}</div>
                     </div>
@@ -325,13 +325,13 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
               {/* roster changes */}
               {roster_changes_preview && roster_changes_preview.length > 0 && next_split && (
                 <div style={{
-                  background: "var(--surface)",
+                  background: "var(--surface-1)",
                   border: "1px solid rgba(10,132,255,.15)",
                   borderRadius: 4, padding: 16, marginBottom: 16,
                 }}>
                   <div style={{
                     fontFamily: "'Barlow Condensed',sans-serif",
-                    fontSize: 11, color: "var(--primary)",
+                    fontSize: 11, color: "var(--accent)",
                     letterSpacing: 2, textTransform: "uppercase", marginBottom: 10,
                   }}>
                     Changements de roster → {nextLabel}
@@ -345,12 +345,12 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
                       fontSize: 13,
                     }}>
                       {c.type === "info" ? (
-                        <span style={{ color: "var(--text-secondary)" }}>{c.message}</span>
+                        <span style={{ color: "var(--text-2)" }}>{c.message}</span>
                       ) : (
                         <>
                           <span style={{
                             fontSize: 9, fontWeight: 800, letterSpacing: 1.5,
-                            color: posColors[c.position] || "var(--secondary)",
+                            color: posColors[c.position] || "var(--amber)",
                             minWidth: 32,
                           }}>{c.position}</span>
                           {c.type === "stay" ? (
@@ -360,7 +360,7 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
                                 border: "1px solid rgba(0,230,118,.2)",
                                 fontSize: 9, padding: "1px 6px", borderRadius: 2,
                               }}>RESTE</span>
-                              <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{c.player}</span>
+                              <span style={{ color: "var(--text-1)", fontWeight: 700 }}>{c.player}</span>
                             </>
                           ) : (
                             <>
@@ -369,14 +369,14 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
                                 border: "1px solid rgba(255,51,102,.2)",
                                 fontSize: 9, padding: "1px 6px", borderRadius: 2,
                               }}>PART</span>
-                              <span style={{ color: "var(--text-secondary)", textDecoration: "line-through" }}>{c.out}</span>
-                              <span style={{ color: "var(--text-secondary)" }}>→</span>
+                              <span style={{ color: "var(--text-2)", textDecoration: "line-through" }}>{c.out}</span>
+                              <span style={{ color: "var(--text-2)" }}>→</span>
                               <span style={{
                                 background: "rgba(0,230,118,.1)", color: "var(--success)",
                                 border: "1px solid rgba(0,230,118,.2)",
                                 fontSize: 9, padding: "1px 6px", borderRadius: 2,
                               }}>ARRIVE</span>
-                              <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{c.in}</span>
+                              <span style={{ color: "var(--text-1)", fontWeight: 700 }}>{c.in}</span>
                             </>
                           )}
                         </>
@@ -399,13 +399,13 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
               exit={{ opacity: 0 }}
             >
               <div style={{
-                background: "var(--surface)",
+                background: "var(--surface-1)",
                 border: "1px solid rgba(10,132,255,.15)",
                 borderRadius: 4, padding: 16, marginBottom: 16,
               }}>
                 <div style={{
                   fontFamily: "'Barlow Condensed',sans-serif",
-                  fontSize: 11, color: "var(--primary)",
+                  fontSize: 11, color: "var(--accent)",
                   letterSpacing: 2, textTransform: "uppercase", marginBottom: 10,
                 }}>Historique de carrière</div>
                 {history && history.length > 0 ? history.map((h, i) => (
@@ -416,20 +416,20 @@ const SplitEndOverlay = ({ splitStatus, userTeam, onNextSplit, onChangeTeam }) =
                       ? "1px solid rgba(255,255,255,.05)" : "none",
                     fontSize: 12,
                   }}>
-                    <span style={{ color: "var(--primary)", minWidth: 120, fontSize: 11 }}>{h.split_label}</span>
-                    <span style={{ fontWeight: 700, color: "var(--text-secondary)", minWidth: 50 }}>{h.team_abbr}</span>
+                    <span style={{ color: "var(--accent)", minWidth: 120, fontSize: 11 }}>{h.split_label}</span>
+                    <span style={{ fontWeight: 700, color: "var(--text-2)", minWidth: 50 }}>{h.team_abbr}</span>
                     <span style={{ color: "var(--success)" }}>{h.wins}V</span>
                     <span style={{ color: "var(--danger)" }}>{h.losses}D</span>
                     <span style={{
                       marginLeft: "auto",
                       background: h.is_champion ? "rgba(255,184,0,.15)" : "rgba(10,132,255,.1)",
-                      color: h.is_champion ? "var(--secondary)" : "var(--primary)",
+                      color: h.is_champion ? "var(--amber)" : "var(--accent)",
                       border: `1px solid ${h.is_champion ? "rgba(255,184,0,.3)" : "rgba(10,132,255,.2)"}`,
                       fontSize: 10, padding: "1px 8px", borderRadius: 2,
                     }}>{h.playoffs_result}</span>
                   </div>
                 )) : (
-                  <div style={{ color: "var(--text-secondary)", fontSize: 12, textAlign: "center", padding: "12px 0" }}>
+                  <div style={{ color: "var(--text-2)", fontSize: 12, textAlign: "center", padding: "12px 0" }}>
                     Aucune donnée de carrière disponible.
                   </div>
                 )}

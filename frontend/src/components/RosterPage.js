@@ -34,7 +34,7 @@ const RosterPage = ({ userTeam, onSwapPlayers }) => {
         </h2>
         {swapMode && (
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ color: "var(--secondary)" }}>
+            <span style={{ color: "var(--amber)" }}>
               Sélectionnez un joueur {selectedForSwap?.position} pour le swap
             </span>
             <button

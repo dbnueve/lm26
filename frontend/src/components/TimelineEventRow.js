@@ -25,15 +25,15 @@ const TimelineEventRow = React.memo(function TimelineEventRow({ item, tc, tn }) 
         style={{
           textAlign: "center", padding: "16px 12px", marginTop: 6,
           background: "rgba(255,184,0,0.08)",
-          border: "2px solid var(--secondary)",
+          border: "2px solid var(--amber)",
           borderRadius: 8,
         }}
       >
         <div style={{ fontSize: 28 }}>💥</div>
-        <div style={{ fontWeight: 800, fontSize: 16, marginTop: 4, color: "var(--secondary)" }}>
+        <div style={{ fontWeight: 800, fontSize: 16, marginTop: 4, color: "var(--amber)" }}>
           {desc}
         </div>
-        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 2 }}>
           {item.time}
         </div>
       </motion.div>
@@ -55,7 +55,7 @@ const TimelineEventRow = React.memo(function TimelineEventRow({ item, tc, tn }) 
           ? `${teamColor}22`
           : isBig
           ? `${teamColor}18`
-          : "var(--surface)",
+          : "var(--surface-1)",
         borderLeft: `3px solid ${teamColor}`,
         borderTop: isBig ? `1px solid ${teamColor}55` : "none",
         borderRight: isBig ? `1px solid ${teamColor}25` : "none",
@@ -65,7 +65,7 @@ const TimelineEventRow = React.memo(function TimelineEventRow({ item, tc, tn }) 
       <span style={{ fontSize: isBig ? 18 : 14, flexShrink: 0 }}>{icon}</span>
       <span style={{
         fontFamily: "monospace", fontSize: 10,
-        color: "var(--text-secondary)",
+        color: "var(--text-2)",
         minWidth: 34, flexShrink: 0,
       }}>
         {item.time}
@@ -83,7 +83,7 @@ const TimelineEventRow = React.memo(function TimelineEventRow({ item, tc, tn }) 
         flex: 1,
         fontSize: isMulti ? 13 : 12,
         fontWeight: isMulti ? 700 : 400,
-        color: isMulti ? teamColor : "var(--text-primary)",
+        color: isMulti ? teamColor : "var(--text-1)",
         lineHeight: 1.3,
       }}>
         {desc}
