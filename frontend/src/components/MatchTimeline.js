@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  SPEEDS, TICK_MS, KILL_TYPES, parseSec, fmtTime,
+  SPEEDS, TICK_MS, KILL_TYPES, parseSec, fmtTime, calcNote,
 } from "./timelineHelpers";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
+import TeamLogo from "./TeamLogo";
 import TimelineEventRow from "./TimelineEventRow";
 import TimelineKillCounter from "./TimelineKillCounter";
-import TimelineScoreboard from "./TimelineScoreboard";
+
+/* ─── Constantes ──────────────────────────────────────────────── */
 
 const DRAKE_ICONS = {
   infernal: "🔥", mountain: "🪨", ocean: "🌊", cloud: "💨",
@@ -22,33 +24,30 @@ function getDrakeIcon(desc) {
   return "🐉";
 }
 
-// Death timer LoL: BRT formula — increases with game time
+// Death timer LoL (BRT formula)
 function calcDeathTimer(deathSec) {
   const min = deathSec / 60;
-  let baseTimer;
-  if (min < 15) baseTimer = 10;
-  else if (min < 30) baseTimer = 10 + Math.floor((min - 15) * 1.2);
-  else if (min < 45) baseTimer = 28 + Math.floor((min - 30) * 2.0);
-  else baseTimer = 58 + Math.floor((min - 45) * 2.5);
-  return Math.min(baseTimer, 90);
+  let t;
+  if (min < 15) t = 10;
+  else if (min < 30) t = 10 + Math.floor((min - 15) * 1.2);
+  else if (min < 45) t = 28 + Math.floor((min - 30) * 2.0);
+  else t = 58 + Math.floor((min - 45) * 2.5);
+  return Math.min(t, 90);
 }
 
-function ChampionPanel({ stats, visibleEvents, matchSec, teamNum, side, tc }) {
-  const color = tc(teamNum);
-  const isLeft = side === "left";
+/* ─── ChampionColumn : icônes verticales avec death timer ────── */
 
-  // Map: champion → { deathSec, respawnSec } pour le dernier kill
+function ChampionColumn({ stats, visibleEvents, matchSec, teamNum, side, tc }) {
+  const color = tc(teamNum);
+
   const deathMap = useMemo(() => {
     const map = {};
     visibleEvents.forEach(ev => {
       if ((ev.type === "kill" || ev.type === "first_blood") && ev.victim_champion) {
         const vc = ev.victim_champion;
-        // Vérifie que la victime appartient à l'équipe de ce panel
-        const isOurTeam = stats.some(p => p.champion === vc);
-        if (isOurTeam) {
+        if (stats.some(p => p.champion === vc)) {
           const deathSec = parseSec(ev.time);
-          const timer = calcDeathTimer(deathSec);
-          map[vc] = { deathSec, respawnSec: deathSec + timer };
+          map[vc] = { deathSec, respawnSec: deathSec + calcDeathTimer(deathSec) };
         }
       }
     });
@@ -57,12 +56,8 @@ function ChampionPanel({ stats, visibleEvents, matchSec, teamNum, side, tc }) {
 
   return (
     <div style={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: isLeft ? "flex-end" : "flex-start",
-      gap: 4,
-      minWidth: 38,
-      flexShrink: 0,
+      display: "flex", flexDirection: "column", gap: 3,
+      alignItems: side === "left" ? "flex-end" : "flex-start",
     }}>
       {stats.map((p, i) => {
         const death = deathMap[p.champion];
@@ -70,31 +65,27 @@ function ChampionPanel({ stats, visibleEvents, matchSec, teamNum, side, tc }) {
         const remainSec = isDead ? Math.ceil(death.respawnSec - matchSec) : 0;
         const ddKey = toDDragonKey(p.champion || "");
         return (
-          <div key={i} style={{ position: "relative", width: 32, height: 32 }}>
+          <div key={i} style={{ position: "relative", width: 30, height: 30, flexShrink: 0 }}>
             <img
               src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${ddKey}.png`}
               alt={p.champion}
               title={`${p.player_name} — ${p.champion}`}
               style={{
-                width: 32, height: 32,
-                borderRadius: 4,
-                border: `1.5px solid ${isDead ? "rgba(255,255,255,0.08)" : color + "88"}`,
-                filter: isDead ? "grayscale(1) brightness(0.3)" : "none",
+                width: 30, height: 30, borderRadius: 4, display: "block",
+                border: `1.5px solid ${isDead ? "rgba(255,255,255,0.06)" : color + "99"}`,
+                filter: isDead ? "grayscale(1) brightness(0.25)" : "none",
                 transition: "filter 0.3s ease",
-                display: "block",
               }}
               onError={e => { e.currentTarget.style.display = "none"; }}
             />
             {isDead && (
               <div style={{
-                position: "absolute", inset: 0,
+                position: "absolute", inset: 0, borderRadius: 4,
+                background: "rgba(0,0,0,0.6)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                flexDirection: "column",
-                background: "rgba(0,0,0,0.55)",
-                borderRadius: 4,
                 pointerEvents: "none",
               }}>
-                <span style={{ fontSize: 9, fontFamily: "monospace", fontWeight: 900, color: "#ef4444", lineHeight: 1 }}>
+                <span style={{ fontSize: 9, fontFamily: "monospace", fontWeight: 900, color: "#ef4444" }}>
                   {remainSec}s
                 </span>
               </div>
@@ -106,14 +97,9 @@ function ChampionPanel({ stats, visibleEvents, matchSec, teamNum, side, tc }) {
   );
 }
 
-function ObjectivesBar({ events, teamNum, side, tc }) {
-  const color = tc(teamNum);
-  const isLeft = side === "left";
+/* ─── ObjectivePips : icônes drakes/baron/herald ─────────────── */
 
-  const towers = useMemo(
-    () => events.filter(e => (e.type === "tower" || e.type === "first_tower") && e.team === teamNum).length,
-    [events, teamNum]
-  );
+function ObjectivePips({ events, teamNum }) {
   const drakes = useMemo(
     () => events.filter(e => e.type === "drake" && e.team === teamNum),
     [events, teamNum]
@@ -126,82 +112,179 @@ function ObjectivesBar({ events, teamNum, side, tc }) {
     () => events.filter(e => e.type === "herald" && e.team === teamNum).length,
     [events, teamNum]
   );
+  const towers = useMemo(
+    () => events.filter(e => (e.type === "tower" || e.type === "first_tower") && e.team === teamNum).length,
+    [events, teamNum]
+  );
+
+  const hasAny = drakes.length + baron + herald + towers > 0;
+  if (!hasAny) return null;
 
   return (
-    <div style={{
-      display: "flex",
-      flexDirection: isLeft ? "row-reverse" : "row",
-      alignItems: "center",
-      gap: 4,
-      flexWrap: "wrap",
-      minWidth: 50,
-    }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "center" }}>
       {towers > 0 && (
-        <span title={`${towers} tour(s)`} style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 1, color: "var(--text-2)" }}>
-          🏯<span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 11, color }}>{towers}</span>
+        <span style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 1 }}>
+          🏯<span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 10, color: "var(--text-2)" }}>{towers}</span>
         </span>
       )}
       {drakes.map((ev, i) => (
-        <span key={i} title={ev.description || "Drake"} style={{ fontSize: 14, lineHeight: 1 }}>
+        <span key={i} title={ev.description || "Drake"} style={{ fontSize: 13, lineHeight: 1 }}>
           {getDrakeIcon(ev.description)}
         </span>
       ))}
-      {baron > 0 && Array.from({ length: baron }).map((_, i) => (
-        <span key={i} title="Baron" style={{ fontSize: 14, lineHeight: 1 }}>👑</span>
+      {Array.from({ length: baron }).map((_, i) => (
+        <span key={i} title="Baron" style={{ fontSize: 13, lineHeight: 1 }}>👑</span>
       ))}
-      {herald > 0 && Array.from({ length: herald }).map((_, i) => (
-        <span key={i} title="Herald" style={{ fontSize: 14, lineHeight: 1 }}>🔮</span>
+      {Array.from({ length: herald }).map((_, i) => (
+        <span key={i} title="Herald" style={{ fontSize: 13, lineHeight: 1 }}>🔮</span>
       ))}
     </div>
   );
 }
 
+/* ─── LiveScoreboard : KDA en temps réel ─────────────────────── */
+
+function LiveScoreboard({ leftStats, rightStats, leftAbbr, rightAbbr,
+                          visibleEvents, winnerTeam, leftNum, duration }) {
+  // Kills/deaths/assists live par champion à partir des events visibles
+  const liveKda = useMemo(() => {
+    const kda = {};
+    visibleEvents.forEach(ev => {
+      if (!KILL_TYPES.has(ev.type)) return;
+      // Killer
+      if (ev.killer_champion) {
+        if (!kda[ev.killer_champion]) kda[ev.killer_champion] = { k: 0, d: 0, a: 0 };
+        kda[ev.killer_champion].k += 1;
+      }
+      // Victim
+      if (ev.victim_champion) {
+        if (!kda[ev.victim_champion]) kda[ev.victim_champion] = { k: 0, d: 0, a: 0 };
+        kda[ev.victim_champion].d += 1;
+      }
+    });
+    return kda;
+  }, [visibleEvents]);
+
+  const renderTeam = (stats, abbr, isWinner) => (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{
+        padding: "4px 8px", fontSize: 10, fontWeight: 700, textTransform: "uppercase",
+        letterSpacing: 1, background: isWinner ? "var(--accent)" : "var(--danger)",
+        color: isWinner ? "#000" : "#fff", borderRadius: "4px 4px 0 0",
+      }}>
+        {abbr}
+      </div>
+      <div style={{ background: "var(--surface-1)", borderRadius: "0 0 4px 4px" }}>
+        {/* Header */}
+        <div style={{
+          display: "grid", gridTemplateColumns: "22px 1fr 52px 36px",
+          padding: "3px 8px", gap: 2,
+          fontSize: 9, color: "var(--text-2)", fontWeight: 600, textTransform: "uppercase",
+          borderBottom: "1px solid var(--border)",
+        }}>
+          <span /><span>Joueur</span>
+          <span style={{ textAlign: "center" }}>K/D/A</span>
+          <span style={{ textAlign: "center" }}>Note</span>
+        </div>
+        {stats.map((p, i) => {
+          const live = liveKda[p.champion] || { k: 0, d: 0, a: 0 };
+          // Note calculée sur les stats finales mais kills/deaths live pour feedback immédiat
+          const liveP = { ...p, kills: live.k, deaths: live.d, assists: live.a };
+          const note = calcNote(liveP, duration || 30, isWinner);
+          const isGood = note >= 7, isBad = note <= 3;
+          return (
+            <div key={i} style={{
+              display: "grid", gridTemplateColumns: "22px 1fr 52px 36px",
+              padding: "4px 8px", gap: 2, alignItems: "center",
+              borderTop: i > 0 ? "1px solid var(--border)" : "none",
+            }}>
+              {p.champion ? (
+                <img
+                  src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(p.champion)}.png`}
+                  alt={p.champion}
+                  style={{ width: 20, height: 20, borderRadius: 3 }}
+                  onError={e => { e.currentTarget.style.display = "none"; }}
+                />
+              ) : <span />}
+              <span style={{ fontSize: 11, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {p.player_name || `J${i + 1}`}
+              </span>
+              <span style={{ textAlign: "center", fontSize: 10, fontWeight: 700, fontFamily: "monospace" }}>
+                <span style={{ color: "var(--success)" }}>{live.k}</span>
+                <span style={{ color: "var(--text-2)" }}>/</span>
+                <span style={{ color: "var(--danger)" }}>{live.d}</span>
+                <span style={{ color: "var(--text-2)" }}>/</span>
+                <span style={{ color: "var(--accent)" }}>{live.a}</span>
+              </span>
+              <span style={{
+                textAlign: "center", fontSize: 10, fontWeight: 700,
+                color: isGood ? "var(--success)" : isBad ? "var(--danger)" : "var(--accent)",
+              }}>
+                {note.toFixed(1)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+      {renderTeam(leftStats, leftAbbr, winnerTeam === leftNum)}
+      {renderTeam(rightStats, rightAbbr, winnerTeam !== leftNum)}
+    </div>
+  );
+}
+
+/* ─── MatchTimeline (composant principal) ────────────────────── */
+
 /**
  * Props
  *   phases, events, goldTimeline     : données du match
- *   team1Abbr / team2Abbr            : abréviations backend team1 / team2
+ *   team1Abbr / team2Abbr            : abréviations
+ *   team1Id / team2Id                : IDs pour TeamLogo
  *   team1Stats / team2Stats          : stats joueurs
  *   duration                         : durée en minutes
- *   winnerTeam                       : 1 ou 2 (numérotation backend)
+ *   winnerTeam                       : 1 ou 2
  *   userIsTeam1                      : true si l'user est team1
  *   onContinue                       : callback fin de timeline
  */
 const MatchTimeline = ({
   phases = [], events = [], goldTimeline = [],
   team1Abbr, team2Abbr,
+  team1Id, team2Id,
   team1Stats = [], team2Stats = [],
   duration = 30,
   winnerTeam = 0,
   userIsTeam1 = true,
   onContinue,
 }) => {
-  const leftNum = userIsTeam1 ? 1 : 2;
+  const leftNum  = userIsTeam1 ? 1 : 2;
   const rightNum = userIsTeam1 ? 2 : 1;
-  const leftAbbr = userIsTeam1 ? team1Abbr : team2Abbr;
+  const leftAbbr  = userIsTeam1 ? team1Abbr : team2Abbr;
   const rightAbbr = userIsTeam1 ? team2Abbr : team1Abbr;
-  const leftStats = userIsTeam1 ? team1Stats : team2Stats;
+  const leftId    = userIsTeam1 ? team1Id : team2Id;
+  const rightId   = userIsTeam1 ? team2Id : team1Id;
+  const leftStats  = userIsTeam1 ? team1Stats : team2Stats;
   const rightStats = userIsTeam1 ? team2Stats : team1Stats;
-  const userWon = winnerTeam === leftNum;
 
   const tc = useCallback((n) => n === 1 ? "var(--accent)" : "var(--danger)", []);
   const tn = useCallback((n) => n === 1 ? team1Abbr : team2Abbr, [team1Abbr, team2Abbr]);
 
   const endSec = useMemo(() => {
     const endEv = events.find(e => e.type === "game_end");
-    if (endEv) {
-      const s = parseSec(endEv.time);
-      if (s > 0) return s;
-    }
+    if (endEv) { const s = parseSec(endEv.time); if (s > 0) return s; }
     return Math.max(duration, 20) * 60;
   }, [events, duration]);
 
   const [matchSec, setMatchSec] = useState(0);
-  const [playing, setPlaying] = useState(true);
-  const [done, setDone] = useState(false);
+  const [playing, setPlaying]   = useState(true);
+  const [done, setDone]         = useState(false);
   const [speedIdx, setSpeedIdx] = useState(0);
 
   const intervalRef = useRef(null);
-  const feedRef = useRef(null);
+  const feedRef     = useRef(null);
 
   useEffect(() => {
     if (!playing || done) {
@@ -210,12 +293,8 @@ const MatchTimeline = ({
     }
     intervalRef.current = setInterval(() => {
       setMatchSec(s => {
-        const next = s + SPEEDS[speedIdx].step ;
-        if (next >= endSec) {
-          setDone(true);
-          setPlaying(false);
-          return endSec;
-        }
+        const next = s + SPEEDS[speedIdx].step;
+        if (next >= endSec) { setDone(true); setPlaying(false); return endSec; }
         return next;
       });
     }, TICK_MS);
@@ -224,9 +303,7 @@ const MatchTimeline = ({
 
   const handleSkip = useCallback(() => {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    setMatchSec(endSec);
-    setDone(true);
-    setPlaying(false);
+    setMatchSec(endSec); setDone(true); setPlaying(false);
   }, [endSec]);
 
   const sortedEvents = useMemo(
@@ -249,25 +326,21 @@ const MatchTimeline = ({
   );
 
   const { leftWidth, goldDiff, goldLeader } = useMemo(() => {
-    if (!goldTimeline || goldTimeline.length === 0) {
-      return { leftWidth: 50, goldDiff: 0, goldLeader: null };
-    }
+    if (!goldTimeline || goldTimeline.length === 0) return { leftWidth: 50, goldDiff: 0, goldLeader: null };
     const curMin = Math.min(Math.floor(matchSec / 60), goldTimeline.length - 1);
-    const entry = goldTimeline[curMin] || goldTimeline[goldTimeline.length - 1];
-    const g1 = entry.g1 || 0;
-    const g2 = entry.g2 || 0;
+    const entry  = goldTimeline[curMin] || goldTimeline[goldTimeline.length - 1];
+    const g1 = entry.g1 || 0, g2 = entry.g2 || 0;
     const total = g1 + g2 || 1;
-    const leftG = leftNum === 1 ? g1 : g2;
+    const leftG  = leftNum === 1 ? g1 : g2;
     const rightG = leftNum === 1 ? g2 : g1;
-    const diff = Math.abs(leftG - rightG);
-    const leader = leftG >= rightG ? "left" : "right";
     return {
-      leftWidth: Math.round((leftG / total) * 100),
-      goldDiff: diff,
-      goldLeader: leader,
+      leftWidth:  Math.round((leftG / total) * 100),
+      goldDiff:   Math.abs(leftG - rightG),
+      goldLeader: leftG >= rightG ? "left" : "right",
     };
   }, [goldTimeline, matchSec, leftNum]);
 
+  // Auto-scroll feed
   const prevVisibleLen = useRef(0);
   useEffect(() => {
     if (visibleEvents.length > prevVisibleLen.current && feedRef.current) {
@@ -277,208 +350,191 @@ const MatchTimeline = ({
   }, [visibleEvents.length]);
 
   return (
-    <div style={{ padding: "14px 18px", maxHeight: "85vh", display: "flex", flexDirection: "column", gap: 10 }}>
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 8,
+      padding: "10px 14px", maxHeight: "80vh",
+    }}>
 
-      {/* Scoreboard header */}
+      {/* ── ZONE 1 : HUD LCK ──────────────────────────────────── */}
       <div style={{
-        background: "var(--surface-1)", borderRadius: 8, padding: "12px 10px",
+        background: "var(--surface-1)", borderRadius: 8,
         border: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
+        padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8,
       }}>
-        {/* Ligne kills + timer + gold */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
-          {/* Gauche : kills */}
-          <div style={{ textAlign: "center", minWidth: 64 }}>
-            <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
+
+        {/* Ligne principale : logo | champions | kills | timer | kills | champions | logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+
+          {/* Logo gauche */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            <TeamLogo teamId={leftId} abbr={leftAbbr} size={36} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", letterSpacing: 1 }}>
               {leftAbbr}
-            </div>
+            </span>
+          </div>
+
+          {/* Champions gauche */}
+          <ChampionColumn
+            stats={leftStats} visibleEvents={visibleEvents}
+            matchSec={matchSec} teamNum={leftNum} side="left" tc={tc}
+          />
+
+          {/* Kills gauche */}
+          <div style={{ textAlign: "right", minWidth: 36 }}>
             <TimelineKillCounter value={leftKills} color="var(--accent)" />
           </div>
 
           {/* Centre : timer + barre gold */}
-          <div style={{ flex: 1, textAlign: "center", padding: "0 8px" }}>
+          <div style={{ flex: 1, textAlign: "center", minWidth: 120 }}>
             <div style={{
-              fontFamily: "monospace", fontSize: 26, fontWeight: 900,
+              fontFamily: "monospace", fontSize: 24, fontWeight: 900,
               color: done ? "var(--amber)" : "var(--text-1)",
-              letterSpacing: 2, marginBottom: 6, fontVariantNumeric: "tabular-nums",
+              letterSpacing: 2, marginBottom: 5, fontVariantNumeric: "tabular-nums",
             }}>
               {fmtTime(matchSec)}
               {!done && playing && (
                 <span style={{
-                  display: "inline-block", width: 7, height: 7, borderRadius: "50%",
-                  background: "var(--danger)", marginLeft: 6, verticalAlign: "middle",
+                  display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                  background: "var(--danger)", marginLeft: 5, verticalAlign: "middle",
                   animation: "pulse 1.1s ease-in-out infinite",
                 }} />
               )}
             </div>
-
-            <div style={{
-              height: 7, borderRadius: 4, overflow: "hidden",
-              background: "var(--danger)", position: "relative",
-            }}>
+            <div style={{ height: 6, borderRadius: 3, overflow: "hidden", background: "var(--danger)" }}>
               <motion.div
                 animate={{ width: `${leftWidth}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                style={{ height: "100%", background: "var(--accent)", borderRadius: "4px 0 0 4px" }}
+                style={{ height: "100%", background: "var(--accent)", borderRadius: "3px 0 0 3px" }}
               />
             </div>
-
-            <div style={{ fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 14 }}>
+            <div style={{ fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 13 }}>
               {goldDiff > 200 ? (
                 <span>
-                  <span style={{
-                    fontWeight: 700,
-                    color: goldLeader === "left" ? "var(--accent)" : "var(--danger)",
-                  }}>
+                  <span style={{ fontWeight: 700, color: goldLeader === "left" ? "var(--accent)" : "var(--danger)" }}>
                     {goldLeader === "left" ? leftAbbr : rightAbbr}
                   </span>
                   {" "}+{(goldDiff / 1000).toFixed(1)}k gold
                 </span>
-              ) : (
-                <span>Égalité</span>
-              )}
+              ) : <span>Égalité</span>}
             </div>
           </div>
 
-          {/* Droite : kills */}
-          <div style={{ textAlign: "center", minWidth: 64 }}>
-            <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
-              {rightAbbr}
-            </div>
+          {/* Kills droite */}
+          <div style={{ textAlign: "left", minWidth: 36 }}>
             <TimelineKillCounter value={rightKills} color="var(--danger)" />
-          </div>
-        </div>
-
-        {/* Ligne champions + objectifs */}
-        <div style={{
-          display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-          marginTop: 10, gap: 6,
-        }}>
-          {/* Champions gauche */}
-          <ChampionPanel
-            stats={leftStats}
-            visibleEvents={visibleEvents}
-            matchSec={matchSec}
-            teamNum={leftNum}
-            side="left"
-            tc={tc}
-          />
-
-          {/* Objectifs gauche */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flex: 1 }}>
-            <ObjectivesBar events={visibleEvents} teamNum={leftNum} side="left" tc={tc} />
-          </div>
-
-          {/* Séparateur central */}
-          <div style={{ width: 1, background: "rgba(255,255,255,0.08)", alignSelf: "stretch", margin: "0 4px" }} />
-
-          {/* Objectifs droite */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, flex: 1 }}>
-            <ObjectivesBar events={visibleEvents} teamNum={rightNum} side="right" tc={tc} />
           </div>
 
           {/* Champions droite */}
-          <ChampionPanel
-            stats={rightStats}
-            visibleEvents={visibleEvents}
-            matchSec={matchSec}
-            teamNum={rightNum}
-            side="right"
-            tc={tc}
+          <ChampionColumn
+            stats={rightStats} visibleEvents={visibleEvents}
+            matchSec={matchSec} teamNum={rightNum} side="right" tc={tc}
           />
+
+          {/* Logo droite */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            <TeamLogo teamId={rightId} abbr={rightAbbr} size={36} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: "var(--danger)", letterSpacing: 1 }}>
+              {rightAbbr}
+            </span>
+          </div>
+        </div>
+
+        {/* Objectifs : gauche | séparateur | droite */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+            <ObjectivePips events={visibleEvents} teamNum={leftNum} />
+          </div>
+          <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
+          <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+            <ObjectivePips events={visibleEvents} teamNum={rightNum} />
+          </div>
+        </div>
+
+        {/* Contrôles playback */}
+        <div style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+          {SPEEDS.map((s, i) => (
+            <button key={s.label}
+              onClick={() => { setSpeedIdx(i); if (!done) setPlaying(true); }}
+              style={{
+                padding: "3px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                border: `1px solid ${speedIdx === i ? "var(--amber)" : "rgba(255,255,255,0.14)"}`,
+                background: speedIdx === i ? "rgba(255,184,0,0.12)" : "transparent",
+                color: speedIdx === i ? "var(--amber)" : "var(--text-2)",
+                transition: "all 0.15s",
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
+          {!done && (
+            <button onClick={() => setPlaying(p => !p)}
+              style={{
+                padding: "3px 9px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "var(--text-2)",
+              }}
+            >
+              {playing ? "⏸" : "▶"}
+            </button>
+          )}
+          <button onClick={handleSkip} disabled={done}
+            style={{
+              padding: "3px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+              cursor: done ? "default" : "pointer",
+              border: "1px solid rgba(255,255,255,0.14)", background: "transparent",
+              color: done ? "rgba(255,255,255,0.2)" : "var(--text-2)",
+            }}
+          >
+            ⏭ Skip
+          </button>
         </div>
       </div>
 
-      {/* Contrôles */}
-      <div style={{ display: "flex", gap: 5, justifyContent: "center", flexShrink: 0 }}>
-        {SPEEDS.map((s, i) => (
-          <button key={s.label}
-            onClick={() => { setSpeedIdx(i); if (!done) setPlaying(true); }}
-            style={{
-              padding: "4px 13px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer",
-              border: `1px solid ${speedIdx === i ? "var(--amber)" : "rgba(255,255,255,0.14)"}`,
-              background: speedIdx === i ? "rgba(255,184,0,0.12)" : "transparent",
-              color: speedIdx === i ? "var(--amber)" : "var(--text-2)",
-              transition: "all 0.15s",
-            }}
-          >
-            {s.label}
-          </button>
-        ))}
-        {!done && (
-          <button onClick={() => setPlaying(p => !p)}
-            style={{
-              padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: "pointer",
-              border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "var(--text-2)",
-            }}
-          >
-            {playing ? "⏸" : "▶"}
-          </button>
-        )}
-        <button onClick={handleSkip} disabled={done}
-          style={{
-            padding: "4px 13px", borderRadius: 20, fontSize: 12, fontWeight: 700,
-            cursor: done ? "default" : "pointer",
-            border: "1px solid rgba(255,255,255,0.14)", background: "transparent",
-            color: done ? "rgba(255,255,255,0.2)" : "var(--text-2)",
-          }}
-        >
-          ⏭ Skip
-        </button>
-      </div>
-
-      {/* Feed */}
+      {/* ── ZONE 2 : Feed événements ──────────────────────────── */}
       <div
         ref={feedRef}
         style={{
-          flex: 1, overflowY: "auto", display: "flex", flexDirection: "column",
-          gap: 4, minHeight: 180, maxHeight: 340, paddingRight: 4,
+          flex: 1, overflowY: "auto",
+          display: "flex", flexDirection: "column", gap: 3,
+          minHeight: 120, maxHeight: 260, paddingRight: 4,
         }}
       >
         <AnimatePresence initial={false}>
           {visibleEvents.map((item, i) => (
             <TimelineEventRow
               key={`${item.type}-${item.time}-${i}`}
-              item={item}
-              tc={tc}
-              tn={tn}
+              item={item} tc={tc} tn={tn}
             />
           ))}
         </AnimatePresence>
 
         {!done && playing && (
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 10px", color: "var(--text-2)", fontSize: 11,
-          }}>
-            <motion.span
-              animate={{ opacity: [0.2, 1, 0.2] }}
-              transition={{ duration: 1.1, repeat: Infinity }}
-            >●</motion.span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", color: "var(--text-2)", fontSize: 11 }}>
+            <motion.span animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.1, repeat: Infinity }}>●</motion.span>
             Simulation en cours…
           </div>
         )}
       </div>
 
-      {/* Scoreboard joueurs */}
-      {done && (leftStats.length > 0 || rightStats.length > 0) && (
-        <TimelineScoreboard
-          leftStats={leftStats}
-          rightStats={rightStats}
-          leftAbbr={leftAbbr}
-          rightAbbr={rightAbbr}
-          userWon={userWon}
-          duration={duration}
-        />
-      )}
+      {/* ── ZONE 3 : Scoreboard live (visible dès le début) ───── */}
+      <LiveScoreboard
+        leftStats={leftStats}
+        rightStats={rightStats}
+        leftAbbr={leftAbbr}
+        rightAbbr={rightAbbr}
+        visibleEvents={visibleEvents}
+        winnerTeam={winnerTeam}
+        leftNum={leftNum}
+        duration={duration}
+      />
 
-      {/* Continuer */}
+      {/* ── Bouton continuer ──────────────────────────────────── */}
       {done && (
         <motion.button
           className="btn-primary"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          style={{ width: "100%", padding: 14, fontSize: 15, flexShrink: 0 }}
+          style={{ width: "100%", padding: 12, fontSize: 14, flexShrink: 0 }}
           onClick={onContinue}
         >
           Voir le résultat final →
