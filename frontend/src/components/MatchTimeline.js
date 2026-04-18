@@ -22,50 +22,65 @@ function getDrakeIcon(desc) {
   return "🐉";
 }
 
-function ChampionPanel({ stats, visibleEvents, teamNum, side, tc }) {
-  const deadChamps = useMemo(() => {
-    const dead = new Set();
-    visibleEvents.forEach(ev => {
-      if (ev.type === "kill" || ev.type === "first_blood") {
-        const desc = (ev.description || "").toLowerCase();
-        stats.forEach(p => {
-          if (p.champion && desc.includes(p.champion.toLowerCase()) && ev.team !== teamNum) {
-            dead.add(p.champion);
-          }
-        });
-      }
-    });
-    return dead;
-  }, [visibleEvents, stats, teamNum]);
+// Death timer LoL: BRT formula — increases with game time
+function calcDeathTimer(deathSec) {
+  const min = deathSec / 60;
+  let baseTimer;
+  if (min < 15) baseTimer = 10;
+  else if (min < 30) baseTimer = 10 + Math.floor((min - 15) * 1.2);
+  else if (min < 45) baseTimer = 28 + Math.floor((min - 30) * 2.0);
+  else baseTimer = 58 + Math.floor((min - 45) * 2.5);
+  return Math.min(baseTimer, 90);
+}
 
+function ChampionPanel({ stats, visibleEvents, matchSec, teamNum, side, tc }) {
   const color = tc(teamNum);
   const isLeft = side === "left";
+
+  // Map: champion → { deathSec, respawnSec } pour le dernier kill
+  const deathMap = useMemo(() => {
+    const map = {};
+    visibleEvents.forEach(ev => {
+      if ((ev.type === "kill" || ev.type === "first_blood") && ev.victim_champion) {
+        const vc = ev.victim_champion;
+        // Vérifie que la victime appartient à l'équipe de ce panel
+        const isOurTeam = stats.some(p => p.champion === vc);
+        if (isOurTeam) {
+          const deathSec = parseSec(ev.time);
+          const timer = calcDeathTimer(deathSec);
+          map[vc] = { deathSec, respawnSec: deathSec + timer };
+        }
+      }
+    });
+    return map;
+  }, [visibleEvents, stats]);
 
   return (
     <div style={{
       display: "flex",
       flexDirection: "column",
       alignItems: isLeft ? "flex-end" : "flex-start",
-      gap: 3,
-      minWidth: 34,
+      gap: 4,
+      minWidth: 38,
       flexShrink: 0,
     }}>
       {stats.map((p, i) => {
-        const isDead = deadChamps.has(p.champion);
+        const death = deathMap[p.champion];
+        const isDead = death && matchSec >= death.deathSec && matchSec < death.respawnSec;
+        const remainSec = isDead ? Math.ceil(death.respawnSec - matchSec) : 0;
         const ddKey = toDDragonKey(p.champion || "");
         return (
-          <div key={i} style={{ position: "relative" }}>
+          <div key={i} style={{ position: "relative", width: 32, height: 32 }}>
             <img
               src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${ddKey}.png`}
               alt={p.champion}
               title={`${p.player_name} — ${p.champion}`}
               style={{
-                width: 28, height: 28,
+                width: 32, height: 32,
                 borderRadius: 4,
-                border: `1px solid ${isDead ? "rgba(255,255,255,0.1)" : color + "66"}`,
-                filter: isDead ? "grayscale(1) brightness(0.4)" : "none",
-                transition: "filter 0.4s ease, opacity 0.4s ease",
-                opacity: isDead ? 0.5 : 1,
+                border: `1.5px solid ${isDead ? "rgba(255,255,255,0.08)" : color + "88"}`,
+                filter: isDead ? "grayscale(1) brightness(0.3)" : "none",
+                transition: "filter 0.3s ease",
                 display: "block",
               }}
               onError={e => { e.currentTarget.style.display = "none"; }}
@@ -74,8 +89,15 @@ function ChampionPanel({ stats, visibleEvents, teamNum, side, tc }) {
               <div style={{
                 position: "absolute", inset: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 12, pointerEvents: "none",
-              }}>💀</div>
+                flexDirection: "column",
+                background: "rgba(0,0,0,0.55)",
+                borderRadius: 4,
+                pointerEvents: "none",
+              }}>
+                <span style={{ fontSize: 9, fontFamily: "monospace", fontWeight: 900, color: "#ef4444", lineHeight: 1 }}>
+                  {remainSec}s
+                </span>
+              </div>
             )}
           </div>
         );
@@ -110,31 +132,26 @@ function ObjectivesBar({ events, teamNum, side, tc }) {
       display: "flex",
       flexDirection: isLeft ? "row-reverse" : "row",
       alignItems: "center",
-      gap: 5,
-      justifyContent: isLeft ? "flex-start" : "flex-start",
+      gap: 4,
       flexWrap: "wrap",
-      minWidth: 60,
+      minWidth: 50,
     }}>
       {towers > 0 && (
-        <span title={`${towers} tour(s)`} style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 2, color: "var(--text-2)" }}>
+        <span title={`${towers} tour(s)`} style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 1, color: "var(--text-2)" }}>
           🏯<span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 11, color }}>{towers}</span>
         </span>
       )}
       {drakes.map((ev, i) => (
-        <span key={i} title={ev.description || "Drake"} style={{ fontSize: 13 }}>
+        <span key={i} title={ev.description || "Drake"} style={{ fontSize: 14, lineHeight: 1 }}>
           {getDrakeIcon(ev.description)}
         </span>
       ))}
-      {baron > 0 && (
-        <span title={`${baron} Baron`} style={{ fontSize: 13 }}>
-          {"👑".repeat(baron)}
-        </span>
-      )}
-      {herald > 0 && (
-        <span title={`${herald} Herald`} style={{ fontSize: 13 }}>
-          {"🔮".repeat(herald)}
-        </span>
-      )}
+      {baron > 0 && Array.from({ length: baron }).map((_, i) => (
+        <span key={i} title="Baron" style={{ fontSize: 14, lineHeight: 1 }}>👑</span>
+      ))}
+      {herald > 0 && Array.from({ length: herald }).map((_, i) => (
+        <span key={i} title="Herald" style={{ fontSize: 14, lineHeight: 1 }}>🔮</span>
+      ))}
     </div>
   );
 }
