@@ -358,7 +358,7 @@ function App() {
     <TeamModalContext.Provider value={{ openTeam }}>
     <TeamLogosContext.Provider value={teamLogos}>
     <PlayerImagesContext.Provider value={playerImages}>
-    <div className="app-container hex-bg">
+    <div className="app-container">
       <Navigation
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
