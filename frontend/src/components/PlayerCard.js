@@ -6,7 +6,7 @@ import { _ddVersion, toDDragonKey } from "./ddHelpers";
 
 const getRatingColor = (rating) => {
   if (rating >= 85) return "var(--success)";
-  if (rating >= 75) return "var(--secondary)";
+  if (rating >= 75) return "var(--amber)";
   return "var(--danger)";
 };
 
