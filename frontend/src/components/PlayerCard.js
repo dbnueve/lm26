@@ -13,10 +13,10 @@ const getRatingColor = (rating) => {
 const StatBar = ({ label, value, color }) => (
   <div style={{ marginBottom: 6 }}>
     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-      <span style={{ color: "var(--text-secondary)" }}>{label}</span>
-      <span className="font-stats" style={{ fontWeight: 700, color }}>{value}%</span>
+      <span style={{ color: "var(--text-2)" }}>{label}</span>
+      <span className="font-stats" style={{ fontWeight: 500, color }}>{value}%</span>
     </div>
-    <div style={{ height: 3, background: "var(--border-subtle)", borderRadius: 2 }}>
+    <div style={{ height: 3, background: "var(--surface-3)", borderRadius: 99 }}>
       <div style={{ height: "100%", borderRadius: 2, background: color, width: value + "%", transition: "width 0.4s ease" }} />
     </div>
   </div>
