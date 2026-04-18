@@ -3,9 +3,141 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   SPEEDS, TICK_MS, KILL_TYPES, parseSec, fmtTime,
 } from "./timelineHelpers";
+import { _ddVersion, toDDragonKey } from "./ddHelpers";
 import TimelineEventRow from "./TimelineEventRow";
 import TimelineKillCounter from "./TimelineKillCounter";
 import TimelineScoreboard from "./TimelineScoreboard";
+
+const DRAKE_ICONS = {
+  infernal: "🔥", mountain: "🪨", ocean: "🌊", cloud: "💨",
+  hextech: "⚡", chemtech: "☣️", elder: "🟣",
+};
+
+function getDrakeIcon(desc) {
+  if (!desc) return "🐉";
+  const lower = desc.toLowerCase();
+  for (const [key, icon] of Object.entries(DRAKE_ICONS)) {
+    if (lower.includes(key)) return icon;
+  }
+  return "🐉";
+}
+
+function ChampionPanel({ stats, visibleEvents, teamNum, side, tc }) {
+  const deadChamps = useMemo(() => {
+    const dead = new Set();
+    visibleEvents.forEach(ev => {
+      if (ev.type === "kill" || ev.type === "first_blood") {
+        const desc = (ev.description || "").toLowerCase();
+        stats.forEach(p => {
+          if (p.champion && desc.includes(p.champion.toLowerCase()) && ev.team !== teamNum) {
+            dead.add(p.champion);
+          }
+        });
+      }
+    });
+    return dead;
+  }, [visibleEvents, stats, teamNum]);
+
+  const color = tc(teamNum);
+  const isLeft = side === "left";
+
+  return (
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: isLeft ? "flex-end" : "flex-start",
+      gap: 3,
+      minWidth: 34,
+      flexShrink: 0,
+    }}>
+      {stats.map((p, i) => {
+        const isDead = deadChamps.has(p.champion);
+        const ddKey = toDDragonKey(p.champion || "");
+        return (
+          <div key={i} style={{ position: "relative" }}>
+            <img
+              src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${ddKey}.png`}
+              alt={p.champion}
+              title={`${p.player_name} — ${p.champion}`}
+              style={{
+                width: 28, height: 28,
+                borderRadius: 4,
+                border: `1px solid ${isDead ? "rgba(255,255,255,0.1)" : color + "66"}`,
+                filter: isDead ? "grayscale(1) brightness(0.4)" : "none",
+                transition: "filter 0.4s ease, opacity 0.4s ease",
+                opacity: isDead ? 0.5 : 1,
+                display: "block",
+              }}
+              onError={e => { e.currentTarget.style.display = "none"; }}
+            />
+            {isDead && (
+              <div style={{
+                position: "absolute", inset: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, pointerEvents: "none",
+              }}>💀</div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ObjectivesBar({ events, teamNum, side, tc }) {
+  const color = tc(teamNum);
+  const isLeft = side === "left";
+
+  const towers = useMemo(
+    () => events.filter(e => (e.type === "tower" || e.type === "first_tower") && e.team === teamNum).length,
+    [events, teamNum]
+  );
+  const drakes = useMemo(
+    () => events.filter(e => e.type === "drake" && e.team === teamNum),
+    [events, teamNum]
+  );
+  const baron = useMemo(
+    () => events.filter(e => e.type === "baron" && e.team === teamNum).length,
+    [events, teamNum]
+  );
+  const herald = useMemo(
+    () => events.filter(e => e.type === "herald" && e.team === teamNum).length,
+    [events, teamNum]
+  );
+
+  return (
+    <div style={{
+      display: "flex",
+      flexDirection: isLeft ? "row-reverse" : "row",
+      alignItems: "center",
+      gap: 5,
+      justifyContent: isLeft ? "flex-start" : "flex-start",
+      flexWrap: "wrap",
+      minWidth: 60,
+    }}>
+      {towers > 0 && (
+        <span title={`${towers} tour(s)`} style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 2, color: "var(--text-2)" }}>
+          🏯<span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 11, color }}>{towers}</span>
+        </span>
+      )}
+      {drakes.map((ev, i) => (
+        <span key={i} title={ev.description || "Drake"} style={{ fontSize: 13 }}>
+          {getDrakeIcon(ev.description)}
+        </span>
+      ))}
+      {baron > 0 && (
+        <span title={`${baron} Baron`} style={{ fontSize: 13 }}>
+          {"👑".repeat(baron)}
+        </span>
+      )}
+      {herald > 0 && (
+        <span title={`${herald} Herald`} style={{ fontSize: 13 }}>
+          {"🔮".repeat(herald)}
+        </span>
+      )}
+    </div>
+  );
+}
 
 /**
  * Props
