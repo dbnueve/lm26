@@ -73,7 +73,7 @@ const PlayerCard = memo(({ player, onSelect, showActions = false, onSwap }) => {
                   style={{ width: 16, height: 16, borderRadius: 3, objectFit: "cover" }}
                   onError={e => { e.currentTarget.style.display = "none"; }}
                 />
-                <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{sigChamp}</span>
+                <span style={{ fontSize: 11, color: "var(--text-2)" }}>{sigChamp}</span>
               </div>
             )}
           </div>
