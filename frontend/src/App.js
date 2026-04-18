@@ -367,7 +367,7 @@ function App() {
         unreadInbox={unreadInbox}
       />
 
-      <main className="main-content">
+      <main className="main-content app-with-sidebar">
         <ErrorBoundary label="Erreur dans la page">
         {currentPage === "dashboard" && userTeamData && (
           <Dashboard
