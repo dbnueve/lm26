@@ -105,12 +105,12 @@ const PlayerCard = memo(({ player, onSelect, showActions = false, onSwap }) => {
           <StatBar
             label="Moral"
             value={player.moral ?? 0}
-            color={player.moral > 70 ? "var(--success)" : player.moral > 40 ? "var(--secondary)" : "var(--danger)"}
+            color={player.moral > 70 ? "var(--success)" : player.moral > 40 ? "var(--amber)" : "var(--danger)"}
           />
           <StatBar
             label="Fatigue"
             value={player.fatigue ?? 0}
-            color={player.fatigue > 70 ? "var(--danger)" : player.fatigue > 40 ? "var(--secondary)" : "var(--success)"}
+            color={player.fatigue > 70 ? "var(--danger)" : player.fatigue > 40 ? "var(--amber)" : "var(--success)"}
           />
         </div>
 
