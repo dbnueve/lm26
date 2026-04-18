@@ -1,7 +1,7 @@
 // Helpers & constantes partagés par MatchTimeline et ses sous-composants
 
 export const SPEEDS = [
-  { label: "1×", step: 3 },
+  { label: "1×", step: 1 },
   { label: "2×", step: 7 },
   { label: "4×", step: 15 },
 ];

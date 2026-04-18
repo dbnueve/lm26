@@ -210,7 +210,7 @@ const MatchTimeline = ({
     }
     intervalRef.current = setInterval(() => {
       setMatchSec(s => {
-        const next = s + SPEEDS[speedIdx].step;
+        const next = s + SPEEDS[speedIdx].step ;
         if (next >= endSec) {
           setDone(true);
           setPlaying(false);
