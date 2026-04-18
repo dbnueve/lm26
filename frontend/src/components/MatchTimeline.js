@@ -264,20 +264,23 @@ const MatchTimeline = ({
 
       {/* Scoreboard header */}
       <div style={{
-        background: "var(--surface-1)", borderRadius: 8, padding: "12px 16px",
+        background: "var(--surface-1)", borderRadius: 8, padding: "12px 10px",
         border: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-          <div style={{ textAlign: "center", minWidth: 72 }}>
+        {/* Ligne kills + timer + gold */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+          {/* Gauche : kills */}
+          <div style={{ textAlign: "center", minWidth: 64 }}>
             <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
               {leftAbbr}
             </div>
             <TimelineKillCounter value={leftKills} color="var(--accent)" />
           </div>
 
-          <div style={{ flex: 1, textAlign: "center", padding: "0 12px" }}>
+          {/* Centre : timer + barre gold */}
+          <div style={{ flex: 1, textAlign: "center", padding: "0 8px" }}>
             <div style={{
-              fontFamily: "monospace", fontSize: 28, fontWeight: 900,
+              fontFamily: "monospace", fontSize: 26, fontWeight: 900,
               color: done ? "var(--amber)" : "var(--text-1)",
               letterSpacing: 2, marginBottom: 6, fontVariantNumeric: "tabular-nums",
             }}>
@@ -302,9 +305,7 @@ const MatchTimeline = ({
               />
             </div>
 
-            <div style={{
-              fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 14,
-            }}>
+            <div style={{ fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 14 }}>
               {goldDiff > 200 ? (
                 <span>
                   <span style={{
@@ -321,12 +322,50 @@ const MatchTimeline = ({
             </div>
           </div>
 
-          <div style={{ textAlign: "center", minWidth: 72 }}>
+          {/* Droite : kills */}
+          <div style={{ textAlign: "center", minWidth: 64 }}>
             <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>
               {rightAbbr}
             </div>
             <TimelineKillCounter value={rightKills} color="var(--danger)" />
           </div>
+        </div>
+
+        {/* Ligne champions + objectifs */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+          marginTop: 10, gap: 6,
+        }}>
+          {/* Champions gauche */}
+          <ChampionPanel
+            stats={leftStats}
+            visibleEvents={visibleEvents}
+            teamNum={leftNum}
+            side="left"
+            tc={tc}
+          />
+
+          {/* Objectifs gauche */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flex: 1 }}>
+            <ObjectivesBar events={visibleEvents} teamNum={leftNum} side="left" tc={tc} />
+          </div>
+
+          {/* Séparateur central */}
+          <div style={{ width: 1, background: "rgba(255,255,255,0.08)", alignSelf: "stretch", margin: "0 4px" }} />
+
+          {/* Objectifs droite */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, flex: 1 }}>
+            <ObjectivesBar events={visibleEvents} teamNum={rightNum} side="right" tc={tc} />
+          </div>
+
+          {/* Champions droite */}
+          <ChampionPanel
+            stats={rightStats}
+            visibleEvents={visibleEvents}
+            teamNum={rightNum}
+            side="right"
+            tc={tc}
+          />
         </div>
       </div>
 
