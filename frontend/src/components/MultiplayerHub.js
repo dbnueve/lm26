@@ -231,7 +231,7 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
 // Même sidebar que le solo mais limitée aux pages disponibles en multi + bouton quitter
 
 import {
-  ChartBar, Users, Trophy, Calendar, Target, ChatsCircle,
+  ChartBar, Users, Trophy, Calendar, Target, Sword,
   ArrowsClockwise,
 } from "@phosphor-icons/react";
 
