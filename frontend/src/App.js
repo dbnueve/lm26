@@ -62,6 +62,10 @@ function App() {
   const [showSplitEnd, setShowSplitEnd] = useState(false);
   const [showInternational, setShowInternational] = useState(false);
 
+  // Multiplayer state
+  const [showMultiplayerLobby, setShowMultiplayerLobby] = useState(false);
+  const [multiplayerSession, setMultiplayerSession] = useState(null); // {sessionId, token, side}
+
   const showToast = (message, type = "info") => {
     setToast({ message, type });
   };
