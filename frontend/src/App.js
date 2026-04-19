@@ -62,9 +62,23 @@ function App() {
   const [showSplitEnd, setShowSplitEnd] = useState(false);
   const [showInternational, setShowInternational] = useState(false);
 
-  // Multiplayer state
+  // Multiplayer state — persisté dans localStorage pour survivre aux rechargements
   const [showMultiplayerLobby, setShowMultiplayerLobby] = useState(false);
-  const [multiplayerSession, setMultiplayerSession] = useState(null); // {sessionId, token, side}
+  const [multiplayerSession, setMultiplayerSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem("mp_session");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
+  const setMpSession = (session) => {
+    setMultiplayerSession(session);
+    if (session) {
+      localStorage.setItem("mp_session", JSON.stringify(session));
+    } else {
+      localStorage.removeItem("mp_session");
+    }
+  };
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
