@@ -45,11 +45,18 @@ export function useMultiplayerSocket(sessionId, token) {
         setError(null);
       }
     } catch (e) {
-      if (mountedRef.current) {
+      if (!mountedRef.current) return;
+      const status = e?.response?.status;
+      if (status === 404 || status === 401) {
+        // Session expirée ou token invalide → nettoyer localStorage
+        localStorage.removeItem("mp_session");
+        setError("Session expirée. Recrée ou rejoins une partie.");
+        stopPolling();
+      } else {
         setError(e?.response?.data?.detail || "Erreur de connexion");
       }
     }
-  }, [sessionId, token]);
+  }, [sessionId, token, stopPolling]);
 
   const startPolling = useCallback(() => {
     if (pollTimer.current) return; // already polling
