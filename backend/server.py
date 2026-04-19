@@ -6884,6 +6884,19 @@ def _mp_simulate(team1_id: str, team2_id: str, picks1: list, picks2: list) -> di
     return result
 
 
+@api_router.get("/multiplayer/league-teams/{league}")
+def mp_league_teams(league: str):
+    """Return the static team list for a league — no GAME_STATE required."""
+    league = league.upper()
+    league_data = LEAGUES_DATA.get(league)
+    if league_data is None:
+        raise HTTPException(404, f"Ligue '{league}' inconnue")
+    return [
+        {"id": t["id"], "name": t["name"], "league": league}
+        for t in league_data["teams"]
+    ]
+
+
 @api_router.post("/multiplayer/create")
 def mp_create(body: _MpCreateBody):
     try:
