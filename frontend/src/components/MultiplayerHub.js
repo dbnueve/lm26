@@ -202,7 +202,7 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
             schedule={schedule}
             teams={teams}
             userTeam={userTeam}
-            onSimulateSeason={null}
+            onSimulateSeason={undefined}
           />
         )}
 
