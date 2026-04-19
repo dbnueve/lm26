@@ -6983,8 +6983,7 @@ async def mp_v2_team(session_id: str, body: _MpV2TeamBody):
             session_id, body.token, body.team_id,
             LEAGUES_DATA, _mp_init_game_state
         )
-        state = _mp_logic.get_full_state(session_id, body.token)
-        await _mp_ws.manager.broadcast(session_id, "state_update", state)
+        await _mp_broadcast_state(session_id)
         return result
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -6995,15 +6994,11 @@ async def mp_v2_ready(session_id: str, body: _MpV2ReadyBody):
     try:
         result = _mp_logic.set_ready(session_id, body.token)
         if result["all_ready"]:
-            # Auto-advance week
             week_result = _mp_logic.advance_week(session_id, _mp_simulate)
-            state = _mp_logic.get_full_state(session_id, body.token)
-            await _mp_ws.manager.broadcast(session_id, "state_update", state)
+            await _mp_broadcast_state(session_id)
             await _mp_ws.manager.broadcast(session_id, "week_advanced", week_result)
             return {**result, "week_result": week_result}
-        # Not all ready yet — broadcast partial state
-        state = _mp_logic.get_full_state(session_id, body.token)
-        await _mp_ws.manager.broadcast(session_id, "state_update", state)
+        await _mp_broadcast_state(session_id)
         return result
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -7016,13 +7011,10 @@ async def mp_v2_draft(session_id: str, body: _MpV2DraftBody):
             session_id, body.token, body.match_id,
             body.champion, _mp_simulate
         )
-        state = _mp_logic.get_full_state(session_id, body.token)
-        await _mp_ws.manager.broadcast(session_id, "state_update", state)
+        await _mp_broadcast_state(session_id)
         await _mp_ws.manager.broadcast(session_id, "draft_action", {
             "match_id": body.match_id,
             "champion": body.champion,
-            "bans": result["bans"],
-            "picks": result["picks"],
             "next_action": result["next_action"],
             "completed": result["completed"],
         })
