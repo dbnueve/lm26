@@ -369,7 +369,7 @@ function App() {
           <MultiplayerLobby
             onSessionJoined={(sessionId, token, side) => {
               setShowMultiplayerLobby(false);
-              setMultiplayerSession({ sessionId, token, side });
+              setMpSession({ sessionId, token, side });
             }}
             onBack={() => setShowMultiplayerLobby(false)}
           />
