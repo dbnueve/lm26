@@ -439,8 +439,14 @@ def _finalize_week(session_id: str, session: dict, gs: dict) -> None:
     max_week = max((m["week"] for m in all_matches), default=week)
 
     if week >= max_week:
-        mp_db.update_session_phase(session_id, "playoffs", week=week)
-        logger.info(f"Session {session_id[:8]}: split terminé → playoffs")
+        # Auto-démarrer les playoffs
+        try:
+            mp_start_playoffs(session_id)
+            logger.info(f"Session {session_id[:8]}: split terminé → playoffs démarrés")
+        except Exception as e:
+            # En cas d'erreur (ex: pas assez d'équipes), passer directement en finished
+            logger.warning(f"Session {session_id[:8]}: impossible de démarrer les playoffs: {e}")
+            mp_db.update_session_phase(session_id, "finished", week=week)
     else:
         mp_db.update_session_phase(session_id, "regular", week=week + 1)
         logger.info(f"Session {session_id[:8]}: semaine {week} → {week + 1}")
