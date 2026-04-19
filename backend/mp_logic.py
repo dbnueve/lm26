@@ -438,7 +438,9 @@ def draft_action(session_id: str, token: str, match_id: int,
         if match["draft_completed"]:
             raise ValueError("Draft déjà terminée")
 
-        draft = _json.loads(match["draft_json"]) if match["draft_json"] else _new_draft_state()
+        raw_draft = _json.loads(match["draft_json"]) if match["draft_json"] else _new_draft_state()
+        # JSON deserialise les clés en strings — on normalise en int pour cohérence
+        draft = _normalize_draft_keys(raw_draft)
         step = draft["step"]
 
         if step >= len(DRAFT_SEQUENCE):
@@ -460,7 +462,7 @@ def draft_action(session_id: str, token: str, match_id: int,
             raise ValueError(f"Pas votre tour (attendu: side {expected_side})")
 
         champion = champion.strip()
-        all_used = draft["bans"]["1"] + draft["bans"]["2"] + draft["picks"]["1"] + draft["picks"]["2"]
+        all_used = draft["bans"][1] + draft["bans"][2] + draft["picks"][1] + draft["picks"][2]
         if champion in all_used:
             raise ValueError(f"'{champion}' déjà utilisé")
 
@@ -483,8 +485,8 @@ def draft_action(session_id: str, token: str, match_id: int,
         if completed:
             # Simulate the match with draft picks
             gs = mp_db.load_game_state(session_id) or {}
-            picks1 = draft["picks"]["1"]
-            picks2 = draft["picks"]["2"]
+            picks1 = draft["picks"][1]
+            picks2 = draft["picks"][2]
             result = simulate_fn(match["team1"], match["team2"], gs, picks1, picks2)
             _apply_match_result(session_id, match_id, match["team1"], match["team2"], result, gs, draft)
             mp_db.save_game_state(session_id, gs)
