@@ -4,7 +4,6 @@ import { API } from "../shared";
 import { useMultiplayerSocket } from "../hooks/useMultiplayerSocket";
 
 // Composants solo réutilisés tels quels
-import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
 import RosterPage from "./RosterPage";
 import StandingsPage from "./StandingsPage";
