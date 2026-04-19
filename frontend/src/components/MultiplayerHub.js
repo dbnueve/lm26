@@ -213,12 +213,13 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
           />
         )}
 
-        {currentPage === "chat" && (
-          <MpChat
+        {currentPage === "playoffs" && (
+          <MpPlayoffsPage
             sessionId={sessionId}
             token={token}
-            me={myPlayer}
-            players={state.players}
+            state={state}
+            userTeam={userTeam}
+            post={post}
           />
         )}
       </div>
