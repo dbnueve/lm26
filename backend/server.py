@@ -7080,6 +7080,194 @@ def mp_set_training_plan(session_id: str, body: dict):
     return {"ok": True, "applied_now": False}
 
 
+@api_router.get("/mp/{session_id}/playoffs")
+def mp_get_playoffs(session_id: str, token: str):
+    """Get playoffs bracket for a session, enriched with team data."""
+    session = _mp_db.get_session(session_id)
+    if session is None:
+        raise HTTPException(404, "Session introuvable")
+    player = _mp_db.get_player(session_id, token)
+    if player is None:
+        raise HTTPException(401, "Token invalide")
+
+    gs = _mp_db.load_game_state(session_id) or {}
+    teams_raw = gs.get("teams", {})
+    bracket = gs.get("playoffs_bracket")
+
+    if session["phase"] not in ("playoffs", "finished") or bracket is None:
+        # Check if regular season is complete → auto-start playoffs
+        if session["phase"] == "playoffs" and bracket is None:
+            try:
+                bracket = _mp_logic.mp_start_playoffs(session_id)
+            except Exception as e:
+                raise HTTPException(400, str(e))
+        else:
+            standings = gs.get("standings", {})
+            total_matches = _mp_db.get_all_matches(session_id)
+            unplayed = [m for m in total_matches if m["result_json"] is None]
+            return {
+                "active": False,
+                "phase": session["phase"],
+                "standings": standings,
+                "unplayed_count": len(unplayed),
+                "message": "La saison régulière n'est pas encore terminée." if unplayed
+                           else "En attente du démarrage des playoffs.",
+            }
+
+    def enrich(match):
+        t1 = teams_raw.get(match["team1"], {})
+        t2 = teams_raw.get(match["team2"], {})
+        return {
+            **match,
+            "team1_data": {"id": match["team1"], "name": t1.get("name", match["team1"]), "abbr": t1.get("abbr", match["team1"].upper())},
+            "team2_data": {"id": match["team2"], "name": t2.get("name", match["team2"]), "abbr": t2.get("abbr", match["team2"].upper())},
+        }
+
+    champion_data = None
+    if bracket.get("champion"):
+        ct = teams_raw.get(bracket["champion"], {})
+        champion_data = {"id": bracket["champion"], "name": ct.get("name", bracket["champion"]), "abbr": ct.get("abbr", bracket["champion"].upper())}
+
+    ub_count = 6 if bracket.get("format") == "lpl" else 4
+    return {
+        "active": True,
+        "phase": session["phase"],
+        "format": bracket.get("format", "standard"),
+        "ub_count": ub_count,
+        "active_rounds": bracket["active_rounds"],
+        "qualified_teams": [
+            {
+                "id": tid,
+                "name": teams_raw.get(tid, {}).get("name", tid),
+                "abbr": teams_raw.get(tid, {}).get("abbr", tid.upper()),
+                "seed": i + 1,
+                "bracket": "UB" if i < ub_count else "LB",
+            }
+            for i, tid in enumerate(bracket.get("qualified_teams", []))
+        ],
+        "matches": [enrich(m) for m in bracket["matches"]],
+        "champion": champion_data,
+    }
+
+
+@api_router.post("/mp/{session_id}/playoffs/start")
+def mp_start_playoffs_endpoint(session_id: str, body: dict):
+    """Manually start playoffs (normally auto-triggered after regular season)."""
+    token = body.get("token")
+    session = _mp_db.get_session(session_id)
+    if session is None:
+        raise HTTPException(404, "Session introuvable")
+    player = _mp_db.get_player(session_id, token)
+    if player is None:
+        raise HTTPException(401, "Token invalide")
+    if session["phase"] == "playoffs":
+        raise HTTPException(400, "Playoffs déjà en cours")
+    try:
+        bracket = _mp_logic.mp_start_playoffs(session_id)
+        return {"ok": True, "bracket": bracket}
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/mp/{session_id}/playoffs/simulate")
+def mp_simulate_playoff(session_id: str, body: dict):
+    """Simulate a full Bo5 series (AI vs AI only)."""
+    token = body.get("token")
+    match_id = body.get("match_id")
+    if not token or not match_id:
+        raise HTTPException(400, "token et match_id requis")
+    session = _mp_db.get_session(session_id)
+    if session is None:
+        raise HTTPException(404, "Session introuvable")
+    player = _mp_db.get_player(session_id, token)
+    if player is None:
+        raise HTTPException(401, "Token invalide")
+    if session["phase"] != "playoffs":
+        raise HTTPException(400, "Pas en phase playoffs")
+
+    # Verify neither team is a human team
+    gs = _mp_db.load_game_state(session_id) or {}
+    bracket = gs.get("playoffs_bracket", {})
+    match = next((m for m in bracket.get("matches", []) if m["id"] == match_id), None)
+    if match is None:
+        raise HTTPException(404, "Match introuvable")
+
+    human_teams = {p["team_id"] for p in _mp_db.get_players(session_id) if p["team_id"]}
+    if match["team1"] in human_teams or match["team2"] in human_teams:
+        raise HTTPException(400, "Impossible de simuler un match impliquant un joueur humain")
+
+    try:
+        result = _mp_logic.mp_simulate_playoff_series(session_id, match_id, _mp_simulate)
+        return result
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/mp/{session_id}/playoffs/play-game")
+def mp_play_playoff_game(session_id: str, body: dict):
+    """Play a single game in a human playoffs Bo5 series (uses draft result or auto-sim)."""
+    token = body.get("token")
+    match_id = body.get("match_id")
+    if not token or not match_id:
+        raise HTTPException(400, "token et match_id requis")
+    session = _mp_db.get_session(session_id)
+    if session is None:
+        raise HTTPException(404, "Session introuvable")
+    player = _mp_db.get_player(session_id, token)
+    if player is None:
+        raise HTTPException(401, "Token invalide")
+    if session["phase"] != "playoffs":
+        raise HTTPException(400, "Pas en phase playoffs")
+
+    lock = _mp_db._get_session_lock(session_id)
+    with lock:
+        gs = _mp_db.load_game_state(session_id) or {}
+        bracket = gs.get("playoffs_bracket", {})
+        match = next((m for m in bracket.get("matches", []) if m["id"] == match_id), None)
+        if match is None:
+            raise HTTPException(404, "Match introuvable")
+        if match["completed"]:
+            raise HTTPException(400, "Série déjà terminée")
+
+        # Simulate one game
+        result = _mp_simulate(match["team1"], match["team2"], gs, [], [])
+        game_winner = match["team1"] if result["winner"] == 1 else match["team2"]
+        match["games"].append({"winner": game_winner, "result": result})
+        if result["winner"] == 1:
+            match["team1_wins"] += 1
+        else:
+            match["team2_wins"] += 1
+
+        wins_needed = (match["best_of"] // 2) + 1
+        series_over = match["team1_wins"] >= wins_needed or match["team2_wins"] >= wins_needed
+        if series_over:
+            match["winner"] = match["team1"] if match["team1_wins"] >= wins_needed else match["team2"]
+            match["completed"] = True
+            # Advance bracket
+            active_matches = [m for m in bracket["matches"] if m["round"] in bracket["active_rounds"]]
+            if all(m["completed"] for m in active_matches):
+                if bracket.get("format") == "lpl":
+                    _mp_logic._mp_advance_lpl(bracket)
+                else:
+                    _mp_logic._mp_advance_standard(bracket)
+                if bracket.get("champion"):
+                    _mp_db.update_session_phase(session_id, "finished")
+                    _mp_db.log_event(session_id, "champion_crowned", {"champion": bracket["champion"]})
+
+        gs["playoffs_bracket"] = bracket
+        _mp_db.save_game_state(session_id, gs)
+
+    return {
+        "game_winner": game_winner,
+        "team1_wins": match["team1_wins"],
+        "team2_wins": match["team2_wins"],
+        "series_over": series_over,
+        "series_winner": match.get("winner"),
+        "champion": bracket.get("champion"),
+        "active_rounds": bracket["active_rounds"],
+    }
+
+
 @api_router.get("/mp/sessions")
 def mp_v2_sessions():
     """List all active sessions (non-finished)."""
