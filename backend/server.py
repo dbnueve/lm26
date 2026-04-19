@@ -6858,6 +6858,20 @@ import mp_db  # also used by mp_logic
 import multiplayer as _mp
 
 
+async def _mp_broadcast_state(session_id: str) -> None:
+    """
+    Broadcast a personalised state_update to each connected player.
+    Each player must receive their own state (my_side, my_team, my_team_data differ).
+    """
+    tokens = _mp_ws.manager.connected_tokens(session_id)
+    for token in tokens:
+        try:
+            state = _mp_logic.get_full_state(session_id, token)
+            await _mp_ws.manager.send_to(session_id, token, "state_update", state)
+        except Exception as e:
+            logger.warning(f"broadcast_state failed for token {token[:8]}: {e}")
+
+
 def _mp_init_game_state(league: str) -> dict:
     """
     Pure version of initialize_game: returns a fresh state dict WITHOUT
