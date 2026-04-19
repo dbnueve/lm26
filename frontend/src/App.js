@@ -352,28 +352,11 @@ function App() {
       <TeamLogosContext.Provider value={teamLogos}>
       <PlayerImagesContext.Provider value={playerImages}>
       <div className="hex-bg">
-        <SaveSelectionPage onLoad={loadSlot} onNew={startNewSlot} />
-        <div style={{ textAlign: "center", marginTop: 16 }}>
-          <button
-            onClick={() => setShowMultiplayerLobby(true)}
-            style={{
-              background: "transparent", border: "1px solid #2563eb",
-              borderRadius: 8, color: "#4a90d9", padding: "10px 28px",
-              fontSize: 14, cursor: "pointer", fontWeight: 600,
-            }}
-          >
-            Mode Multijoueur
-          </button>
-        </div>
-        {showMultiplayerLobby && (
-          <MultiplayerLobby
-            onSessionJoined={(sessionId, token, side) => {
-              setShowMultiplayerLobby(false);
-              setMpSession({ sessionId, token, side });
-            }}
-            onBack={() => setShowMultiplayerLobby(false)}
-          />
-        )}
+        <SaveSelectionPage
+          onLoad={loadSlot}
+          onNew={startNewSlot}
+          onSessionJoined={(sessionId, token, side) => setMpSession({ sessionId, token, side })}
+        />
         {multiplayerSession && (
           <MultiplayerHub
             sessionId={multiplayerSession.sessionId}
