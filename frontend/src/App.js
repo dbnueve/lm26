@@ -361,10 +361,9 @@ function App() {
           />
         )}
         {multiplayerSession && (
-          <MultiplayerGame
+          <MultiplayerHub
             sessionId={multiplayerSession.sessionId}
             token={multiplayerSession.token}
-            mySide={multiplayerSession.side}
             onExit={() => setMultiplayerSession(null)}
           />
         )}
