@@ -691,6 +691,359 @@ function MpTrainingWrapper({ sessionId, token, get, onSetTrainingPlan }) {
   return <TrainingPage userTeam={userTeam} onSetTrainingPlan={onSetTrainingPlan} />;
 }
 
+// ── MpPlayoffsPage ────────────────────────────────────────────────────────────
+const ROUND_LABELS = {
+  ub_r1:       "UB Round 1",
+  ub_r2:       "UB Demi-Finales",
+  ub_final:    "UB Finale",
+  lb_r1:       "LB Round 1",
+  lb_r2:       "LB Round 2",
+  lb_r3:       "LB Round 3",
+  lb_sf:       "LB Semi-Finale",
+  lb_final:    "LB Finale",
+  grand_final: "Grande Finale",
+};
+
+function MpPlayoffsPage({ sessionId, token, state, userTeam, post }) {
+  const [playoffsData, setPlayoffsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null); // match_id en cours
+  const [error, setError] = useState(null);
+
+  const fetchPlayoffs = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/mp/${sessionId}/playoffs`, { params: { token } });
+      setPlayoffsData(res.data);
+    } catch (e) {
+      setError(e?.response?.data?.detail || "Erreur chargement playoffs");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId, token]);
+
+  useEffect(() => { fetchPlayoffs(); }, [fetchPlayoffs]);
+
+  // Rafraîchit aussi quand la phase change (le state WS le détecte)
+  useEffect(() => {
+    if (state.phase === "playoffs" || state.phase === "finished") {
+      fetchPlayoffs();
+    }
+  }, [state.phase, fetchPlayoffs]);
+
+  const handleSimulate = async (matchId) => {
+    setActionLoading(matchId);
+    setError(null);
+    try {
+      await axios.post(`${API}/mp/${sessionId}/playoffs/simulate`, { token, match_id: matchId });
+      await fetchPlayoffs();
+    } catch (e) {
+      setError(e?.response?.data?.detail || "Erreur simulation");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handlePlayGame = async (matchId) => {
+    setActionLoading(matchId);
+    setError(null);
+    try {
+      const res = await axios.post(`${API}/mp/${sessionId}/playoffs/play-game`, { token, match_id: matchId });
+      await fetchPlayoffs();
+      if (res.data.series_over) {
+        // petit délai pour que l'animation soit visible
+      }
+    } catch (e) {
+      setError(e?.response?.data?.detail || "Erreur");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleStartPlayoffs = async () => {
+    setLoading(true);
+    try {
+      await axios.post(`${API}/mp/${sessionId}/playoffs/start`, { token });
+      await fetchPlayoffs();
+    } catch (e) {
+      setError(e?.response?.data?.detail || "Erreur démarrage playoffs");
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="animate-slide-up" style={{ padding: 40, textAlign: "center", color: "var(--text-2)" }}>
+        Chargement…
+      </div>
+    );
+  }
+
+  // ── Phase "saison régulière pas finie" ──────────────────────────────────────
+  if (!playoffsData?.active) {
+    const canForceStart = playoffsData?.unplayed_count === 0 && state.phase !== "playoffs";
+    return (
+      <div className="animate-slide-up" style={{ padding: 20 }}>
+        <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
+          <Sword size={28} style={{ color: "var(--amber)" }} />
+          Playoffs
+        </h2>
+        {error && (
+          <div style={{ padding: "10px 14px", marginBottom: 16, background: "rgba(239,68,68,0.1)", border: "1px solid var(--danger)", borderRadius: "var(--radius-xs)", color: "var(--danger)", fontSize: 13 }}>
+            {error}
+          </div>
+        )}
+        <div className="card" style={{ textAlign: "center", padding: 60 }}>
+          <Sword size={56} style={{ color: "var(--text-2)", marginBottom: 20 }} />
+          <h3 className="font-heading" style={{ marginBottom: 12 }}>
+            {playoffsData?.message || "Les playoffs n'ont pas encore commencé"}
+          </h3>
+          {playoffsData?.unplayed_count > 0 && (
+            <p style={{ color: "var(--text-2)", marginBottom: 24, fontSize: 14 }}>
+              {playoffsData.unplayed_count} match{playoffsData.unplayed_count > 1 ? "s" : ""} restant{playoffsData.unplayed_count > 1 ? "s" : ""} en saison régulière.
+            </p>
+          )}
+          {canForceStart && (
+            <button className="btn-primary" onClick={handleStartPlayoffs}>
+              Démarrer les playoffs
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Champion couronné ───────────────────────────────────────────────────────
+  if (playoffsData.champion) {
+    return (
+      <div className="animate-slide-up" style={{ padding: 20 }}>
+        <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 24 }}>Playoffs</h2>
+        <div className="card" style={{ textAlign: "center", padding: 48 }}>
+          <div style={{ fontSize: 52, marginBottom: 16 }}>🏆</div>
+          <h3 className="font-heading" style={{ fontSize: 24, marginBottom: 8 }}>Champion du split !</h3>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 24 }}>
+            <TeamLogo teamId={playoffsData.champion.id} abbr={playoffsData.champion.abbr} size={52} />
+            <span style={{ fontSize: 28, fontWeight: 900, color: "var(--amber)" }}>
+              {playoffsData.champion.abbr}
+            </span>
+          </div>
+          <PlaceholderBracket matches={playoffsData.matches} userTeamId={userTeam.id} />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Bracket actif ───────────────────────────────────────────────────────────
+  const activeRounds = playoffsData.active_rounds || [];
+  const byRound = {};
+  for (const m of playoffsData.matches || []) {
+    if (!byRound[m.round]) byRound[m.round] = [];
+    byRound[m.round].push(m);
+  }
+
+  const roundOrder = ["ub_r1", "ub_r2", "ub_final", "lb_r1", "lb_r2", "lb_r3", "lb_sf", "lb_final", "grand_final"];
+
+  return (
+    <div className="animate-slide-up" style={{ padding: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        <h2 className="font-heading" style={{ fontSize: 32 }}>Playoffs</h2>
+        <span style={{ padding: "3px 10px", borderRadius: 2, background: "rgba(245,158,11,0.15)", border: "1px solid var(--amber)", color: "var(--amber)", fontSize: 12, fontWeight: 700 }}>
+          {activeRounds.map(r => ROUND_LABELS[r] || r).join(" · ")}
+        </span>
+      </div>
+
+      {error && (
+        <div style={{ padding: "10px 14px", marginBottom: 16, background: "rgba(239,68,68,0.1)", border: "1px solid var(--danger)", borderRadius: "var(--radius-xs)", color: "var(--danger)", fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+
+      {/* Équipes qualifiées */}
+      <div className="card" style={{ padding: "14px 18px", marginBottom: 20 }}>
+        <div style={{ fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
+          Équipes qualifiées
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {(playoffsData.qualified_teams || []).map(qt => (
+            <div key={qt.id} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "5px 10px", borderRadius: "var(--radius-xs)",
+              background: qt.id === userTeam.id ? "rgba(139,92,246,0.12)" : "var(--surface-2)",
+              border: `1px solid ${qt.id === userTeam.id ? "#8b5cf6" : "var(--border)"}`,
+            }}>
+              <span style={{ color: "var(--text-2)", fontSize: 11, minWidth: 18 }}>#{qt.seed}</span>
+              <TeamLogo teamId={qt.id} abbr={qt.abbr} size={20} />
+              <span style={{ fontSize: 13, fontWeight: qt.id === userTeam.id ? 700 : 400, color: qt.id === userTeam.id ? "#a78bfa" : "var(--text-1)" }}>
+                {qt.abbr}
+              </span>
+              <span style={{
+                fontSize: 10, padding: "1px 5px", borderRadius: 2, fontWeight: 700,
+                background: qt.bracket === "UB" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)",
+                color: qt.bracket === "UB" ? "var(--success)" : "var(--danger)",
+                border: `1px solid ${qt.bracket === "UB" ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.4)"}`,
+              }}>
+                {qt.bracket}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Matches par round */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {roundOrder
+          .filter(rnd => byRound[rnd])
+          .map(rnd => (
+            <div key={rnd}>
+              <div style={{ fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                {ROUND_LABELS[rnd] || rnd}
+                {activeRounds.includes(rnd) && (
+                  <span style={{ padding: "1px 6px", background: "rgba(245,158,11,0.2)", border: "1px solid var(--amber)", color: "var(--amber)", borderRadius: 2, fontSize: 10 }}>
+                    EN COURS
+                  </span>
+                )}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+                {byRound[rnd].map(match => (
+                  <PlayoffMatchCard
+                    key={match.id}
+                    match={match}
+                    isActive={activeRounds.includes(match.round)}
+                    userTeamId={userTeam.id}
+                    actionLoading={actionLoading}
+                    onSimulate={handleSimulate}
+                    onPlayGame={handlePlayGame}
+                  />
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+function PlayoffMatchCard({ match, isActive, userTeamId, actionLoading, onSimulate, onPlayGame }) {
+  const isUserMatch = match.team1 === userTeamId || match.team2 === userTeamId;
+  const t1win = match.winner === match.team1;
+  const t2win = match.winner === match.team2;
+  const isLoading = actionLoading === match.id;
+  const winsNeeded = Math.ceil(match.best_of / 2);
+
+  return (
+    <div style={{
+      background: "var(--surface-1)",
+      border: `1px solid ${isActive && isUserMatch ? "#8b5cf6" : isActive ? "var(--border-strong)" : "var(--border)"}`,
+      borderRadius: "var(--radius)",
+      padding: 16,
+      opacity: !match.completed && !isActive ? 0.5 : 1,
+      boxShadow: isActive && isUserMatch ? "0 0 16px rgba(139,92,246,0.12)" : "none",
+    }}>
+      <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, display: "flex", justifyContent: "space-between" }}>
+        <span>Bo{match.best_of}</span>
+        {match.completed && (
+          <span style={{ background: "var(--success)", color: "#000", padding: "1px 6px", borderRadius: 2, fontWeight: 700 }}>
+            TERMINÉ
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Team 1 */}
+        <div style={{ flex: 1, textAlign: "center" }}>
+          <TeamLogo teamId={match.team1_data?.id} abbr={match.team1_data?.abbr || ""} size={36} />
+          <div style={{ fontSize: 12, marginTop: 4, color: t1win ? "var(--success)" : "var(--text-2)", fontWeight: t1win ? 700 : 400 }}>
+            {match.team1_data?.abbr}
+          </div>
+          {match.team1 === userTeamId && (
+            <div style={{ fontSize: 10, color: "#a78bfa" }}>vous</div>
+          )}
+        </div>
+
+        {/* Score */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 14px", background: "var(--surface-2)", borderRadius: 4, minWidth: 70, justifyContent: "center" }}>
+          <span className="font-stats" style={{ fontSize: 26, fontWeight: 900, color: t1win ? "var(--success)" : match.completed ? "var(--danger)" : "var(--text-1)" }}>
+            {match.team1_wins}
+          </span>
+          <span style={{ color: "var(--text-2)" }}>-</span>
+          <span className="font-stats" style={{ fontSize: 26, fontWeight: 900, color: t2win ? "var(--success)" : match.completed ? "var(--danger)" : "var(--text-1)" }}>
+            {match.team2_wins}
+          </span>
+        </div>
+
+        {/* Team 2 */}
+        <div style={{ flex: 1, textAlign: "center" }}>
+          <TeamLogo teamId={match.team2_data?.id} abbr={match.team2_data?.abbr || ""} size={36} />
+          <div style={{ fontSize: 12, marginTop: 4, color: t2win ? "var(--success)" : "var(--text-2)", fontWeight: t2win ? 700 : 400 }}>
+            {match.team2_data?.abbr}
+          </div>
+          {match.team2 === userTeamId && (
+            <div style={{ fontSize: 10, color: "#a78bfa" }}>vous</div>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      {isActive && !match.completed && (
+        <div style={{ marginTop: 14, display: "flex", justifyContent: "center", gap: 8 }}>
+          {isUserMatch ? (
+            <button
+              className="btn-primary"
+              style={{ fontSize: 13, padding: "8px 18px", background: "#8b5cf6", opacity: isLoading ? 0.6 : 1 }}
+              onClick={() => !isLoading && onPlayGame(match.id)}
+              disabled={isLoading}
+            >
+              {isLoading ? "…" : `Jouer (${match.team1_wins + match.team2_wins} games / ${match.best_of})`}
+            </button>
+          ) : (
+            <button
+              className="btn-secondary"
+              style={{ fontSize: 12, padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, opacity: isLoading ? 0.6 : 1 }}
+              onClick={() => !isLoading && onSimulate(match.id)}
+              disabled={isLoading}
+            >
+              <ArrowsClockwise size={14} />
+              {isLoading ? "Simulation…" : "Simuler"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlaceholderBracket({ matches, userTeamId }) {
+  // Vue compacte du bracket complet une fois terminé
+  const roundOrder = ["ub_r1", "ub_r2", "ub_final", "lb_r1", "lb_r2", "lb_r3", "lb_sf", "lb_final", "grand_final"];
+  const byRound = {};
+  for (const m of matches || []) {
+    if (!byRound[m.round]) byRound[m.round] = [];
+    byRound[m.round].push(m);
+  }
+  return (
+    <div style={{ textAlign: "left", marginTop: 24 }}>
+      {roundOrder.filter(r => byRound[r]).map(rnd => (
+        <div key={rnd} style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+            {ROUND_LABELS[rnd]}
+          </div>
+          {byRound[rnd].map(m => (
+            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, padding: "4px 0" }}>
+              <span style={{ color: m.winner === m.team1 ? "var(--success)" : "var(--text-2)", fontWeight: m.winner === m.team1 ? 700 : 400 }}>
+                {m.team1_data?.abbr}
+              </span>
+              <span style={{ color: "var(--text-2)" }}>{m.team1_wins} - {m.team2_wins}</span>
+              <span style={{ color: m.winner === m.team2 ? "var(--success)" : "var(--text-2)", fontWeight: m.winner === m.team2 ? 700 : 400 }}>
+                {m.team2_data?.abbr}
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── TeamPickScreen ────────────────────────────────────────────────────────────
 function TeamPickScreen({ state, token, sessionId, onExit }) {
   const [teams, setTeams] = useState([]);
