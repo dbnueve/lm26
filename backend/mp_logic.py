@@ -402,6 +402,21 @@ def _finalize_week(session_id: str, session: dict, gs: dict) -> None:
 
 # ── Draft ─────────────────────────────────────────────────────────────────────
 
+def _normalize_draft_keys(draft: dict) -> dict:
+    """
+    JSON ne supporte que des clés string. Après json.loads, bans/picks ont
+    des clés "1"/"2". On les convertit en int pour cohérence avec DRAFT_SEQUENCE.
+    """
+    def to_int_keys(d: dict) -> dict:
+        return {int(k): v for k, v in d.items()}
+
+    return {
+        **draft,
+        "bans": to_int_keys(draft.get("bans", {"1": [], "2": {}})),
+        "picks": to_int_keys(draft.get("picks", {"1": [], "2": {}})),
+    }
+
+
 def _new_draft_state() -> dict:
     # Clés int pour cohérence avec DRAFT_SEQUENCE (qui utilise int pour side)
     return {
