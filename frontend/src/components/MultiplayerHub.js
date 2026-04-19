@@ -358,12 +358,20 @@ function DraftPanel({ draft, myDraftSide, draftChamp, setDraftChamp, draftError,
   if (!draft.draft_json) return <p style={S.hint}>Initialisation de la draft…</p>;
 
   let draftState = {};
-  try { draftState = JSON.parse(draft.draft_json); } catch { return null; }
+  try {
+    draftState = typeof draft.draft_json === "string"
+      ? JSON.parse(draft.draft_json)
+      : draft.draft_json;
+  } catch {
+    return <p style={S.hint}>Chargement de la draft…</p>;
+  }
 
   const step = draftState.step || 0;
+  // sequence peut être stockée comme tableau de tableaux [action, side]
   const seq = draftState.sequence || [];
   const currentAction = step < seq.length ? seq[step] : null;
-  const isMyTurn = currentAction && currentAction[1] === myDraftSide;
+  // side peut être number ou string selon la sérialisation
+  const isMyTurn = currentAction && Number(currentAction[1]) === myDraftSide;
 
   return (
     <div>
