@@ -242,7 +242,7 @@ const MP_NAV_ITEMS = [
   { id: "standings",  label: "Classement",      icon: Trophy },
   { id: "schedule",   label: "Calendrier",      icon: Calendar },
   { id: "training",   label: "Entraînement",    icon: Target },
-  { id: "chat",       label: "Chat",            icon: ChatCircle },
+  { id: "chat",       label: "Chat",            icon: ChatsCircle },
 ];
 
 function MpNavigation({ currentPage, setCurrentPage, userTeam, onExit, connected }) {
