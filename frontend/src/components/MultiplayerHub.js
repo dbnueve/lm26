@@ -57,6 +57,39 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
   const me = state.players?.find(p => p.side === state.my_side);
   const others = state.players?.filter(p => p.side !== state.my_side) || [];
 
+  // ── Phase team_pick : sélection d'équipe ───────────────────────────────────
+  if (state.phase === "waiting" || state.phase === "team_pick") {
+    return (
+      <div style={S.overlay}>
+        <TeamPickScreen
+          state={state}
+          token={token}
+          sessionId={sessionId}
+          onExit={onExit}
+        />
+      </div>
+    );
+  }
+
+  // ── Phase finished ─────────────────────────────────────────────────────────
+  if (state.phase === "finished") {
+    const standings = Object.entries(state.standings || {})
+      .sort((a, b) => b[1].wins - a[1].wins);
+    const winner = standings[0]?.[0];
+    return (
+      <div style={S.overlay}>
+        <div style={S.centeredCard}>
+          <h2 style={{ ...S.cardTitle, textAlign: "center" }}>Split terminé !</h2>
+          <div style={{ textAlign: "center", color: "#f59e0b", fontWeight: 700, fontSize: 20 }}>
+            {winner?.toUpperCase()} remporte le split !
+          </div>
+          <StandingsTab standings={state.standings} players={state.players} />
+          <button style={S.btnPrimary} onClick={onExit}>Retour au menu</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={S.overlay}>
       <div style={S.shell}>
