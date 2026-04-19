@@ -114,8 +114,7 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
     return res;
   };
 
-  // Navigation MP : sous-ensemble du menu solo (pas de négociations, playoffs, scouting, tactiques, historique, inbox)
-  const MP_PAGES = ["dashboard", "roster", "standings", "schedule", "training", "chat"];
+  const MP_PAGES = ["dashboard", "roster", "standings", "schedule", "training", "playoffs"];
 
   // ── Rendu principal (même layout que le solo) ──────────────────────────────
   return (
