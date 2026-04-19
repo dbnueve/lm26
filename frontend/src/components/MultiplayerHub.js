@@ -982,23 +982,36 @@ function FinishedScreen({ state, onExit }) {
 
 // ── Helpers de conversion MP → format solo ────────────────────────────────────
 
-function buildUserTeam(state, myTeamId) {
-  if (!myTeamId) return { id: "", name: "", abbr: "", players: [], wins: 0, losses: 0, budget: 0 };
-  const gs = state.game_state || {};
-  // Données depuis game_state si dispo, sinon standings
-  const standingsMap = state.standings || {};
-  const s = standingsMap[myTeamId] || {};
-  const teamGS = gs.teams?.find?.(t => t.id === myTeamId) || {};
+function buildUserTeam(state) {
+  // Le backend retourne my_team_data avec joueurs hydratés et stats complètes
+  const d = state.my_team_data;
+  const id = state.my_team || "";
+  if (!id) return { id: "", name: "", abbr: "", players: [], wins: 0, losses: 0, budget: 0, league: state.league };
 
+  if (d) {
+    return {
+      id,
+      name: d.name || id,
+      abbr: d.abbr || id.toUpperCase(),
+      league: state.league || d.league || "",
+      players: d.players || [],
+      wins: d.wins || 0,
+      losses: d.losses || 0,
+      budget: d.budget || 0,
+    };
+  }
+
+  // Fallback si my_team_data absent (ex: phase team_pick)
+  const s = (state.standings || {})[id] || {};
   return {
-    id: myTeamId,
-    name: teamGS.name || myTeamId,
-    abbr: teamGS.abbr || myTeamId.toUpperCase(),
-    league: state.league,
-    players: teamGS.players || [],
-    wins: s.wins || teamGS.wins || 0,
-    losses: s.losses || teamGS.losses || 0,
-    budget: teamGS.budget || 0,
+    id,
+    name: s.name || id,
+    abbr: s.abbr || id.toUpperCase(),
+    league: state.league || "",
+    players: [],
+    wins: s.wins || 0,
+    losses: s.losses || 0,
+    budget: 0,
   };
 }
 
