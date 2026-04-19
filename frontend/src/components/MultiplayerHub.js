@@ -1017,20 +1017,29 @@ function buildUserTeam(state) {
 
 function buildStandings(state) {
   const standingsMap = state.standings || {};
+  const humanTeams = new Set((state.players || []).map(p => p.team_id).filter(Boolean));
+  const totalWeeks = (state.schedule || []).reduce((m, s) => Math.max(m, s.week || 0), 0);
+  // Top ~40% qualifiés playoffs
+  const total = Object.keys(standingsMap).length;
+  const qualifyCutoff = Math.ceil(total * 0.4);
+
   return Object.entries(standingsMap)
     .map(([id, s]) => ({
       id,
-      abbr: id.toUpperCase(),
-      name: id,
+      abbr: s.abbr || id.toUpperCase(),
+      name: s.name || id,
       wins: s.wins || 0,
       losses: s.losses || 0,
-      winrate: s.wins + s.losses > 0 ? Math.round((s.wins / (s.wins + s.losses)) * 100) : 0,
+      winrate: (s.wins || 0) + (s.losses || 0) > 0
+        ? Math.round(((s.wins || 0) / ((s.wins || 0) + (s.losses || 0))) * 100)
+        : 0,
       elo: s.elo || 1000,
-      qualified: false,
+      qualified: false, // mis à jour après tri
+      is_human: humanTeams.has(id),
       rank: 0,
     }))
-    .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
-    .map((t, i) => ({ ...t, rank: i + 1 }));
+    .sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.elo - a.elo)
+    .map((t, i) => ({ ...t, rank: i + 1, qualified: i < qualifyCutoff }));
 }
 
 function buildSchedule(state, myTeamId) {
