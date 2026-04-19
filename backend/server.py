@@ -6847,8 +6847,279 @@ async def inbox_read_one(msg_id: str):
     return {"ok": True}
 
 
-# ── Multiplayer endpoints ──────────────────────────────────────────────────────
+# ── Multiplayer v2 — WebSockets + SQLite ──────────────────────────────────────
+import mp_db as _mp_db
+import mp_logic as _mp_logic
+import mp_websocket as _mp_ws
+from fastapi import WebSocket, WebSocketDisconnect
+import mp_db  # also used by mp_logic
+
+# Legacy file-based multiplayer (kept for backward compat)
 import multiplayer as _mp
+
+
+def _mp_init_game_state(league: str) -> dict:
+    """
+    Pure version of initialize_game: returns a fresh state dict WITHOUT
+    mutating the global GAME_STATE. Used for isolated multiplayer sessions.
+    """
+    league = league.upper()
+    gs: dict = {
+        "league": league,
+        "teams": {},
+        "players": {},
+        "erl_players": {},
+        "standings": {},
+        "initialized": True,
+    }
+    league_teams = LEAGUES_DATA.get(league, LEAGUES_DATA["LEC"])["teams"]
+    for team_data in league_teams:
+        team = {**team_data, "wins": 0, "losses": 0, "roster": [], "league": league}
+        team["elo"] = initial_elo(team_data.get("rating", 80))
+        team["elo_games"] = 0
+        gs["teams"][team["id"]] = team
+
+        roster = generate_team_roster(team["id"])
+        for player in roster:
+            player["initial_rating"] = player.get("rating", 80)
+            gs["players"][player["id"]] = player
+            team["roster"].append(player["id"])
+
+    gs["standings"] = {tid: {"wins": 0, "losses": 0} for tid in gs["teams"]}
+    return gs
+
+
+def _mp_simulate(team1_id: str, team2_id: str, gs: dict,
+                 picks1: list, picks2: list) -> dict:
+    """Simulate a match using the session's isolated game state."""
+    # Temporarily swap GAME_STATE content so calculate_team_power can run
+    # (it reads from the global GAME_STATE — safest approach without full refactor)
+    _orig_teams = GAME_STATE.get("teams")
+    _orig_players = GAME_STATE.get("players")
+    try:
+        GAME_STATE["teams"] = gs.get("teams", {})
+        GAME_STATE["players"] = gs.get("players", {})
+        draft_adv1 = len(picks1) * 0.4
+        draft_adv2 = len(picks2) * 0.4
+        p1 = calculate_team_power(team1_id, draft_advantage=draft_adv1)
+        p2 = calculate_team_power(team2_id, draft_advantage=draft_adv2)
+    finally:
+        GAME_STATE["teams"] = _orig_teams
+        GAME_STATE["players"] = _orig_players
+    return simulate_match_phases(p1, p2)
+
+
+# ── REST endpoints (v2) ────────────────────────────────────────────────────────
+
+class _MpV2CreateBody(BaseModel):
+    league: str
+    username: str
+    max_players: int = 10
+
+class _MpV2JoinBody(BaseModel):
+    code: str
+    username: str
+
+class _MpV2TeamBody(BaseModel):
+    token: str
+    team_id: str
+
+class _MpV2ReadyBody(BaseModel):
+    token: str
+
+class _MpV2DraftBody(BaseModel):
+    token: str
+    match_id: int
+    champion: str
+
+class _MpV2RosterSwapBody(BaseModel):
+    token: str
+    player1_id: str
+    player2_id: str
+
+
+@api_router.post("/mp/create")
+def mp_v2_create(body: _MpV2CreateBody):
+    try:
+        return _mp_logic.create_session(body.league, body.username, body.max_players)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/mp/join")
+def mp_v2_join(body: _MpV2JoinBody):
+    try:
+        return _mp_logic.join_session(body.code, body.username)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.get("/mp/{session_id}/state")
+def mp_v2_state(session_id: str, token: str):
+    try:
+        return _mp_logic.get_full_state(session_id, token)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@api_router.post("/mp/{session_id}/team")
+async def mp_v2_team(session_id: str, body: _MpV2TeamBody):
+    try:
+        result = _mp_logic.pick_team(
+            session_id, body.token, body.team_id,
+            LEAGUES_DATA, _mp_init_game_state
+        )
+        state = _mp_logic.get_full_state(session_id, body.token)
+        await _mp_ws.manager.broadcast(session_id, "state_update", state)
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/mp/{session_id}/ready")
+async def mp_v2_ready(session_id: str, body: _MpV2ReadyBody):
+    try:
+        result = _mp_logic.set_ready(session_id, body.token)
+        if result["all_ready"]:
+            # Auto-advance week
+            week_result = _mp_logic.advance_week(session_id, _mp_simulate)
+            state = _mp_logic.get_full_state(session_id, body.token)
+            await _mp_ws.manager.broadcast(session_id, "state_update", state)
+            await _mp_ws.manager.broadcast(session_id, "week_advanced", week_result)
+            return {**result, "week_result": week_result}
+        # Not all ready yet — broadcast partial state
+        state = _mp_logic.get_full_state(session_id, body.token)
+        await _mp_ws.manager.broadcast(session_id, "state_update", state)
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/mp/{session_id}/draft/action")
+async def mp_v2_draft(session_id: str, body: _MpV2DraftBody):
+    try:
+        result = _mp_logic.draft_action(
+            session_id, body.token, body.match_id,
+            body.champion, _mp_simulate
+        )
+        state = _mp_logic.get_full_state(session_id, body.token)
+        await _mp_ws.manager.broadcast(session_id, "state_update", state)
+        await _mp_ws.manager.broadcast(session_id, "draft_action", {
+            "match_id": body.match_id,
+            "champion": body.champion,
+            "bans": result["bans"],
+            "picks": result["picks"],
+            "next_action": result["next_action"],
+            "completed": result["completed"],
+        })
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/mp/{session_id}/roster/swap")
+async def mp_v2_roster_swap(session_id: str, body: _MpV2RosterSwapBody):
+    try:
+        result = _mp_logic.roster_swap(
+            session_id, body.token, body.player1_id, body.player2_id
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.get("/mp/{session_id}/team")
+def mp_v2_team_state(session_id: str, token: str):
+    try:
+        return _mp_logic.get_team_state(session_id, token)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@api_router.get("/mp/league-teams/{league}")
+def mp_v2_league_teams(league: str):
+    league = league.upper()
+    data = LEAGUES_DATA.get(league)
+    if data is None:
+        raise HTTPException(404, f"Ligue '{league}' inconnue")
+    return [{"id": t["id"], "name": t["name"], "league": league} for t in data["teams"]]
+
+
+@api_router.get("/mp/sessions")
+def mp_v2_sessions():
+    """List all active sessions (non-finished)."""
+    # Gather from DB — lightweight query
+    import sqlite3 as _sq
+    try:
+        con = _sq.connect(str(_mp_db.DB_PATH))
+        con.row_factory = _sq.Row
+        rows = con.execute(
+            "SELECT id, code, league, phase, current_week, max_players, created_at FROM sessions ORDER BY created_at DESC LIMIT 50"
+        ).fetchall()
+        con.close()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+# ── WebSocket endpoint ─────────────────────────────────────────────────────────
+
+@app.websocket("/ws/mp/{session_id}")
+async def mp_websocket(websocket: WebSocket, session_id: str, token: str):
+    """
+    Main WebSocket for a multiplayer session.
+    On connect: sends full state snapshot.
+    On message: handles chat, ping.
+    On disconnect: marks player offline, broadcasts to others.
+    """
+    session = _mp_db.get_session(session_id)
+    player = _mp_db.get_player(session_id, token) if session else None
+
+    if session is None or player is None:
+        await websocket.close(code=4001)
+        return
+
+    await _mp_ws.manager.connect(session_id, token, websocket)
+    _mp_db.set_player_connected(session_id, token, True)
+
+    try:
+        # Send full state on connect
+        state = _mp_logic.get_full_state(session_id, token)
+        await _mp_ws.manager.send_to(session_id, token, "state_update", state)
+
+        # Broadcast join to others
+        await _mp_ws.manager.broadcast(session_id, "player_joined", {
+            "username": player["username"], "side": player["side"]
+        }, exclude_token=token)
+
+        # Message loop
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type", "")
+
+            if msg_type == "ping":
+                await _mp_ws.manager.send_ping(session_id, token)
+
+            elif msg_type == "chat":
+                text = str(data.get("text", ""))[:200]
+                await _mp_ws.manager.broadcast(session_id, "chat", {
+                    "username": player["username"],
+                    "text": text,
+                })
+
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.warning(f"WS error session={session_id[:8]} token={token[:8]}: {e}")
+    finally:
+        _mp_ws.manager.disconnect(session_id, token)
+        _mp_db.set_player_connected(session_id, token, False)
+        await _mp_ws.manager.broadcast(session_id, "player_left", {
+            "username": player["username"]
+        })
+
+
+# Legacy file-based multiplayer (kept for backward compat)
 
 class _MpCreateBody(BaseModel):
     league: str
