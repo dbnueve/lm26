@@ -89,7 +89,7 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
   const myPlayer = state.players?.find(p => p.side === state.my_side);
   const myTeamId = myPlayer?.team_id;
 
-  const userTeam = useMemo(() => buildUserTeam(state, myTeamId), [state, myTeamId]);
+  const userTeam = useMemo(() => buildUserTeam(state), [state]);
 
   // standings : shape attendue par StandingsPage (array d'objets avec id, abbr, wins, losses…)
   const standings = useMemo(() => buildStandings(state), [state]);
