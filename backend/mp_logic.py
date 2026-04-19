@@ -155,8 +155,12 @@ def pick_team(session_id: str, token: str, team_id: str,
         if player is None:
             raise ValueError("Token invalide")
 
-        if session["phase"] != "team_pick":
-            raise ValueError(f"Pas en phase de sélection (phase: {session['phase']})")
+        # Autoriser la sélection d'équipe si le joueur n'a pas encore d'équipe,
+        # même si la phase a avancé (ex: Joueur 2 rejoint après que Joueur 1 a choisi)
+        if player["team_id"]:
+            raise ValueError("Vous avez déjà choisi une équipe")
+        if session["phase"] == "finished":
+            raise ValueError("La session est terminée")
 
         # Validate team in league
         league = session["league"].upper()
