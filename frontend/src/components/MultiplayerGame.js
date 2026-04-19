@@ -39,14 +39,11 @@ export default function MultiplayerGame({ sessionId, token, mySide, onExit }) {
     return () => clearInterval(pollingRef.current);
   }, [fetchSession]);
 
-  // Load teams list for the session league
+  // Load teams list for the session league (endpoint indépendant du GAME_STATE solo)
   useEffect(() => {
     if (!session?.league) return;
-    axios.get(API + "/teams")
-      .then(res => {
-        const leagueTeams = res.data.filter(t => t.league === session.league);
-        setTeams(leagueTeams);
-      })
+    axios.get(`${API}/multiplayer/league-teams/${session.league}`)
+      .then(res => setTeams(res.data))
       .catch(() => {});
   }, [session?.league]);
 
