@@ -464,11 +464,10 @@ def draft_action(session_id: str, token: str, match_id: int,
         if champion in all_used:
             raise ValueError(f"'{champion}' déjà utilisé")
 
-        side_key = str(my_match_side)
         if action_type == "ban":
-            draft["bans"][side_key].append(champion)
+            draft["bans"][my_match_side].append(champion)
         else:
-            draft["picks"][side_key].append(champion)
+            draft["picks"][my_match_side].append(champion)
 
         draft["step"] += 1
         completed = draft["step"] >= len(DRAFT_SEQUENCE)
