@@ -13,7 +13,7 @@ import { useMultiplayerSocket } from "../hooks/useMultiplayerSocket";
  *   onExit()   retour au menu
  */
 export default function MultiplayerHub({ sessionId, token, onExit }) {
-  const { state, connected } = useMultiplayerSocket(sessionId, token);
+  const { state, connected, error: wsError } = useMultiplayerSocket(sessionId, token);
   const [tab, setTab] = useState("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
