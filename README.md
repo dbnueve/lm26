@@ -1,144 +1,194 @@
-# ⚡ LM — Esports Manager
+# LM26 — Esport Manager
 
-> Une application web fullstack de gestion d'équipe esports, avec système de draft, simulation de matchs et négociations de transferts. Interface "Control Room" dark/neon.
+Manager d'esport League of Legends : draftez, simulez et gérez votre équipe à travers les saisons compétitives (LEC, LCK, LCS, CBLOL, LPL) basées sur les données réelles d'Oracle's Elixir.
 
----
+## Table des matières
 
-## 📋 Table des matières
-
-- [Aperçu](#aperçu)
+- [Fonctionnalités](#fonctionnalités)
 - [Stack technique](#stack-technique)
-- [Structure du projet](#structure-du-projet)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
 - [Lancement](#lancement)
-- [Fonctionnalités](#fonctionnalités)
-- [Design System](#design-system)
-
+- [Configuration](#configuration)
+- [Structure du projet](#structure-du-projet)
+- [Sauvegardes](#sauvegardes)
+- [Multijoueur](#multijoueur)
+- [Données](#données)
+- [Développement](#développement)
 
 ---
 
-## Aperçu
+## Fonctionnalités
 
-**LM** est un simulateur de management d'équipe esports pensé pour les amateurs de League of Legends et titres similaires. L'application permet de gérer un roster de joueurs, d'orchestrer des sessions de draft (système Fearless Draft), de simuler des matchs en temps réel et de négocier des transferts.
-
-L'interface s'inspire des salles de contrôle professionnelles : densité maximale d'information, thème sombre navy/neon, typographie condensée et accents lumineux.
+- **5 ligues majeures** avec rosters réels — LEC, LCK, LCS, CBLOL, LPL
+- **Saison complète** : Spring Split → MSI → Summer Split → Worlds
+- **Draft picks/bans** avec meta dynamique par ligue
+- **Simulation de match** détaillée : timeline d'événements, kills, towers, dragons
+- **Système ELO custom** pour le classement des équipes
+- **Playoffs et compétitions internationales** (MSI, Worlds)
+- **Mode multijoueur** : drafts partagés, lobbies, sauvegardes persistantes
+- **3 slots de sauvegarde** indépendants
+- **Négociations de transferts** et gestion de roster
+- **Entraînements** pour faire progresser les joueurs
 
 ---
 
 ## Stack technique
 
-### Backend
-- **Python** (FastAPI ou Flask)
-- API RESTful avec gestion de matchs, joueurs et équipes
-
-### Frontend
-- **React** (JavaScript `.jsx`)
-- **Tailwind CSS** pour le styling
-- **Shadcn UI** avec surcharges de style (border-radius réduit à 0–2px)
-- **Phosphor Icons** (`@phosphor-icons/react`) pour des icônes au look esports
-- **Yarn** comme gestionnaire de paquets
-
----
-
-## Structure du projet
-
-```
-lm/
-├── backend/              # Serveur Python (API)
-├── frontend/             # Application React
-│   └── src/
-│       └── components/   # Composants React (.js / .jsx)
-├── memory/               # Persistance d'état entre sessions
-├── tests/                # Tests automatisés
-└── yarn.lock
-```
+| Couche | Technologies |
+|---|---|
+| Frontend | React 18, CRA + Craco, Tailwind, Radix UI, Axios, Framer Motion |
+| Backend | FastAPI, Uvicorn (Python 3.10+) |
+| Persistance solo | JSON fichier (écriture atomique) |
+| Persistance multi | SQLite (`backend/multiplayer.db`) |
+| ELO | Système custom (`backend/elo_system.py`) |
+| Données | CSV Oracle's Elixir 2025 / 2026 |
 
 ---
 
 ## Prérequis
 
-- **Node.js** >= 18 et **Yarn**
-- **Python** >= 3.10 et **pip**
+- Python 3.10+
+- Node.js 18+
+- npm
 
 ---
 
 ## Installation
 
-### Backend
-
 ```bash
+# Backend
 cd backend
 pip install -r requirements.txt
-```
 
-### Frontend
-
-```bash
-cd frontend
-yarn install
-yarn add @phosphor-icons/react
+# Frontend
+cd ../frontend
+npm install
 ```
 
 ---
 
 ## Lancement
 
-### Démarrer le backend
-
+**Backend** — port `8002` :
 ```bash
 cd backend
-python server.py
-# L'API tourne sur http://localhost:8001 (ou le port configuré)
+uvicorn server:app --reload --port 8002
 ```
 
-### Démarrer le frontend
-
+**Frontend** — port `3000` :
 ```bash
 cd frontend
-yarn start
-# L'interface est accessible sur http://localhost:3000
+npm start
+```
+
+L'application est accessible sur [http://localhost:3000](http://localhost:3000).
+
+> Si le port `8002` est occupé sous Windows :
+> ```bash
+> netstat -ano | grep :8002
+> taskkill /PID <pid> /F
+> ```
+
+---
+
+## Configuration
+
+- `frontend/.env` → `REACT_APP_BACKEND_URL` (vide = proxy Craco vers `localhost:8002`)
+- Backend CORS : whitelist `http://localhost:3000` en dev ; variable `CORS_ORIGINS` en prod
+- Tous les appels API passent par l'instance `API` exportée depuis [src/shared.js](frontend/src/shared.js)
+
+---
+
+## Structure du projet
+
+```
+lm26/
+├── backend/
+│   ├── server.py              # API FastAPI (54 endpoints)
+│   ├── elo_system.py          # Calcul ELO custom
+│   ├── league_meta_data.py    # Meta champions par ligue
+│   ├── multiplayer.py         # Logique multijoueur
+│   ├── mp_websocket.py        # WebSocket multijoueur
+│   ├── mp_db.py               # Persistance SQLite multijoueur
+│   ├── mp_logic.py            # Règles métier multijoueur
+│   ├── app_state.py           # GAME_STATE global
+│   ├── game_save_*.json       # Sauvegardes solo (3 slots)
+│   ├── active_slot.txt        # Slot actif
+│   └── *.csv                  # Données Oracle's Elixir
+└── frontend/
+    └── src/
+        ├── App.js                       # Routing + orchestration
+        ├── shared.js                    # API client + contextes
+        ├── hooks/
+        │   └── useMultiplayerSocket.js  # WebSocket client
+        └── components/                  # 36+ composants React
+            ├── MultiplayerLobby.js
+            ├── MultiplayerGame.js
+            ├── MultiplayerHub.js
+            ├── SaveSelectionPage.js
+            ├── DraftSystem.js
+            ├── MatchSimulation.js
+            └── ...
 ```
 
 ---
 
-## Fonctionnalités
+## Sauvegardes
 
-### 🏆 Gestion du roster
-Visualisation et gestion de l'équipe avec cartes joueurs en clip-path hexagonal. Chaque fiche affiche les stats clés, le salaire et le rôle.
+### Solo
+Les parties sont stockées dans `backend/game_save_{1,2,3}.json`. Le slot actif est suivi via `backend/active_slot.txt`. Les écritures utilisent un pattern atomique `tmp + rename` pour éviter la corruption.
 
-### 🎯 Système de Draft 
-Interface interactive en grille. Les picks sont affichés avec des bordures or/bleu, les bans apparaissent en portraits hexagonaux grisés avec croix rouge.
-
-### ⚔️ Simulation de matchs
-Disposition "Control Room" : graphiques principaux en `col-span-2`, log d'événements latéral. Timeline horizontale segmentée (bleu = événements alliés, rouge = ennemis).
-
-### 💼 Négociations de transferts
-Dialogues Shadcn avec sliders de salaire et champs de clauses personnalisées. Gestion des offres entrantes et sortantes.
+### Multijoueur
+Les parties multijoueur sont conservées dans `backend/multiplayer.db` (SQLite) et persistent entre redémarrages du backend. Elles apparaissent à côté des saves solo dans la page de sélection.
 
 ---
 
-## Design System
+## Multijoueur
 
-Le fichier `design_guidelines.json` centralise tous les tokens visuels.
+Le mode multijoueur permet à plusieurs joueurs de partager une même save, avec drafts coordonnés en temps réel via WebSocket.
 
-| Token | Valeur |
-|---|---|
-| Background | `#050814` |
-| Surface | `#0B1224` |
-| Primary | `#0A84FF` |
-| Secondary (gold) | `#FFB800` |
-| Danger | `#FF3366` |
-| Success | `#00E676` |
-| Font titres | Barlow Condensed |
-| Font body | Manrope |
-| Font stats | Rajdhani |
+> **Important** : pour le support WebSocket, installer un backend compatible :
+> ```bash
+> pip install 'uvicorn[standard]'
+> # ou
+> pip install websockets
+> ```
 
-Effets visuels : grille hexagonale en SVG (opacité 3%), glows sur les éléments actifs, portraits joueurs en clip-path hexagonal.
+Reprise de session : à l'actualisation, la save multijoueur est restaurée automatiquement depuis SQLite.
 
 ---
 
+## Données
+
+Le projet utilise les datasets publics d'Oracle's Elixir :
+- `2025_LoL_esports_match_data_from_OraclesElixir.csv` (~76 MB)
+- `2026_LoL_esports_match_data_from_OraclesElixir.csv` (~19 MB)
+
+**Ne pas modifier** ces fichiers — ils servent de source de vérité pour les rosters, métas et stats historiques.
+
+---
+
+## Développement
+
+Voir [CLAUDE.md](CLAUDE.md) pour :
+- Conventions de code (immutabilité, taille des fichiers, cleanup React)
+- Zones fragiles connues (`server.py`, simulation, sauvegardes atomiques)
+- Règles d'édition prudente sur les gros fichiers
+- Style de réponse et workflow attendu
+
+### Commandes utiles
+
+```bash
+# Tests backend
+cd backend && pytest
+
+# Build frontend
+cd frontend && npm run build
+```
+
+---
 
 ## Licence
 
-Ce projet est open source. Voir le fichier `LICENSE` pour les détails.
+Projet personnel. Données Oracle's Elixir © leurs auteurs respectifs.
