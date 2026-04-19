@@ -5,6 +5,195 @@ import { API } from "../shared";
 import TeamLogo from "./TeamLogo";
 import LeaguePicker, { LEAGUE_META } from "./LeaguePicker";
 
+const LEAGUES = ["LEC", "LCS", "LCK", "LPL", "CBLOL"];
+
+function MultiplayerSlots({ onSessionJoined }) {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState(null); // null | "create" | "join"
+  const [username, setUsername] = useState("");
+  const [league, setLeague] = useState("LEC");
+  const [joinCode, setJoinCode] = useState("");
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  // Session sauvegardée dans localStorage
+  const saved = (() => { try { return JSON.parse(localStorage.getItem("mp_session")); } catch { return null; } })();
+
+  useEffect(() => {
+    axios.get(API + "/mp/sessions")
+      .then(r => setSessions(r.data.filter(s => s.phase !== "finished")))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleCreate = async () => {
+    if (!username.trim()) { setError("Entrez votre pseudo"); return; }
+    setBusy(true); setError(null);
+    try {
+      const res = await axios.post(API + "/mp/create", { league, username: username.trim(), max_players: 10 });
+      onSessionJoined(res.data.session_id, res.data.token, 1);
+    } catch (e) { setError(e?.response?.data?.detail || "Erreur"); }
+    finally { setBusy(false); }
+  };
+
+  const handleJoin = async () => {
+    if (!username.trim()) { setError("Entrez votre pseudo"); return; }
+    if (!joinCode.trim()) { setError("Entrez le code"); return; }
+    setBusy(true); setError(null);
+    try {
+      const res = await axios.post(API + "/mp/join", { code: joinCode.trim().toUpperCase(), username: username.trim() });
+      onSessionJoined(res.data.session_id, res.data.token, 2);
+    } catch (e) { setError(e?.response?.data?.detail || "Code invalide"); }
+    finally { setBusy(false); }
+  };
+
+  const handleResume = () => {
+    onSessionJoined(saved.sessionId, saved.token, saved.side);
+  };
+
+  const phaseLabel = (p) => ({ waiting: "Attente", team_pick: "Sélection", regular: "Saison", playoffs: "Playoffs" }[p] || p);
+
+  return (
+    <div style={{ marginTop: 40, width: "100%", maxWidth: 900, margin: "40px auto 0" }}>
+      <div style={{ color: "var(--text-2)", fontSize: 12, textTransform: "uppercase", letterSpacing: 2, marginBottom: 16, textAlign: "center" }}>
+        Multijoueur
+      </div>
+      <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+
+        {/* Session en cours dans localStorage */}
+        {saved && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            style={cardStyle("#1e3a5f", "#2563eb44")}
+          >
+            <div style={{ color: "#4a90d9", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Session en cours</div>
+            <div style={{ color: "#e0e0e0", fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+              Code sauvegardé
+            </div>
+            <div style={{ color: "#888", fontSize: 12, marginBottom: 16 }}>
+              {saved.sessionId?.slice(0, 8)}…
+            </div>
+            <button className="btn-primary" onClick={handleResume} style={{ padding: "10px 0", width: "100%" }}>
+              Reprendre
+            </button>
+            <button onClick={() => { localStorage.removeItem("mp_session"); window.location.reload(); }}
+              style={{ marginTop: 8, background: "none", border: "1px solid var(--danger)", color: "var(--danger)", borderRadius: 4, padding: "6px 0", fontSize: 12, cursor: "pointer", width: "100%" }}>
+              Quitter la session
+            </button>
+          </motion.div>
+        )}
+
+        {/* Sessions actives sur le serveur */}
+        {!loading && sessions.map((s, i) => (
+          <motion.div key={s.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+            style={cardStyle()}
+          >
+            <div style={{ color: "var(--text-2)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
+              {s.league} · {phaseLabel(s.phase)}
+            </div>
+            <div style={{ color: "#4a90d9", fontWeight: 800, fontSize: 22, letterSpacing: 4, fontFamily: "monospace", marginBottom: 8 }}>
+              {s.code}
+            </div>
+            <div style={{ color: "var(--text-2)", fontSize: 12, marginBottom: 4 }}>
+              Semaine {s.current_week} · {s.players?.length || 0} joueur(s)
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+              {(s.players || []).map((p, j) => (
+                <span key={j} style={{ background: "#1a1a2e", border: "1px solid #333", borderRadius: 4, padding: "2px 8px", fontSize: 11, color: "#aaa" }}>
+                  {p}
+                </span>
+              ))}
+            </div>
+            {/* Rejoindre cette session spécifique */}
+            {mode === `join-${s.id}` ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <input style={inputStyle} value={username} onChange={e => setUsername(e.target.value)}
+                  placeholder="Votre pseudo" maxLength={20} />
+                {error && <div style={{ color: "#ef4444", fontSize: 12 }}>{error}</div>}
+                <button className="btn-primary" style={{ padding: "8px 0" }}
+                  onClick={async () => {
+                    setBusy(true); setError(null);
+                    try {
+                      const res = await axios.post(API + "/mp/join", { code: s.code, username: username.trim() });
+                      onSessionJoined(res.data.session_id, res.data.token, 2);
+                    } catch (e) { setError(e?.response?.data?.detail || "Erreur"); }
+                    finally { setBusy(false); }
+                  }} disabled={busy}>
+                  Rejoindre
+                </button>
+                <button style={cancelBtnStyle} onClick={() => setMode(null)}>Annuler</button>
+              </div>
+            ) : (
+              <button className="btn-primary" style={{ padding: "8px 0", width: "100%" }}
+                onClick={() => { setMode(`join-${s.id}`); setError(null); }}>
+                Rejoindre
+              </button>
+            )}
+          </motion.div>
+        ))}
+
+        {/* Créer une nouvelle partie */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          style={cardStyle()}>
+          <div style={{ color: "var(--text-2)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+            Nouvelle partie
+          </div>
+          {mode === "create" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input style={inputStyle} value={username} onChange={e => setUsername(e.target.value)}
+                placeholder="Votre pseudo" maxLength={20} />
+              <select style={inputStyle} value={league} onChange={e => setLeague(e.target.value)}>
+                {LEAGUES.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+              {error && <div style={{ color: "#ef4444", fontSize: 12 }}>{error}</div>}
+              <button className="btn-primary" style={{ padding: "10px 0" }} onClick={handleCreate} disabled={busy}>
+                {busy ? "…" : "Créer"}
+              </button>
+              <button style={cancelBtnStyle} onClick={() => { setMode(null); setError(null); }}>Annuler</button>
+            </div>
+          ) : mode === "join" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input style={inputStyle} value={username} onChange={e => setUsername(e.target.value)}
+                placeholder="Votre pseudo" maxLength={20} />
+              <input style={{ ...inputStyle, textTransform: "uppercase", letterSpacing: 4, fontSize: 18 }}
+                value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="CODE" maxLength={6} />
+              {error && <div style={{ color: "#ef4444", fontSize: 12 }}>{error}</div>}
+              <button className="btn-primary" style={{ padding: "10px 0" }} onClick={handleJoin} disabled={busy}>
+                {busy ? "…" : "Rejoindre"}
+              </button>
+              <button style={cancelBtnStyle} onClick={() => { setMode(null); setError(null); }}>Annuler</button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button className="btn-primary" style={{ padding: "10px 0" }} onClick={() => { setMode("create"); setError(null); }}>
+                Créer une partie
+              </button>
+              <button className="btn-secondary" style={{ padding: "9px 0" }} onClick={() => { setMode("join"); setError(null); }}>
+                Rejoindre par code
+              </button>
+            </div>
+          )}
+        </motion.div>
+
+      </div>
+    </div>
+  );
+}
+
+const cardStyle = (bg = "var(--bg-card)", border = "1px solid var(--border)") => ({
+  background: bg, border, borderRadius: 8, padding: 24, width: 220,
+  minHeight: 180, display: "flex", flexDirection: "column", justifyContent: "space-between",
+});
+const inputStyle = {
+  background: "#0d0d1a", border: "1px solid #333", borderRadius: 6,
+  color: "#e0e0e0", padding: "8px 10px", fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box",
+};
+const cancelBtnStyle = {
+  background: "transparent", border: "1px solid #333", borderRadius: 6,
+  color: "#666", padding: "7px 0", fontSize: 13, cursor: "pointer",
+};
+
 const SaveSelectionPage = ({ onLoad, onNew }) => {
   const [saves, setSaves] = useState([]);
   const [loading, setLoading] = useState(true);
