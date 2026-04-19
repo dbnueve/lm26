@@ -119,6 +119,41 @@ def get_full_state(session_id: str, token: str) -> dict:
         None
     )
 
+    # Build per-player team data for the frontend (roster, budget, stats)
+    my_team_id = player["team_id"]
+    teams_raw = game_state.get("teams", {})
+    players_raw = game_state.get("players", {})
+    standings_raw = game_state.get("standings", {})
+
+    # Enrich standings with elo from teams
+    standings_enriched = {}
+    for tid, s in standings_raw.items():
+        team_info = teams_raw.get(tid, {})
+        standings_enriched[tid] = {
+            **s,
+            "elo": team_info.get("elo", 1000),
+            "name": team_info.get("name", tid),
+            "abbr": team_info.get("abbr", tid.upper()),
+        }
+
+    # Build my team object (players hydrated)
+    my_team_data = None
+    if my_team_id and my_team_id in teams_raw:
+        team_obj = teams_raw[my_team_id]
+        roster_ids = team_obj.get("roster", [])
+        hydrated_players = []
+        for pid in roster_ids:
+            p = players_raw.get(str(pid)) or players_raw.get(pid)
+            if p:
+                hydrated_players.append(p)
+        my_team_data = {
+            **team_obj,
+            "id": my_team_id,
+            "players": hydrated_players,
+            "wins": standings_raw.get(my_team_id, {}).get("wins", 0),
+            "losses": standings_raw.get(my_team_id, {}).get("losses", 0),
+        }
+
     return {
         "session_id": session_id,
         "code": session["code"],
@@ -128,8 +163,9 @@ def get_full_state(session_id: str, token: str) -> dict:
         "max_players": session["max_players"],
         "players": players,
         "my_side": player["side"],
-        "my_team": player["team_id"],
-        "standings": game_state.get("standings", {}),
+        "my_team": my_team_id,
+        "my_team_data": my_team_data,
+        "standings": standings_enriched,
         "schedule": matches,
         "week_matches": week_matches,
         "active_draft": active_draft,
