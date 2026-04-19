@@ -48,9 +48,9 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
     return (
       <div style={S.overlay}>
         <div style={{ ...S.center, flexDirection: "column", gap: 16 }}>
-          {error
+          {wsError
             ? <>
-                <div style={{ color: "#ef4444", fontSize: 15 }}>{error}</div>
+                <div style={{ color: "#ef4444", fontSize: 15 }}>{wsError}</div>
                 <button style={S.btnSecondary} onClick={onExit}>Retour au menu</button>
               </>
             : <div style={{ color: "#888" }}>
