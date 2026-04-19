@@ -403,11 +403,12 @@ def _finalize_week(session_id: str, session: dict, gs: dict) -> None:
 # ── Draft ─────────────────────────────────────────────────────────────────────
 
 def _new_draft_state() -> dict:
+    # Clés int pour cohérence avec DRAFT_SEQUENCE (qui utilise int pour side)
     return {
         "step": 0,
         "sequence": DRAFT_SEQUENCE,
-        "bans": {"1": [], "2": []},
-        "picks": {"1": [], "2": []},
+        "bans": {1: [], 2: []},
+        "picks": {1: [], 2: []},
         "completed": False,
     }
 
