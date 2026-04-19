@@ -47,8 +47,16 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
   if (!state) {
     return (
       <div style={S.overlay}>
-        <div style={S.center}>
-          {connected ? "Chargement…" : "Connexion au serveur…"}
+        <div style={{ ...S.center, flexDirection: "column", gap: 16 }}>
+          {error
+            ? <>
+                <div style={{ color: "#ef4444", fontSize: 15 }}>{error}</div>
+                <button style={S.btnSecondary} onClick={onExit}>Retour au menu</button>
+              </>
+            : <div style={{ color: "#888" }}>
+                {connected ? "Chargement…" : "Connexion au serveur…"}
+              </div>
+          }
         </div>
       </div>
     );
