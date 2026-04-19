@@ -378,7 +378,7 @@ function App() {
           <MultiplayerHub
             sessionId={multiplayerSession.sessionId}
             token={multiplayerSession.token}
-            onExit={() => setMultiplayerSession(null)}
+            onExit={() => setMpSession(null)}
           />
         )}
       </div>
