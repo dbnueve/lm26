@@ -6847,6 +6847,119 @@ async def inbox_read_one(msg_id: str):
     return {"ok": True}
 
 
+# ── Multiplayer endpoints ──────────────────────────────────────────────────────
+import multiplayer as _mp
+
+class _MpCreateBody(BaseModel):
+    league: str
+    username: str
+
+class _MpJoinBody(BaseModel):
+    code: str
+    username: str
+
+class _MpTeamBody(BaseModel):
+    token: str
+    team_id: str
+
+class _MpReadyBody(BaseModel):
+    token: str
+
+class _MpDraftBody(BaseModel):
+    token: str
+    champion: str
+
+class _MpSimulateBody(BaseModel):
+    token: str
+
+
+def _mp_simulate(team1_id: str, team2_id: str, picks1: list, picks2: list) -> dict:
+    """Adapter: compute power for both teams then run simulate_match_phases."""
+    # draft_advantage: each pick gives a small bonus vs blind pick baseline
+    draft_adv1 = len(picks1) * 0.4
+    draft_adv2 = len(picks2) * 0.4
+    p1 = calculate_team_power(team1_id, draft_advantage=draft_adv1, apply_tactics=False)
+    p2 = calculate_team_power(team2_id, draft_advantage=draft_adv2, apply_tactics=False)
+    result = simulate_match_phases(p1, p2)
+    return result
+
+
+@api_router.post("/multiplayer/create")
+def mp_create(body: _MpCreateBody):
+    try:
+        return _mp.create_session(body.league, body.username)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/multiplayer/join")
+def mp_join(body: _MpJoinBody):
+    try:
+        return _mp.join_session(body.code, body.username)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.get("/multiplayer/{session_id}/state")
+def mp_state(session_id: str, token: str):
+    try:
+        return _mp.get_session_state(session_id, token)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@api_router.post("/multiplayer/{session_id}/team")
+def mp_pick_team(session_id: str, body: _MpTeamBody):
+    _sync_state_if_stale()
+    try:
+        return _mp.pick_team(session_id, body.token, body.team_id, GAME_STATE)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/multiplayer/{session_id}/ready")
+def mp_ready(session_id: str, body: _MpReadyBody):
+    try:
+        return _mp.set_ready(session_id, body.token)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.get("/multiplayer/{session_id}/draft")
+def mp_draft_state(session_id: str, token: str):
+    try:
+        s = _mp.get_session_state(session_id, token)
+        return {
+            "phase": s["phase"],
+            "draft_state": s.get("draft_state"),
+            "my_side": s["my_side"],
+        }
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@api_router.post("/multiplayer/{session_id}/draft/action")
+def mp_draft_action(session_id: str, body: _MpDraftBody):
+    try:
+        return _mp.draft_action(session_id, body.token, body.champion)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.post("/multiplayer/{session_id}/simulate")
+def mp_simulate(session_id: str, body: _MpSimulateBody):
+    _sync_state_if_stale()
+    try:
+        return _mp.simulate_week(session_id, body.token, _mp_simulate)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.get("/multiplayer/sessions")
+def mp_list_sessions():
+    return _mp.list_sessions()
+
+
 # Include router
 app.include_router(api_router)
 
