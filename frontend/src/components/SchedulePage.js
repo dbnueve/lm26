@@ -26,7 +26,7 @@ const SchedulePage = ({ schedule, teams, userTeam, onSimulateSeason }) => {
     <div className="animate-slide-up">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <h2 className="font-heading" style={{ fontSize: 32 }}>Calendrier</h2>
-        {hasUnplayed && (
+        {hasUnplayed && onSimulateSeason && (
           <button className="btn-secondary" onClick={handleSimulate} disabled={simulating}
             style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <ArrowsClockwise size={16} />
