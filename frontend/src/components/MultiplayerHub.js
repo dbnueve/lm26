@@ -387,10 +387,16 @@ function DraftPanel({ draft, myDraftSide, draftChamp, setDraftChamp, draftError,
         </div>
       )}
       <div style={S.draftCols}>
-        <DraftCol label={`${draft.team1?.toUpperCase()} (vous)`}
-          bans={draftState.bans?.["1"] || []} picks={draftState.picks?.["1"] || []} />
-        <DraftCol label={draft.team2?.toUpperCase()}
-          bans={draftState.bans?.["2"] || []} picks={draftState.picks?.["2"] || []} />
+        <DraftCol
+          label={myDraftSide === 1 ? `${draft.team1?.toUpperCase()} (vous)` : draft.team1?.toUpperCase()}
+          bans={draftState.bans?.[1] || draftState.bans?.["1"] || []}
+          picks={draftState.picks?.[1] || draftState.picks?.["1"] || []}
+        />
+        <DraftCol
+          label={myDraftSide === 2 ? `${draft.team2?.toUpperCase()} (vous)` : draft.team2?.toUpperCase()}
+          bans={draftState.bans?.[2] || draftState.bans?.["2"] || []}
+          picks={draftState.picks?.[2] || draftState.picks?.["2"] || []}
+        />
       </div>
       {draftError && <div style={S.error}>{draftError}</div>}
       {isMyTurn && !draftState.completed && (
