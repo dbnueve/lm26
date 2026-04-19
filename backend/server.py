@@ -7068,18 +7068,14 @@ def mp_set_training_plan(session_id: str, body: dict):
         gs = _mp_db.load_game_state(session_id)
         if not gs:
             raise HTTPException(400, "État de jeu non initialisé")
-        # Find player in team and set training plan
-        found = False
-        for team in gs.get("teams", []):
-            for p in team.get("players", []):
-                if str(p.get("id")) == str(player_id) and team["id"] == player["team_id"]:
-                    p["training_plan"] = training_type
-                    found = True
-                    break
-            if found:
-                break
-        if not found:
+        # Find player in gs["players"] dict and verify they belong to the team
+        team_obj = gs.get("teams", {}).get(player["team_id"])
+        if not team_obj:
+            raise HTTPException(404, "Équipe introuvable dans l'état de jeu")
+        p = gs.get("players", {}).get(str(player_id))
+        if not p or str(player_id) not in [str(pid) for pid in team_obj.get("roster", [])]:
             raise HTTPException(404, "Joueur introuvable dans l'équipe")
+        p["training_plan"] = training_type
         _mp_db.save_game_state(session_id, gs)
     return {"ok": True, "applied_now": False}
 
