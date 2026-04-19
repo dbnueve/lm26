@@ -24,9 +24,10 @@ export default function MultiplayerLobby({ onSessionJoined, onBack }) {
     setError(null);
     setLoading(true);
     try {
-      const res = await axios.post(API + "/multiplayer/create", {
+      const res = await axios.post(API + "/mp/create", {
         league,
         username: username.trim(),
+        max_players: 10,
       });
       setCreated(res.data);
     } catch (e) {
@@ -42,7 +43,7 @@ export default function MultiplayerLobby({ onSessionJoined, onBack }) {
     setError(null);
     setLoading(true);
     try {
-      const res = await axios.post(API + "/multiplayer/join", {
+      const res = await axios.post(API + "/mp/join", {
         code: joinCode.trim().toUpperCase(),
         username: username.trim(),
       });
