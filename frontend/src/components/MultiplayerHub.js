@@ -24,7 +24,6 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
 
-  // ── Helpers HTTP ───────────────────────────────────────────────────────────
   const post = useCallback(async (path, body = {}) => {
     setActionError(null);
     setLoading(true);
@@ -49,7 +48,15 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
     }
   }, [sessionId, token]);
 
-  // ── Chargement ─────────────────────────────────────────────────────────────
+  // ── Tous les useMemo AVANT tout return conditionnel ────────────────────────
+  const myPlayer = state?.players?.find(p => p.side === state.my_side);
+  const myTeamId = myPlayer?.team_id;
+  const userTeam  = useMemo(() => state ? buildUserTeam(state) : null,              [state]);
+  const standings = useMemo(() => state ? buildStandings(state) : null,             [state]);
+  const schedule  = useMemo(() => state ? buildSchedule(state, myTeamId) : null,   [state, myTeamId]);
+  const teams     = useMemo(() => state ? buildTeamsList(state) : null,             [state]);
+
+  // ── Returns conditionnels APRÈS les hooks ─────────────────────────────────
   if (!state) {
     return (
       <div className="app-with-sidebar" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
@@ -66,40 +73,13 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
     );
   }
 
-  // ── Phase sélection d'équipe ───────────────────────────────────────────────
   if (state.phase === "waiting" || state.phase === "team_pick") {
-    return (
-      <TeamPickScreen
-        state={state}
-        token={token}
-        sessionId={sessionId}
-        onExit={onExit}
-      />
-    );
+    return <TeamPickScreen state={state} token={token} sessionId={sessionId} onExit={onExit} />;
   }
 
-  // ── Phase terminée ─────────────────────────────────────────────────────────
   if (state.phase === "finished") {
     return <FinishedScreen state={state} onExit={onExit} />;
   }
-
-  // ── Adapters : données MP → format des composants solo ────────────────────
-
-  // userTeam : shape attendue par Dashboard, RosterPage, TrainingPage
-  const myPlayer = state.players?.find(p => p.side === state.my_side);
-  const myTeamId = myPlayer?.team_id;
-
-  const userTeam = useMemo(() => buildUserTeam(state), [state]);
-
-  // standings : shape attendue par StandingsPage (array d'objets avec id, abbr, wins, losses…)
-  const standings = useMemo(() => buildStandings(state), [state]);
-
-  // schedule : shape attendue par SchedulePage (array avec team1, team2, week, played, id…)
-  const schedule = useMemo(() => buildSchedule(state, myTeamId), [state, myTeamId]);
-
-  // teams : liste minimale pour les abbr dans SchedulePage
-  const teams = useMemo(() => buildTeamsList(state), [state]);
-
   // splitStatus minimal
   const splitStatus = { split_label: `Session MP — ${state.league} — Semaine ${state.week}` };
 

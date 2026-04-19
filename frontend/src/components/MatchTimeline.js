@@ -7,7 +7,7 @@ import { _ddVersion, toDDragonKey } from "./ddHelpers";
 import TeamLogo from "./TeamLogo";
 import TimelineEventRow from "./TimelineEventRow";
 import TimelineKillCounter from "./TimelineKillCounter";
-
+import MiniMap from "./MiniMap";
 /* ─── Constantes ──────────────────────────────────────────────── */
 
 const DRAKE_ICONS = {
@@ -355,90 +355,99 @@ const MatchTimeline = ({
       padding: "10px 14px", maxHeight: "80vh",
     }}>
 
-      {/* ── ZONE 1 : HUD LCK ──────────────────────────────────── */}
+      {/* Ligne principale : logo+kills | champions | CARTE | champions | kills+logo */}
+<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+
+  {/* === GAUCHE : Logo + kills + champions === */}
+  <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, justifyContent: "flex-end" }}>
+
+    {/* Logo + abbr */}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+      <TeamLogo teamId={leftId} abbr={leftAbbr} size={36} />
+      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", letterSpacing: 1 }}>
+        {leftAbbr}
+      </span>
+    </div>
+
+    {/* Kills gauche */}
+    <TimelineKillCounter value={leftKills} color="var(--accent)" />
+
+    {/* Champions gauche — colonne verticale */}
+    <ChampionColumn
+      stats={leftStats} visibleEvents={visibleEvents}
+      matchSec={matchSec} teamNum={leftNum} side="left" tc={tc}
+    />
+  </div>
+
+  {/* === CENTRE : Carte minimap === */}
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+    <MiniMap
+      leftStats={leftStats}
+      rightStats={rightStats}
+      leftNum={leftNum}
+      rightNum={rightNum}
+      visibleEvents={visibleEvents}
+      matchSec={matchSec}
+      size={350}
+    />
+    {/* Timer + barre gold sous la carte */}
+    <div style={{ width: 150, textAlign: "center" }}>
       <div style={{
-        background: "var(--surface-1)", borderRadius: 8,
-        border: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
-        padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8,
+        fontFamily: "monospace", fontSize: 20, fontWeight: 900,
+        color: done ? "var(--amber)" : "var(--text-1)",
+        letterSpacing: 2, marginBottom: 4, fontVariantNumeric: "tabular-nums",
       }}>
-
-        {/* Ligne principale : logo | champions | kills | timer | kills | champions | logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-
-          {/* Logo gauche */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-            <TeamLogo teamId={leftId} abbr={leftAbbr} size={36} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", letterSpacing: 1 }}>
-              {leftAbbr}
+        {fmtTime(matchSec)}
+        {!done && playing && (
+          <span style={{
+            display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+            background: "var(--danger)", marginLeft: 5, verticalAlign: "middle",
+            animation: "pulse 1.1s ease-in-out infinite",
+          }} />
+        )}
+      </div>
+      <div style={{ height: 5, borderRadius: 3, overflow: "hidden", background: "var(--danger)" }}>
+        <motion.div
+          animate={{ width: `${leftWidth}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          style={{ height: "100%", background: "var(--accent)", borderRadius: "3px 0 0 3px" }}
+        />
+      </div>
+      <div style={{ fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 13 }}>
+        {goldDiff > 200 ? (
+          <span>
+            <span style={{ fontWeight: 700, color: goldLeader === "left" ? "var(--accent)" : "var(--danger)" }}>
+              {goldLeader === "left" ? leftAbbr : rightAbbr}
             </span>
-          </div>
+            {" "}+{(goldDiff / 1000).toFixed(1)}k gold
+          </span>
+        ) : <span>Égalité</span>}
+      </div>
+    </div>
+  </div>
 
-          {/* Champions gauche */}
-          <ChampionColumn
-            stats={leftStats} visibleEvents={visibleEvents}
-            matchSec={matchSec} teamNum={leftNum} side="left" tc={tc}
-          />
+  {/* === DROITE : Champions + kills + Logo === */}
+  <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, justifyContent: "flex-start" }}>
 
-          {/* Kills gauche */}
-          <div style={{ textAlign: "right", minWidth: 36 }}>
-            <TimelineKillCounter value={leftKills} color="var(--accent)" />
-          </div>
+    {/* Champions droite */}
+    <ChampionColumn
+      stats={rightStats} visibleEvents={visibleEvents}
+      matchSec={matchSec} teamNum={rightNum} side="right" tc={tc}
+    />
 
-          {/* Centre : timer + barre gold */}
-          <div style={{ flex: 1, textAlign: "center", minWidth: 120 }}>
-            <div style={{
-              fontFamily: "monospace", fontSize: 24, fontWeight: 900,
-              color: done ? "var(--amber)" : "var(--text-1)",
-              letterSpacing: 2, marginBottom: 5, fontVariantNumeric: "tabular-nums",
-            }}>
-              {fmtTime(matchSec)}
-              {!done && playing && (
-                <span style={{
-                  display: "inline-block", width: 6, height: 6, borderRadius: "50%",
-                  background: "var(--danger)", marginLeft: 5, verticalAlign: "middle",
-                  animation: "pulse 1.1s ease-in-out infinite",
-                }} />
-              )}
-            </div>
-            <div style={{ height: 6, borderRadius: 3, overflow: "hidden", background: "var(--danger)" }}>
-              <motion.div
-                animate={{ width: `${leftWidth}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                style={{ height: "100%", background: "var(--accent)", borderRadius: "3px 0 0 3px" }}
-              />
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 13 }}>
-              {goldDiff > 200 ? (
-                <span>
-                  <span style={{ fontWeight: 700, color: goldLeader === "left" ? "var(--accent)" : "var(--danger)" }}>
-                    {goldLeader === "left" ? leftAbbr : rightAbbr}
-                  </span>
-                  {" "}+{(goldDiff / 1000).toFixed(1)}k gold
-                </span>
-              ) : <span>Égalité</span>}
-            </div>
-          </div>
+    {/* Kills droite */}
+    <TimelineKillCounter value={rightKills} color="var(--danger)" />
 
-          {/* Kills droite */}
-          <div style={{ textAlign: "left", minWidth: 36 }}>
-            <TimelineKillCounter value={rightKills} color="var(--danger)" />
-          </div>
+    {/* Logo + abbr */}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+      <TeamLogo teamId={rightId} abbr={rightAbbr} size={36} />
+      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--danger)", letterSpacing: 1 }}>
+        {rightAbbr}
+      </span>
+    </div>
+  </div>
 
-          {/* Champions droite */}
-          <ChampionColumn
-            stats={rightStats} visibleEvents={visibleEvents}
-            matchSec={matchSec} teamNum={rightNum} side="right" tc={tc}
-          />
-
-          {/* Logo droite */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-            <TeamLogo teamId={rightId} abbr={rightAbbr} size={36} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: "var(--danger)", letterSpacing: 1 }}>
-              {rightAbbr}
-            </span>
-          </div>
-        </div>
-
+</div>
         {/* Objectifs : gauche | séparateur | droite */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
@@ -487,7 +496,7 @@ const MatchTimeline = ({
             ⏭ Skip
           </button>
         </div>
-      </div>
+      
 
       {/* ── ZONE 2 : Feed événements ──────────────────────────── */}
       <div
