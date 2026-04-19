@@ -7045,39 +7045,6 @@ def mp_v2_league_teams(league: str):
     return [{"id": t["id"], "name": t["name"], "league": league} for t in data["teams"]]
 
 
-@api_router.get("/mp/{session_id}/events")
-def mp_get_events(session_id: str, token: str, type: str = None, limit: int = 50):
-    """Get recent events for a session. Optionally filter by type (e.g. 'chat')."""
-    session = _mp_db.get_session(session_id)
-    if session is None:
-        raise HTTPException(404, "Session introuvable")
-    player = _mp_db.get_player(session_id, token)
-    if player is None:
-        raise HTTPException(401, "Token invalide")
-    events = _mp_db.get_recent_events(session_id, limit)
-    if type:
-        events = [e for e in events if e.get("event_type") == type]
-    return {"events": events}
-
-
-@api_router.post("/mp/{session_id}/chat")
-def mp_post_chat(session_id: str, body: dict):
-    """Post a chat message."""
-    token = body.get("token")
-    text = (body.get("text") or "").strip()
-    if not token or not text:
-        raise HTTPException(400, "token et text requis")
-    session = _mp_db.get_session(session_id)
-    if session is None:
-        raise HTTPException(404, "Session introuvable")
-    player = _mp_db.get_player(session_id, token)
-    if player is None:
-        raise HTTPException(401, "Token invalide")
-    if len(text) > 300:
-        raise HTTPException(400, "Message trop long (max 300 chars)")
-    _mp_db.log_event(session_id, "chat", {"username": player["username"], "text": text})
-    return {"ok": True}
-
 
 @api_router.post("/mp/{session_id}/training/plan")
 def mp_set_training_plan(session_id: str, body: dict):
