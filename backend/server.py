@@ -7157,7 +7157,7 @@ def mp_get_playoffs(session_id: str, token: str):
 
 
 @api_router.post("/mp/{session_id}/playoffs/start")
-def mp_start_playoffs_endpoint(session_id: str, body: dict):
+async def mp_start_playoffs_endpoint(session_id: str, body: dict):
     """Manually start playoffs (normally auto-triggered after regular season)."""
     token = body.get("token")
     session = _mp_db.get_session(session_id)
@@ -7170,13 +7170,14 @@ def mp_start_playoffs_endpoint(session_id: str, body: dict):
         raise HTTPException(400, "Playoffs déjà en cours")
     try:
         bracket = _mp_logic.mp_start_playoffs(session_id)
+        await _mp_broadcast_state(session_id)
         return {"ok": True, "bracket": bracket}
     except Exception as e:
         raise HTTPException(400, str(e))
 
 
 @api_router.post("/mp/{session_id}/playoffs/simulate")
-def mp_simulate_playoff(session_id: str, body: dict):
+async def mp_simulate_playoff(session_id: str, body: dict):
     """Simulate a full Bo5 series (AI vs AI only)."""
     token = body.get("token")
     match_id = body.get("match_id")
@@ -7191,7 +7192,6 @@ def mp_simulate_playoff(session_id: str, body: dict):
     if session["phase"] != "playoffs":
         raise HTTPException(400, "Pas en phase playoffs")
 
-    # Verify neither team is a human team
     gs = _mp_db.load_game_state(session_id) or {}
     bracket = gs.get("playoffs_bracket", {})
     match = next((m for m in bracket.get("matches", []) if m["id"] == match_id), None)
@@ -7204,14 +7204,15 @@ def mp_simulate_playoff(session_id: str, body: dict):
 
     try:
         result = _mp_logic.mp_simulate_playoff_series(session_id, match_id, _mp_simulate)
+        await _mp_broadcast_state(session_id)
         return result
     except Exception as e:
         raise HTTPException(400, str(e))
 
 
 @api_router.post("/mp/{session_id}/playoffs/play-game")
-def mp_play_playoff_game(session_id: str, body: dict):
-    """Play a single game in a human playoffs Bo5 series (uses draft result or auto-sim)."""
+async def mp_play_playoff_game(session_id: str, body: dict):
+    """Play a single game in a human playoffs Bo5 series."""
     token = body.get("token")
     match_id = body.get("match_id")
     if not token or not match_id:
@@ -7235,10 +7236,9 @@ def mp_play_playoff_game(session_id: str, body: dict):
         if match["completed"]:
             raise HTTPException(400, "Série déjà terminée")
 
-        # Simulate one game
         result = _mp_simulate(match["team1"], match["team2"], gs, [], [])
         game_winner = match["team1"] if result["winner"] == 1 else match["team2"]
-        match["games"].append({"winner": game_winner, "result": result})
+        match["games"].append({"winner": game_winner})
         if result["winner"] == 1:
             match["team1_wins"] += 1
         else:
@@ -7249,7 +7249,6 @@ def mp_play_playoff_game(session_id: str, body: dict):
         if series_over:
             match["winner"] = match["team1"] if match["team1_wins"] >= wins_needed else match["team2"]
             match["completed"] = True
-            # Advance bracket
             active_matches = [m for m in bracket["matches"] if m["round"] in bracket["active_rounds"]]
             if all(m["completed"] for m in active_matches):
                 if bracket.get("format") == "lpl":
@@ -7263,6 +7262,7 @@ def mp_play_playoff_game(session_id: str, body: dict):
         gs["playoffs_bracket"] = bracket
         _mp_db.save_game_state(session_id, gs)
 
+    await _mp_broadcast_state(session_id)
     return {
         "game_winner": game_winner,
         "team1_wins": match["team1_wins"],
