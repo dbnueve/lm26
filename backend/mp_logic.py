@@ -624,3 +624,309 @@ def get_team_state(session_id: str, token: str) -> dict:
     roster = [gs["players"][pid] for pid in team.get("roster", []) if pid in gs["players"]]
 
     return {"team": team, "players": roster}
+
+
+# ── Playoffs ───────────────────────────────────────────────────────────────────
+
+def _mp_make_playoff_match(round_name: str, match_number: int, team1: str, team2: str) -> dict:
+    import uuid as _uuid
+    return {
+        "id": str(_uuid.uuid4()),
+        "round": round_name,
+        "match_number": match_number,
+        "team1": team1,
+        "team2": team2,
+        "team1_wins": 0,
+        "team2_wins": 0,
+        "games": [],
+        "winner": None,
+        "best_of": 5,
+        "completed": False,
+    }
+
+
+def _mp_match_loser(match: dict) -> str:
+    return match["team2"] if match["winner"] == match["team1"] else match["team1"]
+
+
+def mp_start_playoffs(session_id: str) -> dict:
+    """Initialize playoffs bracket from current standings. Stores bracket in game_state."""
+    lock = mp_db._get_session_lock(session_id)
+    with lock:
+        gs = mp_db.load_game_state(session_id) or {}
+        standings = gs.get("standings", {})
+        league = gs.get("league", "LEC").upper()
+
+        # Sort teams by wins desc, losses asc
+        sorted_teams = sorted(
+            standings.items(),
+            key=lambda x: (-x[1].get("wins", 0), x[1].get("losses", 0), x[0])
+        )
+
+        n_qual = 10 if league == "LPL" else 6
+        qualified = [tid for tid, _ in sorted_teams[:n_qual]]
+
+        if league == "LPL" and len(qualified) >= 10:
+            bracket = _mp_init_bracket_lpl(qualified)
+        else:
+            # Fallback: cap at available teams, minimum 4
+            qualified = qualified[:6]
+            bracket = _mp_init_bracket_standard(qualified)
+
+        gs["playoffs_bracket"] = bracket
+        mp_db.save_game_state(session_id, gs)
+        mp_db.update_session_phase(session_id, "playoffs")
+        mp_db.log_event(session_id, "playoffs_started", {"qualified": qualified})
+        return bracket
+
+
+def _mp_init_bracket_standard(qualified: list) -> dict:
+    """6-team double-elim: seeds 1-4 UB, seeds 5-6 LB entry."""
+    q = qualified
+    return {
+        "format": "standard",
+        "qualified_teams": q,
+        "active_rounds": ["ub_r1"],
+        "matches": [
+            _mp_make_playoff_match("ub_r1", 1, q[0], q[3]),  # #1 vs #4
+            _mp_make_playoff_match("ub_r1", 2, q[1], q[2]),  # #2 vs #3
+        ],
+        "champion": None,
+        "ub_r1_losers": [],
+        "ub_final_winner": None,
+        "ub_final_loser": None,
+        "lb_r1_winner": None,
+        "lb_r2_winner": None,
+        "lb_r3_winner": None,
+    }
+
+
+def _mp_init_bracket_lpl(qualified: list) -> dict:
+    """10-team LPL double-elim."""
+    q = qualified
+    return {
+        "format": "lpl",
+        "qualified_teams": q,
+        "active_rounds": ["ub_r1", "lb_r1"],
+        "matches": [
+            _mp_make_playoff_match("ub_r1", 1, q[2], q[5]),
+            _mp_make_playoff_match("ub_r1", 2, q[3], q[4]),
+            _mp_make_playoff_match("lb_r1", 1, q[6], q[9]),
+            _mp_make_playoff_match("lb_r1", 2, q[7], q[8]),
+        ],
+        "champion": None,
+        "ub_r1_winners": [], "ub_r1_losers": [],
+        "ub_r2_winners": [], "ub_r2_losers": [],
+        "ub_final_winner": None, "ub_final_loser": None,
+        "lb_r1_winners": [], "lb_r2_winners": [], "lb_r3_winners": [],
+        "lb_sf_winner": None,
+    }
+
+
+def mp_advance_playoffs(session_id: str) -> dict:
+    """Advance bracket when all active-round matches are complete. Returns updated bracket."""
+    lock = mp_db._get_session_lock(session_id)
+    with lock:
+        gs = mp_db.load_game_state(session_id) or {}
+        bracket = gs.get("playoffs_bracket")
+        if bracket is None:
+            raise ValueError("Bracket non initialisé")
+
+        if bracket.get("format") == "lpl":
+            _mp_advance_lpl(bracket)
+        else:
+            _mp_advance_standard(bracket)
+
+        # Champion crowned → session finished
+        if bracket.get("champion"):
+            mp_db.update_session_phase(session_id, "finished")
+            mp_db.log_event(session_id, "champion_crowned", {"champion": bracket["champion"]})
+
+        gs["playoffs_bracket"] = bracket
+        mp_db.save_game_state(session_id, gs)
+        return bracket
+
+
+def _mp_advance_standard(bracket: dict) -> None:
+    active_rounds = bracket["active_rounds"]
+    active_matches = [m for m in bracket["matches"] if m["round"] in active_rounds]
+    if not all(m["completed"] for m in active_matches):
+        return
+
+    qualified = bracket["qualified_teams"]
+
+    def get_m(rnd, num=None):
+        ms = [m for m in active_matches if m["round"] == rnd]
+        if num is not None:
+            ms = [m for m in ms if m["match_number"] == num]
+        return ms[0] if ms else None
+
+    if active_rounds == ["ub_r1"]:
+        m1 = get_m("ub_r1", 1)
+        m2 = get_m("ub_r1", 2)
+        bracket["ub_r1_losers"] = [_mp_match_loser(m1), _mp_match_loser(m2)]
+        bracket["active_rounds"] = ["ub_final", "lb_r1"]
+        bracket["matches"] += [
+            _mp_make_playoff_match("ub_final", 1, m1["winner"], m2["winner"]),
+            _mp_make_playoff_match("lb_r1", 1, qualified[4], qualified[5]),
+        ]
+
+    elif set(active_rounds) == {"ub_final", "lb_r1"}:
+        ubf = get_m("ub_final")
+        lb1 = get_m("lb_r1")
+        bracket["ub_final_winner"] = ubf["winner"]
+        bracket["ub_final_loser"] = _mp_match_loser(ubf)
+        bracket["lb_r1_winner"] = lb1["winner"]
+        bracket["active_rounds"] = ["lb_r2"]
+        bracket["matches"].append(
+            _mp_make_playoff_match("lb_r2", 1, bracket["lb_r1_winner"], bracket["ub_r1_losers"][0])
+        )
+
+    elif active_rounds == ["lb_r2"]:
+        lb2 = active_matches[0]
+        bracket["lb_r2_winner"] = lb2["winner"]
+        bracket["active_rounds"] = ["lb_r3"]
+        bracket["matches"].append(
+            _mp_make_playoff_match("lb_r3", 1, bracket["lb_r2_winner"], bracket["ub_r1_losers"][1])
+        )
+
+    elif active_rounds == ["lb_r3"]:
+        lb3 = active_matches[0]
+        bracket["lb_r3_winner"] = lb3["winner"]
+        bracket["active_rounds"] = ["lb_final"]
+        bracket["matches"].append(
+            _mp_make_playoff_match("lb_final", 1, bracket["lb_r3_winner"], bracket["ub_final_loser"])
+        )
+
+    elif active_rounds == ["lb_final"]:
+        lbf = active_matches[0]
+        bracket["active_rounds"] = ["grand_final"]
+        bracket["matches"].append(
+            _mp_make_playoff_match("grand_final", 1, bracket["ub_final_winner"], lbf["winner"])
+        )
+
+    elif active_rounds == ["grand_final"]:
+        gf = active_matches[0]
+        bracket["champion"] = gf["winner"]
+        bracket["active_rounds"] = []
+
+
+def _mp_advance_lpl(bracket: dict) -> None:
+    active_rounds = bracket["active_rounds"]
+    qualified = bracket["qualified_teams"]
+    active_matches = [m for m in bracket["matches"] if m["round"] in active_rounds]
+    if not all(m["completed"] for m in active_matches):
+        return
+
+    def ms(rnd): return sorted([m for m in active_matches if m["round"] == rnd], key=lambda m: m["match_number"])
+
+    if set(active_rounds) == {"ub_r1", "lb_r1"}:
+        ub_ms = ms("ub_r1"); lb_ms = ms("lb_r1")
+        bracket["ub_r1_winners"] = [m["winner"] for m in ub_ms]
+        bracket["ub_r1_losers"] = [_mp_match_loser(m) for m in ub_ms]
+        bracket["lb_r1_winners"] = [m["winner"] for m in lb_ms]
+        bracket["active_rounds"] = ["ub_r2", "lb_r2"]
+        bracket["matches"] += [
+            _mp_make_playoff_match("ub_r2", 1, qualified[0], bracket["ub_r1_winners"][0]),
+            _mp_make_playoff_match("ub_r2", 2, qualified[1], bracket["ub_r1_winners"][1]),
+            _mp_make_playoff_match("lb_r2", 1, bracket["ub_r1_losers"][0], bracket["lb_r1_winners"][0]),
+            _mp_make_playoff_match("lb_r2", 2, bracket["ub_r1_losers"][1], bracket["lb_r1_winners"][1]),
+        ]
+
+    elif set(active_rounds) == {"ub_r2", "lb_r2"}:
+        ub_ms = ms("ub_r2"); lb_ms = ms("lb_r2")
+        bracket["ub_r2_winners"] = [m["winner"] for m in ub_ms]
+        bracket["ub_r2_losers"] = [_mp_match_loser(m) for m in ub_ms]
+        bracket["lb_r2_winners"] = [m["winner"] for m in lb_ms]
+        bracket["active_rounds"] = ["ub_final", "lb_r3"]
+        bracket["matches"] += [
+            _mp_make_playoff_match("ub_final", 1, bracket["ub_r2_winners"][0], bracket["ub_r2_winners"][1]),
+            _mp_make_playoff_match("lb_r3", 1, bracket["ub_r2_losers"][0], bracket["lb_r2_winners"][0]),
+            _mp_make_playoff_match("lb_r3", 2, bracket["ub_r2_losers"][1], bracket["lb_r2_winners"][1]),
+        ]
+
+    elif set(active_rounds) == {"ub_final", "lb_r3"}:
+        ubf = ms("ub_final")[0]; lb_ms = ms("lb_r3")
+        bracket["ub_final_winner"] = ubf["winner"]
+        bracket["ub_final_loser"] = _mp_match_loser(ubf)
+        bracket["lb_r3_winners"] = [m["winner"] for m in lb_ms]
+        bracket["active_rounds"] = ["lb_sf"]
+        bracket["matches"].append(
+            _mp_make_playoff_match("lb_sf", 1, bracket["lb_r3_winners"][0], bracket["lb_r3_winners"][1])
+        )
+
+    elif active_rounds == ["lb_sf"]:
+        lbsf = active_matches[0]
+        bracket["lb_sf_winner"] = lbsf["winner"]
+        bracket["active_rounds"] = ["lb_final"]
+        bracket["matches"].append(
+            _mp_make_playoff_match("lb_final", 1, bracket["lb_sf_winner"], bracket["ub_final_loser"])
+        )
+
+    elif active_rounds == ["lb_final"]:
+        lbf = active_matches[0]
+        bracket["active_rounds"] = ["grand_final"]
+        bracket["matches"].append(
+            _mp_make_playoff_match("grand_final", 1, bracket["ub_final_winner"], lbf["winner"])
+        )
+
+    elif active_rounds == ["grand_final"]:
+        gf = active_matches[0]
+        bracket["champion"] = gf["winner"]
+        bracket["active_rounds"] = []
+
+
+def mp_simulate_playoff_series(session_id: str, match_id: str,
+                                simulate_fn: callable) -> dict:
+    """Simulate a full Bo5 series (AI vs AI). Returns series result."""
+    lock = mp_db._get_session_lock(session_id)
+    with lock:
+        gs = mp_db.load_game_state(session_id) or {}
+        bracket = gs.get("playoffs_bracket")
+        if bracket is None:
+            raise ValueError("Bracket non initialisé")
+
+        match = next((m for m in bracket["matches"] if m["id"] == match_id), None)
+        if match is None:
+            raise ValueError("Match introuvable")
+        if match["completed"]:
+            raise ValueError("Série déjà terminée")
+
+        wins_needed = (match["best_of"] // 2) + 1
+        while match["team1_wins"] < wins_needed and match["team2_wins"] < wins_needed:
+            result = simulate_fn(match["team1"], match["team2"], gs, [], [])
+            if result["winner"] == 1:
+                match["team1_wins"] += 1
+            else:
+                match["team2_wins"] += 1
+            match["games"].append({"winner": match["team1"] if result["winner"] == 1 else match["team2"]})
+
+        match["winner"] = match["team1"] if match["team1_wins"] >= wins_needed else match["team2"]
+        match["completed"] = True
+
+        # Update standings for champion tracking
+        gs.setdefault("standings", {})
+        gs["standings"].setdefault(match["winner"], {"wins": 0, "losses": 0})
+
+        # Advance bracket if all active matches complete
+        active_matches = [m for m in bracket["matches"] if m["round"] in bracket["active_rounds"]]
+        if all(m["completed"] for m in active_matches):
+            if bracket.get("format") == "lpl":
+                _mp_advance_lpl(bracket)
+            else:
+                _mp_advance_standard(bracket)
+            if bracket.get("champion"):
+                mp_db.update_session_phase(session_id, "finished")
+                mp_db.log_event(session_id, "champion_crowned", {"champion": bracket["champion"]})
+
+        gs["playoffs_bracket"] = bracket
+        mp_db.save_game_state(session_id, gs)
+
+        return {
+            "match_id": match_id,
+            "winner": match["winner"],
+            "team1_wins": match["team1_wins"],
+            "team2_wins": match["team2_wins"],
+            "champion": bracket.get("champion"),
+            "active_rounds": bracket["active_rounds"],
+        }
