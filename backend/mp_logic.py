@@ -289,11 +289,16 @@ def set_ready(session_id: str, token: str) -> dict:
         if session["phase"] != "regular":
             raise ValueError(f"Pas en phase regular (phase: {session['phase']})")
 
+        if not player["team_id"]:
+            raise ValueError("Vous devez choisir une équipe avant de vous marquer prêt")
+
         mp_db.set_player_ready(session_id, token, True)
         mp_db.log_event(session_id, "player_ready", {"username": player["username"]})
 
         players = mp_db.get_players(session_id)
-        all_ready = all(p["ready"] for p in players)
+        # Seuls les joueurs avec une équipe comptent pour le check "tous prêts"
+        active_players = [p for p in players if p["team_id"]]
+        all_ready = len(active_players) > 0 and all(p["ready"] for p in active_players)
 
         return {"ok": True, "all_ready": all_ready}
 
