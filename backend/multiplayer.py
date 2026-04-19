@@ -207,6 +207,8 @@ def get_session_state(session_id: str, token: str) -> dict:
 
 def pick_team(session_id: str, token: str, team_id: str, game_state: dict) -> dict:
     """Assign a team to a player. Both must pick different teams from the session league."""
+    from server import LEAGUES_DATA  # import local pour éviter circular import au module level
+
     session = _load_session(session_id)
     if session is None:
         raise ValueError("Session introuvable")
@@ -218,12 +220,14 @@ def pick_team(session_id: str, token: str, team_id: str, game_state: dict) -> di
     if session["phase"] != "team_pick":
         raise ValueError(f"Pas en phase de sélection d'équipe (phase actuelle: {session['phase']})")
 
-    # Validate team belongs to the session league
-    team = game_state.get("teams", {}).get(team_id)
-    if team is None:
-        raise ValueError(f"Équipe '{team_id}' introuvable")
-    if team.get("league") != session["league"]:
-        raise ValueError(f"L'équipe '{team_id}' n'appartient pas à la ligue {session['league']}")
+    # Validate team belongs to the session league via LEAGUES_DATA (indépendant du GAME_STATE)
+    league = session["league"].upper()
+    league_data = LEAGUES_DATA.get(league)
+    if league_data is None:
+        raise ValueError(f"Ligue '{league}' inconnue")
+    valid_ids = {t["id"] for t in league_data["teams"]}
+    if team_id not in valid_ids:
+        raise ValueError(f"L'équipe '{team_id}' n'appartient pas à la ligue {league}")
 
     # Prevent both players picking the same team
     taken = {p["team"] for p in session["players"].values() if p["team"]}
