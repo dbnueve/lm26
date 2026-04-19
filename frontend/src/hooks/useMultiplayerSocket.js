@@ -33,6 +33,13 @@ export function useMultiplayerSocket(sessionId, token) {
   const attemptsRef = useRef(0);
 
   // ── HTTP polling fallback ──────────────────────────────────────────────────
+  const stopPolling = useCallback(() => {
+    if (pollTimer.current) {
+      clearInterval(pollTimer.current);
+      pollTimer.current = null;
+    }
+  }, []);
+
   const fetchState = useCallback(async () => {
     if (!sessionId || !token) return;
     try {
@@ -59,17 +66,10 @@ export function useMultiplayerSocket(sessionId, token) {
   }, [sessionId, token, stopPolling]);
 
   const startPolling = useCallback(() => {
-    if (pollTimer.current) return; // already polling
+    if (pollTimer.current) return;
     fetchState();
     pollTimer.current = setInterval(fetchState, 2500);
   }, [fetchState]);
-
-  const stopPolling = useCallback(() => {
-    if (pollTimer.current) {
-      clearInterval(pollTimer.current);
-      pollTimer.current = null;
-    }
-  }, []);
 
   // ── WebSocket ──────────────────────────────────────────────────────────────
   const connect = useCallback(() => {
