@@ -377,7 +377,15 @@ def get_recent_events(session_id: str, limit: int = 50) -> list[dict]:
                ORDER BY id DESC LIMIT ?""",
             (session_id, limit)
         ).fetchall()
-        return [dict(r) for r in reversed(rows)]
+        result = []
+        for r in reversed(rows):
+            row = dict(r)
+            try:
+                row["data"] = json.loads(row.get("payload", "{}"))
+            except Exception:
+                row["data"] = {}
+            result.append(row)
+        return result
 
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
