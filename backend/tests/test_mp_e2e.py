@@ -82,6 +82,11 @@ async def main() -> int:
                 match_id = d["id"]
                 raw = json.loads(d["draft_json"])
                 step = raw["step"]
+                # Map côté → token selon l'équipe qui occupe team1/team2 du match
+                team_a_id = st["my_team"]  # Alice
+                match_team1, match_team2 = d["team1"], d["team2"]
+                token_side1 = token_a if match_team1 == team_a_id else token_b
+                token_side2 = token_a if match_team2 == team_a_id else token_b
                 # On pick des champions uniques (C0, C1, ...) pour chaque action
                 champion_pool = [f"Champ{k}" for k in range(20)]
                 used = set()
