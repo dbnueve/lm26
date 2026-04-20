@@ -71,9 +71,11 @@ def join_session(code: str, username: str) -> dict:
     if session is None:
         raise ValueError(f"Aucune session avec le code {code}")
 
-    # Autoriser le join tant que la partie n'est pas terminée et qu'il reste des slots
+    # Seulement autoriser le join en phase d'attente ou sélection d'équipe
     if session["phase"] in ("finished",):
         raise ValueError("La session est terminée")
+    if session["phase"] not in ("waiting", "team_pick"):
+        raise ValueError("La partie est déjà en cours — rejoins via ton token existant")
 
     n = mp_db.count_players(session["id"])
     if n >= session["max_players"]:
