@@ -8,7 +8,7 @@ import MatchTimeline from "./MatchTimeline";
 import MatchResultScoreboard from "./MatchResultScoreboard";
 
 // Match Simulation Component
-const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftCompleted, draftState }) => {
+const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftCompleted, draftState, onSimulate }) => {
   const [phase, setPhase] = useState(draftCompleted ? "ready" : "pre");
   const [matchResult, setMatchResult] = useState(null);
   const [simError, setSimError] = useState(null);
