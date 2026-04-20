@@ -118,11 +118,21 @@ def get_full_state(session_id: str, token: str) -> dict:
     week_matches = mp_db.get_week_matches(session_id, session["current_week"])
 
     # Find active draft match (human vs human, not yet completed)
-    active_draft = next(
+    _raw_draft = next(
         (m for m in week_matches
          if m["is_human_vs_human"] and not m["draft_completed"] and m["result_json"] is None),
         None
     )
+    my_team_id = player["team_id"]
+    # Enrich active_draft with my_draft_side so frontend doesn't need to compare team_ids
+    active_draft = None
+    if _raw_draft is not None:
+        my_draft_side = None
+        if my_team_id == _raw_draft["team1"]:
+            my_draft_side = 1
+        elif my_team_id == _raw_draft["team2"]:
+            my_draft_side = 2
+        active_draft = {**dict(_raw_draft), "my_draft_side": my_draft_side}
 
     # Build per-player team data for the frontend (roster, budget, stats)
     my_team_id = player["team_id"]
