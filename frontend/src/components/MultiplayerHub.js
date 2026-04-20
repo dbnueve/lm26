@@ -162,6 +162,8 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
             onPlayMatch={state.active_draft ? null : handlePlayMatch}
             onPlayPlayoffMatch={null}
             onSeasonStart={null}
+            playMatchLabel={myPlayer?.ready ? "En attente des autres…" : "Jouer le match"}
+            playMatchDisabled={!!myPlayer?.ready || !!state.active_draft}
           />
         )}
 
