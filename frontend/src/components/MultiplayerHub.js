@@ -128,38 +128,6 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions }) 
     await post("/ready", { token });
   };
 
-  // Draft MP : parse l'état depuis active_draft
-  const mpDraftRaw = useMemo(() => {
-    if (!state?.active_draft) return null;
-    try {
-      const d = state.active_draft;
-      const ds = typeof d.draft_json === "string" ? JSON.parse(d.draft_json) : (d.draft_json || {});
-      // Injecter le côté "moi" pour que DraftSystem sache qui est user/enemy
-      let mySide = null;
-      if (d.team1 === myTeamId) mySide = 1;
-      else if (d.team2 === myTeamId) mySide = 2;
-      return { ...ds, _mySide: mySide, _team1: d.team1, _team2: d.team2, _matchId: d.id };
-    } catch { return null; }
-  }, [state?.active_draft, myTeamId]);
-
-  const mpMyTurn = useMemo(() => {
-    if (!mpDraftRaw) return false;
-    const seq = mpDraftRaw.sequence || [];
-    const step = mpDraftRaw.step || 0;
-    const currentAction = step < seq.length ? seq[step] : null;
-    if (!currentAction) return false;
-    return Number(currentAction[1]) === mpDraftRaw._mySide;
-  }, [mpDraftRaw]);
-
-  const handleMpDraftAction = useCallback(async (champion, actionType) => {
-    if (!state?.active_draft) return;
-    await post("/draft/action", {
-      token,
-      match_id: state.active_draft.id,
-      champion,
-    });
-  }, [post, state?.active_draft, token]);
-
   const MP_PAGES = ["dashboard", "roster", "standings", "schedule", "training", "playoffs"];
 
   // ── Rendu principal (même layout que le solo) ──────────────────────────────
