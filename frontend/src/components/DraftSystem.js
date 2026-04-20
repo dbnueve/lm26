@@ -239,7 +239,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
             <h2 className="font-heading" style={{ fontSize: 28, marginBottom: 4 }}>
-              Phase de Draft - {isBanPhase ? "BANS" : "PICKS"}
+              {mpLabel || `Phase de Draft - ${isBanPhase ? "BANS" : "PICKS"}`}
             </h2>
             <div style={{ fontSize: 12, color: "var(--text-2)" }}>
               Tour {(normalizedDraftState?.step ?? 0) + 1}/20 —{" "}
@@ -259,13 +259,15 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
                 {isBanPhase ? "Bannir" : "Pick"} {selectedChampion}
               </button>
             )}
-            <button
-              onClick={onCancel}
-              className="btn-secondary"
-              style={{ padding: "12px 16px" }}
-            >
-              <X size={20} /> Fermer
-            </button>
+            {onCancel && (
+              <button
+                onClick={onCancel}
+                className="btn-secondary"
+                style={{ padding: "12px 16px" }}
+              >
+                <X size={20} /> Fermer
+              </button>
+            )}
           </div>
         </div>
 
