@@ -19,11 +19,25 @@ import DraftSystem from "./DraftSystem";
  * Vues disponibles : dashboard, roster, standings, schedule, training, chat
  * Vues MP-only : ready panel (dans dashboard), draft active, joueurs connectés
  */
-export default function MultiplayerHub({ sessionId, token, onExit, champions }) {
+export default function MultiplayerHub({ sessionId, token, onExit, champions: championsProp }) {
   const { state, connected, error: wsError, refetch } = useMultiplayerSocket(sessionId, token);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [mpChampions, setMpChampions] = useState(null);
+
+  // Charger les champions de la ligue de la session MP (peut différer du solo)
+  useEffect(() => {
+    if (!state?.league) return;
+    const controller = new AbortController();
+    axios.get(`${API}/draft/champions`, { params: { league: state.league }, signal: controller.signal })
+      .then(r => setMpChampions(r.data))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [state?.league]);
+
+  // Fallback sur le prop si la requête dédiée n'a pas encore répondu
+  const champions = mpChampions || championsProp || {};
 
   const post = useCallback(async (path, body = {}) => {
     setActionError(null);
