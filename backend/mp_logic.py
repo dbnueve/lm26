@@ -290,11 +290,15 @@ def _generate_round_robin(team_ids: list[str], human_teams: set[str]) -> list[di
     matches = []
     total_rounds = n - 1
 
+    # rotating a len = n-1 (fixed est séparé). Pour appairer toutes les équipes :
+    # pair[0] = (fixed, rotating[0]), puis miroir autour du centre de rotating :
+    # pair[i] = (rotating[i], rotating[len(rotating)-i]) pour i=1..n//2-1.
+    # rotating_len = n-1 donc l'indice miroir est (n-1)-i, jamais égal à i (n pair).
     for round_idx in range(total_rounds):
         week = round_idx + 1
         pairs = [(fixed, rotating[0])]
         for i in range(1, n // 2):
-            pairs.append((rotating[i], rotating[n - 2 - i]))
+            pairs.append((rotating[i], rotating[n - 1 - i]))
 
         for t1, t2 in pairs:
             if "BYE" in (t1, t2):
