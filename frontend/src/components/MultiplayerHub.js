@@ -189,9 +189,16 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions: ch
     return res;
   };
 
-  // "Jouer le match" en MP = marquer prêt → advance_week → draft démarre si HvH
+  // "Jouer le match" en MP :
+  //  - si match vs IA cette semaine : ouvre draft solo + simulation (comme en solo)
+  //  - si match vs joueur (HvH) : set ready → draft partagé démarre
+  //  - sinon (rare, pas de match pour ce joueur cette semaine) : set ready direct
   const handlePlayMatch = async () => {
-    if (myPlayer?.ready) return; // déjà prêt
+    if (myPlayer?.ready) return;
+    if (myIaMatch) {
+      handleOpenIaMatch();
+      return;
+    }
     await post("/ready", { token });
   };
 
