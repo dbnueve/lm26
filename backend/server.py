@@ -3895,8 +3895,14 @@ async def make_offer(offer: NegotiationOffer):
 # Draft System
 
 @api_router.get("/draft/champions")
-async def get_draft_champions():
-    """Get all available champions for draft with meta stats"""
+async def get_draft_champions(league: str | None = None):
+    """Get all available champions for draft with meta stats.
+
+    If `league` is provided, returns that league's baseline meta (useful for
+    multiplayer sessions on a different league than the active solo save).
+    """
+    if league:
+        return LEAGUE_META_CHAMPIONS.get(league, LEAGUE_META_CHAMPIONS.get("LEC", META_CHAMPIONS))
     _sync_state_if_stale()
     return get_meta_champions()
 
