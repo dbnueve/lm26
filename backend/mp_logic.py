@@ -471,14 +471,21 @@ def _finalize_week(session_id: str, session: dict, gs: dict) -> None:
     max_week = max((m["week"] for m in all_matches), default=week)
 
     if week >= max_week:
-        # Auto-démarrer les playoffs
+        # Sauver gs avant la transition pour ne pas perdre l'état si playoffs crashent
+        mp_db.save_game_state(session_id, gs)
         try:
             mp_start_playoffs(session_id)
             logger.info(f"Session {session_id[:8]}: split terminé → playoffs démarrés")
         except Exception as e:
-            # En cas d'erreur (ex: pas assez d'équipes), passer directement en finished
-            logger.warning(f"Session {session_id[:8]}: impossible de démarrer les playoffs: {e}")
-            mp_db.update_session_phase(session_id, "finished", week=week)
+            # En cas d'erreur (ex: pas assez d'équipes, bracket corrompu), ne PAS
+            # passer en finished (rendrait la partie injouable) : rester en regular
+            # à la dernière semaine. L'hôte peut relancer via /reset-ready + retry.
+            logger.warning(
+                f"Session {session_id[:8]}: impossible de démarrer les playoffs: {e}. "
+                f"Session maintenue en phase regular pour permettre retry."
+            )
+            mp_db.log_event(session_id, "playoffs_start_failed", {"error": str(e)})
+            mp_db.update_session_phase(session_id, "regular", week=week)
     else:
         mp_db.update_session_phase(session_id, "regular", week=week + 1)
         logger.info(f"Session {session_id[:8]}: semaine {week} → {week + 1}")
