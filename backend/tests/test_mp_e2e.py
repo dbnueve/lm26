@@ -72,6 +72,8 @@ async def main() -> int:
                 print(f"   iter{i}: sortie boucle, phase={phase}")
                 break
 
+            print(f"   iter{i}: active_draft={st.get('active_draft') is not None}, week={st['week']}")
+
             # Si un draft humain vs humain est actif, on le résout
             if st.get("active_draft"):
                 d = st["active_draft"]
