@@ -7249,6 +7249,96 @@ async def mp_v2_play_ia_match(session_id: str, body: _MpV2PlayIaBody):
         raise HTTPException(400, str(e))
 
 
+@api_router.get("/mp/{session_id}/draft/suggest")
+async def mp_v2_draft_suggest(session_id: str, token: str, match_id: int):
+    """Return draft suggestions for the current MP draft turn.
+
+    Works on the session's draft_json state. Returns {action, suggestions, step}
+    matching the solo /draft/suggest contract so the same UI code can consume it.
+    """
+    import json as _json
+    try:
+        session = _mp_db.get_session(session_id)
+        if session is None:
+            raise HTTPException(404, "Session introuvable")
+        player = _mp_db.get_player(session_id, token)
+        if player is None:
+            raise HTTPException(401, "Token invalide")
+        match = _mp_db.get_match_by_id(match_id)
+        if match is None or match["session_id"] != session_id:
+            raise HTTPException(404, "Match introuvable")
+        if match["draft_completed"]:
+            return {"action": None, "step": 0, "suggestions": []}
+
+        raw_draft = _json.loads(match["draft_json"]) if match["draft_json"] else None
+        if not raw_draft:
+            return {"action": None, "step": 0, "suggestions": []}
+        draft = _mp_logic._normalize_draft_keys(raw_draft)
+        step = draft.get("step", 0)
+        seq = draft.get("sequence") or _mp_logic.DRAFT_SEQUENCE
+        if step >= len(seq):
+            return {"action": None, "step": step, "suggestions": []}
+
+        action_type, expected_side = seq[step]
+
+        # Determine requester side
+        player_team = player.get("team_id")
+        if player_team == match["team1"]:
+            my_side = 1
+        elif player_team == match["team2"]:
+            my_side = 2
+        else:
+            return {"action": "spectator", "step": step, "suggestions": []}
+
+        if my_side != expected_side:
+            return {"action": "enemy_turn", "step": step, "suggestions": []}
+
+        opp_side = 2 if my_side == 1 else 1
+        my_bans   = draft["bans"].get(my_side, []) or []
+        opp_bans  = draft["bans"].get(opp_side, []) or []
+        my_raw    = draft["picks"].get(my_side, []) or []
+        opp_raw   = draft["picks"].get(opp_side, []) or []
+
+        # MP stores picks as bare strings — wrap to {champion, position} for reuse
+        # and infer position from the champion's meta when possible.
+        def _wrap(names: list) -> list:
+            out = []
+            for n in names:
+                if isinstance(n, dict):
+                    out.append(n)
+                    continue
+                pos = META_LOOKUP.get(n, {}).get("position", "")
+                out.append({"champion": n, "position": pos})
+            return out
+
+        my_picks    = _wrap(my_raw)
+        enemy_picks = _wrap(opp_raw)
+        unavailable = set(my_bans + opp_bans + my_raw + opp_raw)
+
+        all_pos = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"]
+        taken_pos = {p["position"] for p in my_picks if p.get("position")}
+        needed = [p for p in all_pos if p not in taken_pos] or all_pos
+
+        # Opponent team id for pool-aware bans
+        opp_team_id = match["team2"] if my_side == 1 else match["team1"]
+
+        suggestions = _compute_draft_suggestions(
+            action_type=action_type,
+            step=step,
+            my_picks=my_picks,
+            enemy_picks=enemy_picks,
+            unavailable=unavailable,
+            needed=needed,
+            opp_id=opp_team_id,
+        )
+        return {"action": action_type, "step": step, "suggestions": suggestions}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("mp_v2_draft_suggest failed: %s", e)
+        return {"action": None, "step": 0, "suggestions": []}
+
+
 @api_router.post("/mp/{session_id}/reset-ready")
 async def mp_v2_reset_ready(session_id: str, body: _MpV2ReadyBody):
     """Déblocage manuel : reset les flags ready de tous les joueurs."""
