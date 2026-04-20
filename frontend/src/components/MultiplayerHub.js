@@ -249,6 +249,9 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions: ch
             mpDraftState={mpDraftRaw}
             mpMyTurn={mpMyTurn}
             mpLabel={`Draft — ${mpDraftRaw._team1?.toUpperCase()} vs ${mpDraftRaw._team2?.toUpperCase()}${!mpDraftRaw._mySide ? " (spectateur)" : ""}`}
+            mpSessionId={sessionId}
+            mpMatchId={mpDraftRaw._matchId}
+            mpToken={token}
           />
         )}
 
