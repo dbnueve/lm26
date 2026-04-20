@@ -120,8 +120,6 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
         <MpStatusBar
           state={state}
           connected={connected}
-          loading={loading}
-          onReady={() => post("/ready", { token })}
           me={myPlayer}
         />
 
