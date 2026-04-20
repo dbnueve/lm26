@@ -49,13 +49,40 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions }) 
     }
   }, [sessionId, token]);
 
-  // ── Tous les useMemo AVANT tout return conditionnel ────────────────────────
+  // ── Tous les hooks AVANT tout return conditionnel ─────────────────────────
   const myPlayer = state?.players?.find(p => p.side === state.my_side);
   const myTeamId = myPlayer?.team_id;
   const userTeam  = useMemo(() => state ? buildUserTeam(state) : null,              [state]);
   const standings = useMemo(() => state ? buildStandings(state) : null,             [state]);
   const schedule  = useMemo(() => state ? buildSchedule(state, myTeamId) : null,   [state, myTeamId]);
   const teams     = useMemo(() => state ? buildTeamsList(state) : null,             [state]);
+
+  // Draft MP : parse l'état depuis active_draft
+  const mpDraftRaw = useMemo(() => {
+    if (!state?.active_draft) return null;
+    try {
+      const d = state.active_draft;
+      const ds = typeof d.draft_json === "string" ? JSON.parse(d.draft_json) : (d.draft_json || {});
+      let mySide = null;
+      if (d.team1 === myTeamId) mySide = 1;
+      else if (d.team2 === myTeamId) mySide = 2;
+      return { ...ds, _mySide: mySide, _team1: d.team1, _team2: d.team2, _matchId: d.id };
+    } catch { return null; }
+  }, [state?.active_draft, myTeamId]);
+
+  const mpMyTurn = useMemo(() => {
+    if (!mpDraftRaw) return false;
+    const seq = mpDraftRaw.sequence || [];
+    const step = mpDraftRaw.step || 0;
+    const currentAction = step < seq.length ? seq[step] : null;
+    if (!currentAction) return false;
+    return Number(currentAction[1]) === mpDraftRaw._mySide;
+  }, [mpDraftRaw]);
+
+  const handleMpDraftAction = useCallback(async (champion) => {
+    if (!state?.active_draft) return;
+    await post("/draft/action", { token, match_id: state.active_draft.id, champion });
+  }, [post, state?.active_draft, token]);
 
   // ── Returns conditionnels APRÈS les hooks ─────────────────────────────────
   if (!state) {
