@@ -27,6 +27,15 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
   const mountedRef = useRef(true);
   const mpCompletedRef = useRef(false);
 
+  // Mode MP : détecter fin de draft via mpDraftState.completed
+  useEffect(() => {
+    if (!onMpAction || !mpDraftState?.completed || mpCompletedRef.current) return;
+    mpCompletedRef.current = true;
+    completeTimeoutRef.current = setTimeout(() => {
+      if (mountedRef.current && onComplete) onComplete(mpDraftState);
+    }, 1200);
+  }, [onMpAction, mpDraftState, onComplete]);
+
   useEffect(() => {
     mountedRef.current = true;
     const controller = new AbortController();
