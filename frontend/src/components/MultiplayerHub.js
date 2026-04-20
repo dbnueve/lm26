@@ -94,6 +94,12 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
     return res;
   };
 
+  // "Jouer le match" en MP = marquer prêt → advance_week → draft démarre si HvH
+  const handlePlayMatch = async () => {
+    if (myPlayer?.ready) return; // déjà prêt
+    await post("/ready", { token });
+  };
+
   const MP_PAGES = ["dashboard", "roster", "standings", "schedule", "training", "playoffs"];
 
   // ── Rendu principal (même layout que le solo) ──────────────────────────────
