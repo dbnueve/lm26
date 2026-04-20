@@ -7322,15 +7322,25 @@ async def mp_v2_draft_suggest(session_id: str, token: str, match_id: int):
         # Opponent team id for pool-aware bans
         opp_team_id = match["team2"] if my_side == 1 else match["team1"]
 
-        suggestions = _compute_draft_suggestions(
-            action_type=action_type,
-            step=step,
-            my_picks=my_picks,
-            enemy_picks=enemy_picks,
-            unavailable=unavailable,
-            needed=needed,
-            opp_id=opp_team_id,
-        )
+        # Swap GAME_STATE so pool/team lookups read MP session data, not solo state.
+        gs = _mp_db.load_game_state(session_id) or {}
+        _orig_teams = GAME_STATE.get("teams")
+        _orig_players = GAME_STATE.get("players")
+        try:
+            GAME_STATE["teams"] = gs.get("teams", {}) or {}
+            GAME_STATE["players"] = gs.get("players", {}) or {}
+            suggestions = _compute_draft_suggestions(
+                action_type=action_type,
+                step=step,
+                my_picks=my_picks,
+                enemy_picks=enemy_picks,
+                unavailable=unavailable,
+                needed=needed,
+                opp_id=opp_team_id,
+            )
+        finally:
+            GAME_STATE["teams"] = _orig_teams
+            GAME_STATE["players"] = _orig_players
         return {"action": action_type, "step": step, "suggestions": suggestions}
     except HTTPException:
         raise
