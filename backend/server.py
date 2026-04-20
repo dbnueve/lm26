@@ -6926,6 +6926,95 @@ def _mp_simulate(team1_id: str, team2_id: str, gs: dict,
     return simulate_match_phases(p1, p2)
 
 
+def _mp_simulate_detailed(team1_id: str, team2_id: str, gs: dict,
+                          user_team_id: str | None,
+                          user_draft: dict | None) -> dict:
+    """
+    Solo-style detailed simulation for a multiplayer match.
+    Produces a result dict including `match_details` (team1_stats, team2_stats,
+    events, gold_timeline, phases) so the frontend can render MatchTimeline /
+    MatchResultScoreboard exactly like in solo.
+
+    `user_draft` is the draft dict from the frontend:
+       { picks: [str], bans: [str], enemy_picks: [str], enemy_bans: [str] }
+    The user_draft picks apply to `user_team_id`; the opposite team gets
+    auto-generated picks/bans based on meta.
+    """
+    _orig_teams = GAME_STATE.get("teams")
+    _orig_players = GAME_STATE.get("players")
+    try:
+        GAME_STATE["teams"] = gs.get("teams", {})
+        GAME_STATE["players"] = gs.get("players", {})
+
+        # Draft advantage for the user side only
+        user_adv = 0.0
+        if user_draft and user_team_id in (team1_id, team2_id):
+            opponent_id = team2_id if team1_id == user_team_id else team1_id
+            user_adv = calculate_draft_advantage(user_draft, user_team_id, opponent_id)
+
+        t1_power = calculate_team_power(
+            team1_id,
+            user_adv if team1_id == user_team_id else 0,
+            apply_tactics=team1_id == user_team_id,
+        )
+        t2_power = calculate_team_power(
+            team2_id,
+            user_adv if team2_id == user_team_id else 0,
+            apply_tactics=team2_id == user_team_id,
+        )
+
+        result = simulate_match_phases(t1_power, t2_power)
+
+        # Per-team picks (user_draft applies to user side; other team = enemy_picks or auto)
+        user_picks = (user_draft or {}).get("picks", []) or []
+        enemy_picks = (user_draft or {}).get("enemy_picks", []) or []
+
+        def picks_for(team_id: str) -> list:
+            if team_id == user_team_id:
+                return user_picks
+            return enemy_picks  # opposite side
+
+        k1, k2 = generate_kill_totals(result["duration"], result["winner"] == 1)
+        team1_stats = generate_player_stats(
+            team1_id, result["winner"] == 1, result["duration"], k1, k2,
+            picks_for(team1_id),
+        )
+        team1_champs = {p["champion"] for p in team1_stats if p.get("champion")}
+        team2_stats = generate_player_stats(
+            team2_id, result["winner"] == 2, result["duration"], k2, k1,
+            picks_for(team2_id), excluded=team1_champs,
+        )
+
+        user_bans = (user_draft or {}).get("bans", []) or []
+        enemy_bans = (user_draft or {}).get("enemy_bans", []) or []
+        all_bans = user_bans + enemy_bans
+
+        detailed_events, gold_timeline = generate_detailed_events(
+            phases=result.get("phases", []),
+            team1_stats=team1_stats, team2_stats=team2_stats,
+            duration=result.get("duration", 30),
+            winner=result.get("winner", 1),
+            base_events=result.get("events", []),
+        )
+        result = {**result, "events": detailed_events, "gold_timeline": gold_timeline}
+        result["match_details"] = {
+            **result,
+            "team1_stats": team1_stats,
+            "team2_stats": team2_stats,
+            "bans": all_bans,
+        }
+        return result
+    finally:
+        GAME_STATE["teams"] = _orig_teams
+        GAME_STATE["players"] = _orig_players
+
+
+# Let mp_logic sim remaining AI-vs-AI matches via the plain _mp_simulate while
+# using the detailed path for the human's vs-IA match. Attached as attribute
+# so mp_logic.play_ia_match can reach it without importing server.py.
+_mp_simulate_detailed._plain_sim = _mp_simulate  # type: ignore[attr-defined]
+
+
 # ── REST endpoints (v2) ────────────────────────────────────────────────────────
 
 class _MpV2CreateBody(BaseModel):
