@@ -7321,14 +7321,32 @@ async def mp_websocket(websocket: WebSocket, session_id: str, token: str):
             "username": player["username"], "side": player["side"]
         }, exclude_token=token)
 
-        # Message loop
+        # Message loop avec heartbeat serveur : si pas de message du client en 30s,
+        # envoie un ping ; 2 timeouts consécutifs sans message → client considéré mort.
+        import asyncio as _asyncio
+        missed_heartbeats = 0
         while True:
-            data = await websocket.receive_json()
+            try:
+                data = await _asyncio.wait_for(websocket.receive_json(), timeout=30.0)
+                missed_heartbeats = 0
+            except _asyncio.TimeoutError:
+                missed_heartbeats += 1
+                if missed_heartbeats >= 2:
+                    logger.info(
+                        f"WS heartbeat timeout session={session_id[:8]} token={token[:8]}"
+                    )
+                    break
+                try:
+                    await _mp_ws.manager.send_ping(session_id, token)
+                except Exception:
+                    break
+                continue
+
             msg_type = data.get("type", "")
-
             if msg_type == "ping":
-                await _mp_ws.manager.send_ping(session_id, token)
-
+                await _mp_ws.manager.send_pong(session_id, token)
+            elif msg_type == "pong":
+                pass  # ack du ping serveur, rien à faire
             elif msg_type == "chat":
                 text = str(data.get("text", ""))[:200]
                 await _mp_ws.manager.broadcast(session_id, "chat", {
