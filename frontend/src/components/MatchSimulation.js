@@ -44,13 +44,17 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
     } : null;
 
     try {
-      const response = await axios.post(API + "/match/simulate", {
-        match_id: match.id,
-        user_draft: userDraft,
-      }, { timeout: 15000 });
+      // onSimulate (used by MP) returns the same shape as /match/simulate.
+      // In solo mode we fall back to the direct endpoint.
+      const data = onSimulate
+        ? await onSimulate(userDraft)
+        : (await axios.post(API + "/match/simulate", {
+            match_id: match.id,
+            user_draft: userDraft,
+          }, { timeout: 15000 })).data;
       timeoutRef.current = setTimeout(() => {
         if (!mountedRef.current) return;
-        setMatchResult(response.data);
+        setMatchResult(data);
         setPhase("timeline");
         setSimulating(false);
         simLockRef.current = false;
