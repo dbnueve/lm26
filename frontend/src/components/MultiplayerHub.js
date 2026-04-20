@@ -159,7 +159,7 @@ export default function MultiplayerHub({ sessionId, token, onExit }) {
             splitStatus={splitStatus}
             phase="regular"
             playoffsData={null}
-            onPlayMatch={null}
+            onPlayMatch={state.active_draft ? null : handlePlayMatch}
             onPlayPlayoffMatch={null}
             onSeasonStart={null}
           />
