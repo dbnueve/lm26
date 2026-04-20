@@ -353,6 +353,24 @@ def set_ready(session_id: str, token: str) -> dict:
         return {"ok": True, "all_ready": all_ready}
 
 
+def reset_ready_flags(session_id: str, token: str) -> dict:
+    """Débloque une session : reset tous les flags ready.
+    Utile si un joueur a quitté ou si un match bloque sans se terminer.
+    Tout joueur participant peut déclencher le reset.
+    """
+    lock = mp_db._get_session_lock(session_id)
+    with lock:
+        session = mp_db.get_session(session_id)
+        if session is None:
+            raise ValueError("Session introuvable")
+        player = mp_db.get_player(session_id, token)
+        if player is None:
+            raise ValueError("Token invalide")
+        mp_db.reset_all_ready(session_id)
+        mp_db.log_event(session_id, "ready_reset", {"username": player["username"]})
+        return {"ok": True}
+
+
 def advance_week(session_id: str, simulate_fn: Callable) -> dict:
     """
     Simulate all AI vs AI matches for current week.
