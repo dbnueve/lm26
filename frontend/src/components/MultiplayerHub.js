@@ -10,6 +10,7 @@ import StandingsPage from "./StandingsPage";
 import SchedulePage from "./SchedulePage";
 import TrainingPage from "./TrainingPage";
 import TeamLogo from "./TeamLogo";
+import DraftSystem from "./DraftSystem";
 
 /**
  * MultiplayerHub — même interface que le mode solo.
