@@ -170,14 +170,16 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions }) 
           </div>
         )}
 
-        {/* Draft active — s'affiche au-dessus du contenu quelle que soit la page */}
-        {state.active_draft && (
-          <MpDraftBanner
-            draft={state.active_draft}
-            myTeamId={myTeamId}
-            sessionId={sessionId}
-            token={token}
-            post={post}
+        {/* Draft active — plein écran comme en solo */}
+        {state.active_draft && mpDraftRaw && !mpDraftRaw.completed && (
+          <DraftSystem
+            champions={champions || {}}
+            onComplete={() => {/* la WS met à jour state.active_draft */}}
+            onCancel={null}
+            onMpAction={handleMpDraftAction}
+            mpDraftState={mpDraftRaw}
+            mpMyTurn={mpMyTurn}
+            mpLabel={`Draft — ${mpDraftRaw._team1?.toUpperCase()} vs ${mpDraftRaw._team2?.toUpperCase()}${!mpDraftRaw._mySide ? " (spectateur)" : ""}`}
           />
         )}
 
