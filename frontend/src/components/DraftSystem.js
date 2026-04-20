@@ -136,7 +136,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
   };
 
   const isFearless = (champion) => {
-    if (!draftState?.fearless_excluded) return false;
+    if (!normalizedDraftState?.fearless_excluded) return false;
     return draftState.fearless_excluded.includes(champion);
   };
 
@@ -242,14 +242,14 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
               Phase de Draft - {isBanPhase ? "BANS" : "PICKS"}
             </h2>
             <div style={{ fontSize: 12, color: "var(--text-2)" }}>
-              Tour {(draftState?.step ?? 0) + 1}/20 —{" "}
-              <span style={{ color: draftState?.current_turn === "user" ? "var(--accent)" : "var(--danger)", fontWeight: 600 }}>
-                {draftState?.current_turn === "user" ? "Votre tour" : "Tour adversaire"}
+              Tour {(normalizedDraftState?.step ?? 0) + 1}/20 —{" "}
+              <span style={{ color: normalizedDraftState?.current_turn === "user" ? "var(--accent)" : "var(--danger)", fontWeight: 600 }}>
+                {normalizedDraftState?.current_turn === "user" ? "Votre tour" : "Tour adversaire"}
               </span>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {selectedChampion && draftState?.current_turn === "user" && (
+            {selectedChampion && normalizedDraftState?.current_turn === "user" && (
               <button
                 className="btn-primary"
                 onClick={() => performAction(isBanPhase ? "ban" : "pick", selectedChampion, selectedPosition)}
@@ -277,7 +277,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>BANS</div>
               {[0, 1, 2, 3, 4].map(i => {
-                const name = draftState?.user_bans[i];
+                const name = normalizedDraftState?.user_bans[i];
                 return (
                   <div key={i} style={{
                     background: name ? "rgba(255,51,102,0.2)" : "var(--surface-1)",
@@ -294,7 +294,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
             <div>
               <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>PICKS</div>
               {[0, 1, 2, 3, 4].map(i => {
-                const pick = draftState?.user_picks[i];
+                const pick = normalizedDraftState?.user_picks[i];
                 const name = pick?.champion;
                 return (
                   <div key={i} style={{
@@ -332,7 +332,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
               </div>
             </div>
             {/* Suggestions bar — delta-scored by backend */}
-            {suggestions.length > 0 && draftState?.current_turn === "user" && (
+            {suggestions.length > 0 && normalizedDraftState?.current_turn === "user" && (
               <div style={{ marginBottom: 10, padding: "8px 10px", background: "rgba(255,184,0,0.06)", border: "1px solid rgba(255,184,0,0.22)", borderRadius: 4 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--amber)", marginBottom: 6 }}>
                   {isBanPhase ? "⚡ À bannir" : "✦ Meilleurs picks"}
@@ -497,7 +497,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>BANS</div>
               {[0, 1, 2, 3, 4].map(i => {
-                const name = draftState?.enemy_bans[i];
+                const name = normalizedDraftState?.enemy_bans[i];
                 return (
                   <div key={i} style={{
                     background: name ? "rgba(255,51,102,0.2)" : "var(--surface-1)",
@@ -514,7 +514,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
             <div>
               <div style={{ fontSize: 11, color: "var(--text-2)", marginBottom: 6 }}>PICKS</div>
               {[0, 1, 2, 3, 4].map(i => {
-                const pick = draftState?.enemy_picks[i];
+                const pick = normalizedDraftState?.enemy_picks[i];
                 const name = pick?.champion;
                 return (
                   <div key={i} style={{
