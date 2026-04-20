@@ -362,6 +362,7 @@ function App() {
             sessionId={multiplayerSession.sessionId}
             token={multiplayerSession.token}
             onExit={() => setMpSession(null)}
+            champions={champions}
           />
         )}
       </div>
