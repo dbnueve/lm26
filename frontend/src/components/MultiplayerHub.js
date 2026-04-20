@@ -19,7 +19,7 @@ import DraftSystem from "./DraftSystem";
  * Vues disponibles : dashboard, roster, standings, schedule, training, chat
  * Vues MP-only : ready panel (dans dashboard), draft active, joueurs connectés
  */
-export default function MultiplayerHub({ sessionId, token, onExit }) {
+export default function MultiplayerHub({ sessionId, token, onExit, champions }) {
   const { state, connected, error: wsError } = useMultiplayerSocket(sessionId, token);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [loading, setLoading] = useState(false);
