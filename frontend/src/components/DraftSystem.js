@@ -128,16 +128,16 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
   }, [champions]);
 
   const isUnavailable = (champion) => {
-    if (!draftState) return false;
-    if (draftState.banned_champions.includes(champion)) return true;
-    if (draftState.user_picked_champions.includes(champion)) return true;
-    if (draftState.enemy_picked_champions.includes(champion)) return true;
+    if (!normalizedDraftState) return false;
+    if (normalizedDraftState.banned_champions.includes(champion)) return true;
+    if (normalizedDraftState.user_picked_champions.includes(champion)) return true;
+    if (normalizedDraftState.enemy_picked_champions.includes(champion)) return true;
     return false;
   };
 
   const isFearless = (champion) => {
     if (!normalizedDraftState?.fearless_excluded) return false;
-    return draftState.fearless_excluded.includes(champion);
+    return normalizedDraftState.fearless_excluded.includes(champion);
   };
 
   // En mode MP, l'état vient de mpDraftState (WS) ; en solo, de l'état local
