@@ -4728,6 +4728,88 @@ def ai_select_pick(draft: dict, needed_positions: list):
     return top[0][0], top[0][1]
 
 
+def _compute_draft_suggestions(
+    action_type: str,
+    step: int,
+    my_picks: list,
+    enemy_picks: list,
+    unavailable: set,
+    needed: list,
+    opp_id: str | None,
+) -> list:
+    """Shared suggestion logic — usable by solo and MP drafts."""
+    opp_pool     = _get_team_champ_pool(opp_id) if opp_id else set()
+
+    if action_type == "ban":
+        enemy_needed = set(needed)
+        opp_pool_by_pos = _get_team_champ_pool_by_pos(opp_id) if opp_id else {}
+
+        candidates = []
+        for name, meta in META_LOOKUP.items():
+            if name in unavailable:
+                continue
+            tier     = meta.get("tier", "C")
+            presence = meta.get("presence", 0.0)
+            wr       = meta.get("winrate", 50.0)
+            weight   = presence * 0.4 + wr * 0.2
+            weight  += {"S": 18, "A": 9, "B": 3, "C": 0}.get(tier, 0)
+            in_pool  = name in opp_pool
+
+            pool_pos = next((pos for pos, champs in opp_pool_by_pos.items() if name in champs), None)
+            fills_needed = pool_pos in enemy_needed if pool_pos else False
+
+            if fills_needed:
+                weight += 12
+            if fills_needed and in_pool:
+                weight += 18
+            elif in_pool:
+                weight += 12
+
+            parts = []
+            if tier == "S": parts.append("S-tier")
+            if in_pool and pool_pos:
+                parts.append(f"pool {pool_pos} adverse")
+            elif in_pool:
+                parts.append("dans le pool adverse")
+            if wr > 58: parts.append(f"{wr:.0f}% WR")
+            candidates.append({
+                "champion": name, "position": pool_pos or meta.get("position", ""),
+                "score": round(weight, 1),
+                "reason": " · ".join(parts) or "Forte présence méta",
+            })
+        candidates.sort(key=lambda x: -x["score"])
+        return candidates[:5]
+
+    # pick
+    candidates = []
+    for pos in needed:
+        for champ in get_meta_champions().get(pos, []):
+            name = champ["name"]
+            if name in unavailable:
+                continue
+            score      = delta_analyzer(name, pos, my_picks, enemy_picks, needed, step)
+            comp_gain  = comp_score(my_picks + [{"champion": name, "position": pos}]) - comp_score(my_picks)
+            countered  = COUNTER_MAP.get(name, set()) & {p.get("champion","") for p in enemy_picks if isinstance(p, dict)}
+            tier       = META_LOOKUP.get(name, {}).get("tier", "C")
+            parts      = []
+            if tier == "S":      parts.append("S-tier")
+            if countered:        parts.append(f"Counter {', '.join(countered)}")
+            if comp_gain > 6:    parts.append("Renforce la compo")
+            my_names = {p.get("champion","") for p in my_picks if isinstance(p, dict)}
+            syn_champs = {nm for pair, _ in SYNERGY_PAIRS
+                          for nm in pair if name in pair
+                          and (pair - {name}).issubset(my_names)}
+            if syn_champs:
+                parts.append(f"Synergie {', '.join(syn_champs)}")
+            candidates.append({
+                "champion": name, "position": pos,
+                "score": round(score, 1), "comp_gain": round(comp_gain, 1),
+                "reason": " · ".join(parts) or "Bon pick",
+            })
+    candidates.sort(key=lambda x: -x["score"])
+    return candidates[:6]
+
+
 @api_router.get("/draft/suggest")
 async def draft_suggest():
     """
