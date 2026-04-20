@@ -79,6 +79,19 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
 
   const fetchSuggestions = async () => {
     try {
+      // MP path — read suggestions from the session's draft state.
+      if (onMpAction && mpSessionId && mpMatchId && mpToken) {
+        const res = await axios.get(`${API}/mp/${mpSessionId}/draft/suggest`, {
+          params: { token: mpToken, match_id: mpMatchId },
+        });
+        if (res.data.action && !["enemy_turn", "spectator"].includes(res.data.action)) {
+          setApiSuggestions(res.data.suggestions || []);
+        } else {
+          setApiSuggestions([]);
+        }
+        return;
+      }
+      // Solo path
       const res = await axios.get(API + "/draft/suggest");
       if (res.data.action && res.data.action !== "enemy_turn") {
         setApiSuggestions(res.data.suggestions || []);
@@ -89,6 +102,17 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
       setApiSuggestions([]);
     }
   };
+
+  // MP mode — refresh suggestions whenever it's our turn (triggered by WS step change).
+  useEffect(() => {
+    if (!onMpAction) return;
+    if (mpMyTurn) {
+      fetchSuggestions();
+    } else {
+      setApiSuggestions([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onMpAction, mpMyTurn, mpDraftState?.step]);
 
   const performAction = async (action, champion, position = null) => {
     // Mode MP : délègue à onMpAction, l'état arrive par WS
