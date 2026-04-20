@@ -163,9 +163,9 @@ const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, playoffs
                     <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 4 }}>{opp?.abbr || oppId}</div>
                   </div>
                 </div>
-                <button className="btn-primary" style={{ width: "100%" }} onClick={() => onPlayMatch(nextRegularMatch)} data-testid="play-match-btn">
+                <button className="btn-primary" style={{ width: "100%", opacity: playMatchDisabled ? 0.6 : 1 }} onClick={() => !playMatchDisabled && onPlayMatch(nextRegularMatch)} disabled={playMatchDisabled} data-testid="play-match-btn">
                   <GameController size={16} style={{ marginRight: 6 }} />
-                  Jouer le match
+                  {playMatchLabel || "Jouer le match"}
                 </button>
               </div>
             );
