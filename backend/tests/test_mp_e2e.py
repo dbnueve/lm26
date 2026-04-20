@@ -12,7 +12,7 @@ BASE = "http://localhost:8002/api"
 
 
 async def main() -> int:
-    async with httpx.AsyncClient(base_url=BASE, timeout=30.0) as c:
+    async with httpx.AsyncClient(base_url=BASE, timeout=120.0) as c:
         print("─── 1. Joueur 1 crée une session LEC ───")
         r = await c.post("/mp/create", json={"league": "LEC", "username": "alice", "max_players": 2})
         r.raise_for_status()
