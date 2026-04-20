@@ -108,9 +108,12 @@ async def main() -> int:
 
             # Pas de draft → les 2 joueurs marquent ready
             r1 = await c.post(f"/mp/{session_id}/ready", json={"token": token_a})
+            if r1.status_code != 200:
+                print(f"   ERROR ready alice: {r1.status_code} {r1.text[:200]}")
+                return 1
             r2 = await c.post(f"/mp/{session_id}/ready", json={"token": token_b})
             if r2.status_code != 200:
-                print(f"   ERROR ready: {r2.status_code} {r2.text[:200]}")
+                print(f"   ERROR ready bob: {r2.status_code} {r2.text[:200]}")
                 return 1
             weeks_played += 1
             data = r2.json()
