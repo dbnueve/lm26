@@ -87,6 +87,7 @@ async def main() -> int:
                 match_team1, match_team2 = d["team1"], d["team2"]
                 token_side1 = token_a if match_team1 == team_a_id else token_b
                 token_side2 = token_a if match_team2 == team_a_id else token_b
+                print(f"      draft match: {match_team1}(side1) vs {match_team2}(side2), step={step}")
                 # On pick des champions uniques (C0, C1, ...) pour chaque action
                 champion_pool = [f"Champ{k}" for k in range(20)]
                 used = set()
