@@ -397,21 +397,11 @@ function MpStatusBar({ state, connected, loading, onReady, me }) {
         ))}
       </div>
 
-      {/* Semaine + bouton prêt */}
+      {/* Semaine */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ color: "var(--text-2)" }}>Semaine {state.week}</span>
-        {state.phase === "regular" && !me?.ready && (
-          <button
-            className="btn-primary"
-            style={{ padding: "6px 14px", fontSize: 13 }}
-            onClick={onReady}
-            disabled={loading}
-          >
-            {loading ? "…" : "Prêt"}
-          </button>
-        )}
-        {me?.ready && (
-          <span style={{ color: "var(--success)", fontSize: 13 }}>En attente des autres…</span>
+        {state.active_draft && (
+          <span style={{ color: "#a78bfa", fontSize: 12, fontWeight: 700 }}>DRAFT EN COURS</span>
         )}
       </div>
     </div>
