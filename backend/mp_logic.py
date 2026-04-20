@@ -81,10 +81,12 @@ def join_session(code: str, username: str) -> dict:
     if n >= session["max_players"]:
         raise ValueError(f"Session complète ({session['max_players']} joueurs max)")
 
-    # Prevent duplicate username
-    existing = {p["username"] for p in mp_db.get_players(session["id"])}
-    if username in existing:
-        raise ValueError(f"Le pseudo '{username}' est déjà pris")
+    # Si le pseudo existe déjà → reconnecter avec le token existant (même joueur qui refreshe)
+    players = mp_db.get_players(session["id"])
+    for p in players:
+        if p["username"] == username:
+            logger.info(f"'{username}' reconnecté à session {session['id'][:8]}")
+            return {"session_id": session["id"], "token": p["token"], "league": session["league"]}
 
     token = str(uuid.uuid4())
     side = mp_db.get_next_side(session["id"])
