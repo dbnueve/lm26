@@ -81,6 +81,13 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
   };
 
   const performAction = async (action, champion, position = null) => {
+    // Mode MP : délègue à onMpAction, l'état arrive par WS
+    if (onMpAction) {
+      setSelectedChampion(null);
+      setSelectedPosition(null);
+      await onMpAction(champion, action);
+      return;
+    }
     try {
       const url = API + "/draft/action";
       const response = await axios.post(url, {
