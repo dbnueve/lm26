@@ -63,12 +63,11 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions }) 
     try {
       const d = state.active_draft;
       const ds = typeof d.draft_json === "string" ? JSON.parse(d.draft_json) : (d.draft_json || {});
-      let mySide = null;
-      if (d.team1 === myTeamId) mySide = 1;
-      else if (d.team2 === myTeamId) mySide = 2;
+      // my_draft_side vient du backend (1 si team1, 2 si team2, null si spectateur)
+      const mySide = d.my_draft_side ?? null;
       return { ...ds, _mySide: mySide, _team1: d.team1, _team2: d.team2, _matchId: d.id };
     } catch { return null; }
-  }, [state?.active_draft, myTeamId]);
+  }, [state?.active_draft]);
 
   const mpMyTurn = useMemo(() => {
     if (!mpDraftRaw) return false;
