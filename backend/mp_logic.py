@@ -446,6 +446,106 @@ def advance_week(session_id: str, simulate_fn: Callable) -> dict:
         }
 
 
+def play_ia_match(session_id: str, token: str, user_draft: dict | None,
+                  simulate_detailed_fn: Callable) -> dict:
+    """
+    Play the current-week match where the caller faces an AI opponent,
+    using the same detailed simulation path as solo (draft + timeline).
+
+    `simulate_detailed_fn(team1_id, team2_id, gs, user_team_id, user_draft)`
+    must return a result dict that includes `match_details` (team stats,
+    events, gold_timeline, phases) — shaped like solo `/match/simulate`.
+
+    After the user's match is saved, remaining AI-vs-AI matches of the week
+    are auto-simulated and the week advances if no human-vs-human draft is
+    pending.
+    """
+    lock = mp_db._get_session_lock(session_id)
+    with lock:
+        session = mp_db.get_session(session_id)
+        if session is None:
+            raise ValueError("Session introuvable")
+        if session["phase"] != "regular":
+            raise ValueError("Pas en phase régulière")
+
+        player = mp_db.get_player(session_id, token)
+        if player is None:
+            raise ValueError("Token invalide")
+        my_team = player.get("team_id")
+        if not my_team:
+            raise ValueError("Équipe non assignée")
+
+        week = session["current_week"]
+        week_matches = mp_db.get_week_matches(session_id, week)
+
+        my_match = next(
+            (m for m in week_matches
+             if (m["team1"] == my_team or m["team2"] == my_team)
+             and not m["is_human_vs_human"]
+             and m["result_json"] is None),
+            None,
+        )
+        if my_match is None:
+            raise ValueError("Aucun match vs IA cette semaine")
+
+        gs = mp_db.load_game_state(session_id) or {}
+        t1, t2 = my_match["team1"], my_match["team2"]
+
+        # Detailed simulation (includes match_details for timeline UI)
+        result = simulate_detailed_fn(t1, t2, gs, my_team, user_draft)
+
+        _apply_match_result(session_id, my_match["id"], t1, t2, result, gs,
+                            draft=user_draft)
+
+        # Auto-simulate remaining AI-vs-AI matches of this week and check HvH pending
+        pending_drafts = []
+        from importlib import import_module as _im  # avoid circular at module load
+        # Reuse the simple simulate function by importing the symbol lazily
+        # (server.py passes us the callable — keep it injectable for tests)
+        # Here we use a second callable only for plain AI-vs-AI sim.
+        # Caller passes it via simulate_detailed_fn by setting a `_plain_sim`
+        # attribute; otherwise fall back to copying the detailed one.
+        plain_sim = getattr(simulate_detailed_fn, "_plain_sim", None)
+        for m in week_matches:
+            if m["id"] == my_match["id"]:
+                continue
+            if m["result_json"] is not None:
+                continue
+            if m["is_human_vs_human"]:
+                pending_drafts.append({
+                    "match_id": m["id"], "team1": m["team1"],
+                    "team2": m["team2"], "week": week,
+                })
+                continue
+            if plain_sim is not None:
+                r = plain_sim(m["team1"], m["team2"], gs, [], [])
+            else:
+                r = simulate_detailed_fn(m["team1"], m["team2"], gs, None, None)
+            _apply_match_result(session_id, m["id"], m["team1"], m["team2"],
+                                r, gs, draft=None)
+
+        mp_db.save_game_state(session_id, gs)
+
+        mp_db.set_player_ready(session_id, token, True)
+
+        # Advance week if no HvH draft is pending and no unplayed matches
+        all_week_matches_now = mp_db.get_week_matches(session_id, week)
+        incomplete = [mm for mm in all_week_matches_now if mm["result_json"] is None]
+        if not incomplete and not pending_drafts:
+            _finalize_week(session_id, session, gs)
+
+        mp_db.log_event(session_id, "ia_match_played", {
+            "match_id": my_match["id"], "winner": result.get("winner"),
+        })
+
+        return {
+            "match_id": my_match["id"],
+            "result": result,
+            "pending_drafts": pending_drafts,
+            "week": week,
+        }
+
+
 def _apply_match_result(session_id: str, match_id: int,
                         team1: str, team2: str,
                         result: dict, gs: dict,
