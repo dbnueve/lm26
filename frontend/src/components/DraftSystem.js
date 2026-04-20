@@ -15,7 +15,7 @@ import { _ddVersion, toDDragonKey, setDdVersion } from "./ddHelpers";
  *           passer mpMyTurn (bool) → indique si c'est notre tour.
  *           passer mpLabel → label affiché dans le header.
  */
-const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpDraftState, mpMyTurn, mpLabel }) => {
+const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpDraftState, mpMyTurn, mpLabel, mpSessionId, mpMatchId, mpToken }) => {
   const [draftState, setDraftState] = useState(null);
   const [selectedChampion, setSelectedChampion] = useState(null);
   const [selectedPosition, setSelectedPosition] = useState(null);
