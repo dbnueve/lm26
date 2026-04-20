@@ -66,8 +66,10 @@ async def main() -> int:
             r = await c.get(f"/mp/{session_id}/state", params={"token": token_a})
             st = r.json()
             phase = st["phase"]
+            if i == 0:
+                print(f"   iter0 phase={phase} week={st['week']} players_ready={[p['ready'] for p in st['players']]}")
             if phase != "regular":
-                print(f"   fin boucle regular: phase={phase}")
+                print(f"   iter{i}: sortie boucle, phase={phase}")
                 break
 
             # Si un draft humain vs humain est actif, on le résout
