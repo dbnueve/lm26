@@ -45,7 +45,7 @@ const StatRow = ({ label, value, valueColor }) => (
 
 /* ── Dashboard ────────────────────────────────────────────── */
 
-const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, playoffsData, onPlayMatch, onPlayPlayoffMatch, onSeasonStart }) => {
+const Dashboard = ({ userTeam, schedule, standings, splitStatus, phase, playoffsData, onPlayMatch, onPlayPlayoffMatch, onSeasonStart, playMatchLabel, playMatchDisabled }) => {
   const [detailPlayer, setDetailPlayer] = useState(null);
 
   const nextRegularMatch = useMemo(() =>
