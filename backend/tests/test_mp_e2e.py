@@ -100,7 +100,7 @@ async def main() -> int:
                 seq = raw["sequence"] if raw else []
                 while step < len(seq):
                     action_type, expected_side = seq[step]
-                    tok = token_a if int(expected_side) == 1 else token_b
+                    tok = token_side1 if int(expected_side) == 1 else token_side2
                     champ = available.pop(0)
                     rr = await c.post(
                         f"/mp/{session_id}/draft/action",
