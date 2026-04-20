@@ -7023,6 +7023,17 @@ async def mp_v2_draft(session_id: str, body: _MpV2DraftBody):
         raise HTTPException(400, str(e))
 
 
+@api_router.post("/mp/{session_id}/reset-ready")
+async def mp_v2_reset_ready(session_id: str, body: _MpV2ReadyBody):
+    """Déblocage manuel : reset les flags ready de tous les joueurs."""
+    try:
+        result = _mp_logic.reset_ready_flags(session_id, body.token)
+        await _mp_broadcast_state(session_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @api_router.post("/mp/{session_id}/roster/swap")
 async def mp_v2_roster_swap(session_id: str, body: _MpV2RosterSwapBody):
     try:
