@@ -4533,10 +4533,29 @@ def calculate_draft_advantage(user_draft: dict, user_team_id: str, opponent_team
 
     advantage = 0.0
 
+    # ── 0. Normalise inputs ────────────────────────────────────────────────
+    # Picks can arrive as either [{"champion": "x", "position": "y"}] or plain ["x", "y"]
+    # (some MP payloads strip the position). Accept both.
+    def _pick_name(p) -> str:
+        if isinstance(p, dict):
+            return p.get("champion", "") or ""
+        return str(p) if p else ""
+
+    def _pick_pos(p) -> str | None:
+        if isinstance(p, dict):
+            return p.get("position")
+        return None
+
+    def _ban_name(b) -> str:
+        if isinstance(b, dict):
+            return b.get("champion", "") or ""
+        return str(b) if b else ""
+
     # ── 1. Compositional delta ─────────────────────────────────────────────
-    user_picks  = user_draft.get("picks", [])
+    user_picks  = user_draft.get("picks", []) or []
     draft_state = GAME_STATE.get("draft_state") or {}
-    enemy_picks = draft_state.get("enemy_picks", [])
+    # Prefer enemy_picks from the payload (MP provides it); fall back to solo GAME_STATE.
+    enemy_picks = user_draft.get("enemy_picks") or draft_state.get("enemy_picks", [])
 
     user_comp_sc  = comp_score(user_picks)
     enemy_comp_sc = comp_score(enemy_picks)
@@ -4544,7 +4563,7 @@ def calculate_draft_advantage(user_draft: dict, user_team_id: str, opponent_team
 
     # ── 2. Pick quality (WR bonus) ─────────────────────────────────────────
     for pick in user_picks:
-        meta = META_LOOKUP.get(pick.get("champion", ""), {})
+        meta = META_LOOKUP.get(_pick_name(pick), {})
         if meta.get("winrate", 0) > 55:
             advantage += 0.4
         elif meta.get("winrate", 0) < 45:
@@ -4559,13 +4578,19 @@ def calculate_draft_advantage(user_draft: dict, user_team_id: str, opponent_team
             starters_by_pos[p["position"]] = p
 
     for pick in user_picks:
-        player = starters_by_pos.get(pick.get("position"))
-        if player and pick.get("champion") in player.get("champion_pool", []):
+        pos = _pick_pos(pick)
+        if pos is None:
+            continue
+        player = starters_by_pos.get(pos)
+        if player and _pick_name(pick) in player.get("champion_pool", []):
             advantage += 1.0
 
     # ── 4. Ban value ───────────────────────────────────────────────────────
     opponent_pool = _get_team_champ_pool(opponent_team_id)
-    for ban in user_draft.get("bans", []):
+    for ban_raw in (user_draft.get("bans", []) or []):
+        ban = _ban_name(ban_raw)
+        if not ban:
+            continue
         meta = META_LOOKUP.get(ban, {})
         tier = meta.get("tier", "C")
         if tier == "S" and ban in opponent_pool:
