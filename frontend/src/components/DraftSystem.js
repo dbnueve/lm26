@@ -259,12 +259,18 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {selectedChampion && normalizedDraftState?.current_turn === "user" && (
+            {selectedChampion && (
               <button
                 className="btn-primary"
                 onClick={() => performAction(isBanPhase ? "ban" : "pick", selectedChampion, selectedPosition)}
+                disabled={normalizedDraftState?.current_turn !== "user"}
                 data-testid="confirm-draft-action"
-                style={{ padding: "12px 24px" }}
+                style={{
+                  padding: "12px 24px",
+                  opacity: normalizedDraftState?.current_turn === "user" ? 1 : 0.5,
+                  cursor: normalizedDraftState?.current_turn === "user" ? "pointer" : "not-allowed",
+                }}
+                title={normalizedDraftState?.current_turn === "user" ? "" : "Ce n'est pas votre tour"}
               >
                 {isBanPhase ? "Bannir" : "Pick"} {selectedChampion}
               </button>
