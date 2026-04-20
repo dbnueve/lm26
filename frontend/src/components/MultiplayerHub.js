@@ -363,7 +363,7 @@ function MpNavigation({ currentPage, setCurrentPage, userTeam, onExit, connected
 }
 
 // ── Bandeau statut MP ──────────────────────────────────────────────────────────
-function MpStatusBar({ state, connected, loading, onReady, me }) {
+function MpStatusBar({ state, connected, me }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
