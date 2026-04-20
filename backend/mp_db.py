@@ -24,15 +24,17 @@ logger = logging.getLogger(__name__)
 
 DB_PATH = Path(__file__).parent / "multiplayer.db"
 
-# Per-session write locks — prevents concurrent writes corrupting a session
-_session_locks: dict[str, threading.Lock] = {}
+# Per-session write locks — prevents concurrent writes corrupting a session.
+# Use RLock so that functions already holding the lock (e.g. advance_week →
+# _finalize_week → mp_start_playoffs) can safely re-acquire it without deadlock.
+_session_locks: dict[str, threading.RLock] = {}
 _locks_mu = threading.Lock()
 
 
-def _get_session_lock(session_id: str) -> threading.Lock:
+def _get_session_lock(session_id: str) -> threading.RLock:
     with _locks_mu:
         if session_id not in _session_locks:
-            _session_locks[session_id] = threading.Lock()
+            _session_locks[session_id] = threading.RLock()
         return _session_locks[session_id]
 
 
