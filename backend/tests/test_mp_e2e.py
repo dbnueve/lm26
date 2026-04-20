@@ -72,14 +72,16 @@ async def main() -> int:
                 print(f"   iter{i}: sortie boucle, phase={phase}")
                 break
 
-            print(f"   iter{i}: active_draft={st.get('active_draft') is not None}, week={st['week']}")
+            active = st.get("active_draft")
+            draft_ready = active and active.get("draft_json") is not None
+            print(f"   iter{i}: active_draft={active is not None} draft_ready={draft_ready} week={st['week']}")
 
-            # Si un draft humain vs humain est actif, on le résout
-            if st.get("active_draft"):
-                d = st["active_draft"]
+            # Si un draft H vs H est actif ET initialisé → le résoudre
+            if draft_ready:
+                d = active
                 match_id = d["id"]
-                raw = json.loads(d["draft_json"]) if d.get("draft_json") else None
-                step = raw["step"] if raw else 0
+                raw = json.loads(d["draft_json"])
+                step = raw["step"]
                 # On pick des champions uniques (C0, C1, ...) pour chaque action
                 champion_pool = [f"Champ{k}" for k in range(20)]
                 used = set()
