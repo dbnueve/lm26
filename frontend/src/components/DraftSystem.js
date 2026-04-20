@@ -140,7 +140,43 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
     return draftState.fearless_excluded.includes(champion);
   };
 
-  const currentPhase = draftState?.phase || "loading";
+  // En mode MP, l'état vient de mpDraftState (WS) ; en solo, de l'état local
+  const activeDraftState = onMpAction ? mpDraftState : draftState;
+
+  // Convertir mpDraftState (format MP) vers le format solo attendu par le rendu
+  const normalizedDraftState = (() => {
+    if (!onMpAction) return activeDraftState;
+    if (!mpDraftState) return null;
+    // mpDraftState a : bans[1/2], picks[1/2], sequence, step, completed
+    // On détermine notre side à partir de mpMyTurn et sequence
+    const seq = mpDraftState.sequence || [];
+    const step = mpDraftState.step || 0;
+    const currentAction = step < seq.length ? seq[step] : null;
+    const isBan = currentAction?.[0] === "ban";
+    // Reconstituer un état compatible avec le rendu solo
+    // user = notre équipe, enemy = adversaire
+    const myKey = mpDraftState._mySide || 1;
+    const oppKey = myKey === 1 ? 2 : 1;
+    const bansMe = mpDraftState.bans?.[myKey] || mpDraftState.bans?.[String(myKey)] || [];
+    const bansOpp = mpDraftState.bans?.[oppKey] || mpDraftState.bans?.[String(oppKey)] || [];
+    const picksMe = (mpDraftState.picks?.[myKey] || mpDraftState.picks?.[String(myKey)] || []).map(c => ({ champion: c }));
+    const picksOpp = (mpDraftState.picks?.[oppKey] || mpDraftState.picks?.[String(oppKey)] || []).map(c => ({ champion: c }));
+    return {
+      phase: mpDraftState.completed ? "complete" : (isBan ? "ban_phase" : "pick_phase"),
+      step,
+      current_turn: mpMyTurn ? "user" : "enemy",
+      user_bans: bansMe,
+      enemy_bans: bansOpp,
+      user_picks: picksMe,
+      enemy_picks: picksOpp,
+      banned_champions: [...bansMe, ...bansOpp],
+      user_picked_champions: picksMe.map(p => p.champion),
+      enemy_picked_champions: picksOpp.map(p => p.champion),
+      fearless_excluded: [],
+    };
+  })();
+
+  const currentPhase = normalizedDraftState?.phase || "loading";
   const isBanPhase = currentPhase.includes("ban");
 
   const tierColor = (tier) => {
