@@ -11,6 +11,8 @@ import SchedulePage from "./SchedulePage";
 import TrainingPage from "./TrainingPage";
 import TeamLogo from "./TeamLogo";
 import DraftSystem from "./DraftSystem";
+import MatchSimulation from "./MatchSimulation";
+import { AnimatePresence } from "framer-motion";
 
 /**
  * MultiplayerHub — même interface que le mode solo.
