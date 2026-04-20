@@ -7044,6 +7044,11 @@ class _MpV2RosterSwapBody(BaseModel):
     player2_id: str
 
 
+class _MpV2PlayIaBody(BaseModel):
+    token: str
+    user_draft: dict | None = None
+
+
 @api_router.post("/mp/create")
 def mp_v2_create(body: _MpV2CreateBody):
     try:
