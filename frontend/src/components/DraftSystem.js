@@ -6,7 +6,16 @@ import { API } from "../shared";
 import { _ddVersion, toDDragonKey, setDdVersion } from "./ddHelpers";
 
 // Draft System Component
-const DraftSystem = ({ champions, matchId, onComplete, onCancel }) => {
+/**
+ * DraftSystem — utilisable en solo ET en multijoueur.
+ *
+ * Mode solo (défaut) : appelle /draft/start, /draft/suggest, /draft/action.
+ * Mode MP : passer onMpAction(champion, actionType) → gère l'action côté MP.
+ *           passer mpDraftState → état extérieur (mis à jour par WS).
+ *           passer mpMyTurn (bool) → indique si c'est notre tour.
+ *           passer mpLabel → label affiché dans le header.
+ */
+const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpDraftState, mpMyTurn, mpLabel }) => {
   const [draftState, setDraftState] = useState(null);
   const [selectedChampion, setSelectedChampion] = useState(null);
   const [selectedPosition, setSelectedPosition] = useState(null);
