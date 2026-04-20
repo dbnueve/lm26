@@ -6854,9 +6854,6 @@ import mp_websocket as _mp_ws
 from fastapi import WebSocket, WebSocketDisconnect
 import mp_db  # also used by mp_logic
 
-# Legacy file-based multiplayer (kept for backward compat)
-import multiplayer as _mp
-
 
 async def _mp_broadcast_state(session_id: str) -> None:
     """
