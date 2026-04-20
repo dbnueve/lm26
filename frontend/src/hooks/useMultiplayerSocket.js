@@ -15,10 +15,12 @@ const HTTP_BASE = BACKEND_BASE || "";
  * Hook WebSocket pour une session multijoueur avec polling HTTP de fallback.
  *
  * - Tente une connexion WebSocket en priorité
- * - Si le WS échoue ou est déconnecté → polling HTTP toutes les 2.5s
+ * - Si le WS échoue/ferme → polling HTTP toutes les 2.5s
  * - Quand le WS se reconnecte → arrête le polling
+ * - Un seul fetch initial HTTP en parallèle du connect() pour afficher l'état
+ *   rapidement, mais le polling récurrent ne démarre que si le WS échoue.
  *
- * @returns {{ state, connected, wsOk, error, sendMessage, sendChat }}
+ * @returns {{ state, connected, wsOk, error, sendMessage, sendChat, refetch }}
  */
 export function useMultiplayerSocket(sessionId, token) {
   const [state, setState] = useState(null);
@@ -31,6 +33,7 @@ export function useMultiplayerSocket(sessionId, token) {
   const pollTimer = useRef(null);
   const mountedRef = useRef(true);
   const attemptsRef = useRef(0);
+  const abortRef = useRef(null);
 
   // ── HTTP polling fallback ──────────────────────────────────────────────────
   const stopPolling = useCallback(() => {
@@ -42,10 +45,14 @@ export function useMultiplayerSocket(sessionId, token) {
 
   const fetchState = useCallback(async () => {
     if (!sessionId || !token) return;
+    // Annuler toute requête précédente en vol
+    if (abortRef.current) abortRef.current.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
       const res = await axios.get(
         `${HTTP_BASE}/api/mp/${sessionId}/state`,
-        { params: { token }, timeout: 5000 }
+        { params: { token }, timeout: 5000, signal: ctrl.signal }
       );
       if (mountedRef.current) {
         setState(res.data);
@@ -53,9 +60,9 @@ export function useMultiplayerSocket(sessionId, token) {
       }
     } catch (e) {
       if (!mountedRef.current) return;
+      if (axios.isCancel?.(e) || e?.name === "CanceledError") return;
       const status = e?.response?.status;
       if (status === 404 || status === 401) {
-        // Session expirée ou token invalide → nettoyer localStorage
         localStorage.removeItem("mp_session");
         setError("Session expirée. Recrée ou rejoins une partie.");
         stopPolling();
@@ -87,7 +94,7 @@ export function useMultiplayerSocket(sessionId, token) {
         setWsOk(true);
         setError(null);
         attemptsRef.current = 0;
-        stopPolling(); // WS connecté → plus besoin du polling
+        stopPolling();
       };
 
       ws.onmessage = (evt) => {
@@ -96,16 +103,20 @@ export function useMultiplayerSocket(sessionId, token) {
           const msg = JSON.parse(evt.data);
           if (msg.type === "state_update") {
             setState(msg.payload);
+          } else if (msg.type === "ping") {
+            // Le serveur nous teste — répondre par pong pour rester vivants
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ type: "pong" }));
+            }
           }
         } catch {
-          // ignore malformed frames
+          // ignore frames malformées
         }
       };
 
       ws.onerror = () => {
         if (!mountedRef.current) return;
         setWsOk(false);
-        // Démarre le polling en fallback immédiatement
         startPolling();
       };
 
@@ -115,16 +126,16 @@ export function useMultiplayerSocket(sessionId, token) {
         setWsOk(false);
         wsRef.current = null;
 
-        // Polling de secours pendant la reconnexion
         startPolling();
 
-        // Reconnexion exponentielle (max 30s)
-        const delay = Math.min(1000 * 2 ** attemptsRef.current, 30000);
+        // Reconnexion exponentielle avec jitter (évite thundering herd)
+        const base = Math.min(1000 * 2 ** attemptsRef.current, 30000);
+        const jitter = Math.random() * 1000;
+        const delay = base + jitter;
         attemptsRef.current += 1;
         reconnectTimer.current = setTimeout(connect, delay);
       };
     } catch {
-      // WebSocket non supporté ou URL invalide → polling seul
       setWsOk(false);
       startPolling();
     }
@@ -132,9 +143,9 @@ export function useMultiplayerSocket(sessionId, token) {
 
   useEffect(() => {
     mountedRef.current = true;
-    // Démarre le polling immédiatement pour l'état initial
-    // (le WS prendra le relais quand il sera prêt)
-    startPolling();
+    // Un seul fetch initial pour afficher l'état vite,
+    // le polling récurrent ne démarre que si le WS échoue (via onerror/onclose).
+    fetchState();
     connect();
 
     return () => {
@@ -142,12 +153,20 @@ export function useMultiplayerSocket(sessionId, token) {
       clearTimeout(reconnectTimer.current);
       clearInterval(pollTimer.current);
       pollTimer.current = null;
-      wsRef.current?.close();
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = null;
+      if (wsRef.current) {
+        // Neutraliser les callbacks avant close pour éviter re-connect post-unmount
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+      }
       wsRef.current = null;
     };
-  }, [connect, startPolling]);
+  }, [connect, fetchState]);
 
-  // connected = WS ouvert OU polling actif avec état reçu
   useEffect(() => {
     if (!wsOk && state) setConnected(true);
   }, [wsOk, state]);
@@ -162,5 +181,5 @@ export function useMultiplayerSocket(sessionId, token) {
     sendMessage("chat", { text });
   }, [sendMessage]);
 
-  return { state, connected, wsOk, error, sendMessage, sendChat };
+  return { state, connected, wsOk, error, sendMessage, sendChat, refetch: fetchState };
 }
