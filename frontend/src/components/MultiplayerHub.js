@@ -103,6 +103,54 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions: ch
     await post("/draft/action", { token, match_id: state.active_draft.id, champion });
   }, [post, state?.active_draft, token]);
 
+  // ── Match vs IA — flow identique au solo (draft + simulation + timeline) ──
+  const myIaMatch = useMemo(() => {
+    if (!state?.week_matches || !myTeamId) return null;
+    return state.week_matches.find(m =>
+      !m.is_human_vs_human
+      && m.result_json == null
+      && (m.team1 === myTeamId || m.team2 === myTeamId)
+    ) || null;
+  }, [state?.week_matches, myTeamId]);
+
+  const [activeIaMatch, setActiveIaMatch] = useState(null);
+  const [iaShowDraft, setIaShowDraft] = useState(false);
+  const [iaDraftCompleted, setIaDraftCompleted] = useState(false);
+  const [iaDraftState, setIaDraftState] = useState(null);
+
+  const handleOpenIaMatch = useCallback(() => {
+    if (!myIaMatch) return;
+    setIaDraftCompleted(false);
+    setIaDraftState(null);
+    setActiveIaMatch(myIaMatch);
+  }, [myIaMatch]);
+
+  const handleIaDraftComplete = useCallback((completed) => {
+    setIaShowDraft(false);
+    setIaDraftCompleted(true);
+    setIaDraftState(completed);
+  }, []);
+
+  const handleIaSimulate = useCallback(async (userDraft) => {
+    const res = await axios.post(
+      `${API}/mp/${sessionId}/play-ia-match`,
+      { token, user_draft: userDraft },
+      { timeout: 20000 },
+    );
+    if (typeof refetch === "function") {
+      try { await refetch(); } catch { /* no-op */ }
+    }
+    // Shape returned by endpoint: { match_id, result, pending_drafts, week }
+    // MatchSimulation expects the solo-style response with top-level match_details.
+    return res.data.result;
+  }, [sessionId, token, refetch]);
+
+  const handleIaMatchClose = useCallback(() => {
+    setActiveIaMatch(null);
+    setIaDraftCompleted(false);
+    setIaDraftState(null);
+  }, []);
+
   // ── Returns conditionnels APRÈS les hooks ─────────────────────────────────
   if (!state) {
     return (
