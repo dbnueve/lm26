@@ -252,6 +252,32 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions: ch
           />
         )}
 
+        {/* Match vs IA — flow identique au solo (Draft + Simulation + Timeline + Scoreboard) */}
+        <AnimatePresence>
+          {activeIaMatch && !iaShowDraft && userTeam && (
+            <MatchSimulation
+              match={activeIaMatch}
+              userTeam={userTeam}
+              teams={teams || []}
+              onClose={handleIaMatchClose}
+              onStartDraft={() => setIaShowDraft(true)}
+              draftCompleted={iaDraftCompleted}
+              draftState={iaDraftState}
+              onSimulate={handleIaSimulate}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {iaShowDraft && (
+            <DraftSystem
+              champions={champions || {}}
+              onComplete={handleIaDraftComplete}
+              onCancel={() => setIaShowDraft(false)}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Contenu — composants solo */}
         {currentPage === "dashboard" && (
           <Dashboard
