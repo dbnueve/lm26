@@ -7120,6 +7120,28 @@ async def mp_v2_draft(session_id: str, body: _MpV2DraftBody):
         raise HTTPException(400, str(e))
 
 
+@api_router.post("/mp/{session_id}/play-ia-match")
+async def mp_v2_play_ia_match(session_id: str, body: _MpV2PlayIaBody):
+    """Play the user's vs-IA match of the current week with solo-style UX.
+
+    Runs the detailed simulation (draft advantage, player stats, events,
+    timeline), persists the result, marks the player ready, and advances
+    the week if no HvH draft remains pending.
+    """
+    try:
+        result = _mp_logic.play_ia_match(
+            session_id, body.token, body.user_draft, _mp_simulate_detailed
+        )
+        await _mp_broadcast_state(session_id)
+        await _mp_ws.manager.broadcast(session_id, "ia_match_played", {
+            "match_id": result["match_id"],
+            "week": result["week"],
+        })
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @api_router.post("/mp/{session_id}/reset-ready")
 async def mp_v2_reset_ready(session_id: str, body: _MpV2ReadyBody):
     """Déblocage manuel : reset les flags ready de tous les joueurs."""
