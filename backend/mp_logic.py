@@ -135,7 +135,6 @@ def get_full_state(session_id: str, token: str) -> dict:
         active_draft = {**dict(_raw_draft), "my_draft_side": my_draft_side}
 
     # Build per-player team data for the frontend (roster, budget, stats)
-    my_team_id = player["team_id"]
     teams_raw = game_state.get("teams", {})
     players_raw = game_state.get("players", {})
     standings_raw = game_state.get("standings", {})
