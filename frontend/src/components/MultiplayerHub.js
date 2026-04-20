@@ -20,7 +20,7 @@ import DraftSystem from "./DraftSystem";
  * Vues MP-only : ready panel (dans dashboard), draft active, joueurs connectés
  */
 export default function MultiplayerHub({ sessionId, token, onExit, champions }) {
-  const { state, connected, error: wsError } = useMultiplayerSocket(sessionId, token);
+  const { state, connected, error: wsError, refetch } = useMultiplayerSocket(sessionId, token);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -30,6 +30,10 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions }) 
     setLoading(true);
     try {
       const res = await axios.post(`${API}/mp/${sessionId}${path}`, body);
+      // Rapatrier l'état immédiatement plutôt qu'attendre le broadcast WS/polling
+      if (typeof refetch === "function") {
+        try { await refetch(); } catch { /* no-op */ }
+      }
       return res.data;
     } catch (e) {
       const msg = e?.response?.data?.detail || "Erreur";
@@ -38,7 +42,7 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions }) 
     } finally {
       setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, refetch]);
 
   const get = useCallback(async (path) => {
     try {
