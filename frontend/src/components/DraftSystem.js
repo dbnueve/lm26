@@ -25,6 +25,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
   const [apiSuggestions, setApiSuggestions] = useState([]);
   const completeTimeoutRef = useRef(null);
   const mountedRef = useRef(true);
+  const mpCompletedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
