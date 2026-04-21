@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Trophy, ArrowsClockwise } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
+import { API_CLIENT } from "../shared";
 import TeamLogo from "./TeamLogo";
 
 // Playoffs Page — LEC Stage 2: 6-team double elimination, all Bo5
