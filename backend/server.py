@@ -7125,6 +7125,14 @@ def _mp2_public_info(sess: "_sessions.Session", token: str | None = None) -> dic
             for t, tid in sess.players.items()
         ],
         "my_team_id": my_team,
+        # Ready votes: { action -> [usernames who have voted ready] }.
+        # Lets the UI show "Waiting for Charlie to ready up…"
+        "ready": _sessions.ready_snapshot(sess),
+        # Convenience: which actions am I ready for?
+        "my_ready": sorted(
+            action for action, tokens in sess.ready.items()
+            if token and token in tokens
+        ),
     }
 
 
