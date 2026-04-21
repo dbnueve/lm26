@@ -107,6 +107,8 @@ from save_paths import get_save_path, _read_active_slot_file, _write_active_slot
 from app_state import GAME_STATE, state  # noqa: E402
 # Persistence extraite dans persistence.py (refactor étape 3)
 from persistence import save_state, load_state, _sync_state_if_stale, register_post_load_hook  # noqa: E402
+# Registre MP en mémoire (refactor étape 4: mp-as-shared-solo)
+import sessions as _sessions  # noqa: E402
 
 # Map league name -> which main league scouts from it
 _LEAGUE_TO_SCOUTING_FOR = {
