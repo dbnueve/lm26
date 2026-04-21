@@ -36,7 +36,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
 
   const loadPlayers = async () => {
     try {
-      const response = await axios.get(API + "/scouting/all");
+      const response = await API_CLIENT.get("/scouting/all");
       setAllPlayers(response.data);
     } catch (e) {
       console.error("Error loading scouting players:", e);
