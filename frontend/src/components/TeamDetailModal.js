@@ -11,7 +11,7 @@ const TeamDetailModal = ({ team, onClose }) => {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const playerImages = useContext(PlayerImagesContext) || {};
   useEffect(() => {
-    axios.get(API + "/teams/" + team.id).then(r => setTeamData(r.data)).catch(() => {});
+    API_CLIENT.get("/teams/" + team.id).then(r => setTeamData(r.data)).catch(() => {});
   }, [team.id]);
 
   const positions = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
