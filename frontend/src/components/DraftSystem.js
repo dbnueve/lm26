@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { X, Shield } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
+import { API_CLIENT } from "../shared";
 import { _ddVersion, toDDragonKey, setDdVersion } from "./ddHelpers";
 
 // Draft System Component
