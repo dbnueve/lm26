@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import "@/App.css";
 import axios from "axios";
 import { AnimatePresence } from "framer-motion";
-import { API, PlayerImagesContext, TeamLogosContext, TeamModalContext, withTimeout, useSession } from "./shared";
+import { API, API_CLIENT, PlayerImagesContext, TeamLogosContext, TeamModalContext, withTimeout, useSession } from "./shared";
 import { useMp2Socket } from "./hooks/useMp2Socket";
 
 import TeamLogo from "./components/TeamLogo";
