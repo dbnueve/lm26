@@ -91,7 +91,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
         return;
       }
       // Solo path
-      const res = await axios.get(API + "/draft/suggest");
+      const res = await API_CLIENT.get("/draft/suggest");
       if (res.data.action && res.data.action !== "enemy_turn") {
         setApiSuggestions(res.data.suggestions || []);
       } else {
