@@ -29,8 +29,7 @@ import SplitEndOverlay from "./components/SplitEndOverlay";
 import SaveSelectionPage from "./components/SaveSelectionPage";
 import TeamDetailModal from "./components/TeamDetailModal";
 import ErrorBoundary from "./components/ErrorBoundary";
-import MultiplayerLobby from "./components/MultiplayerLobby";
-import MultiplayerHub from "./components/MultiplayerHub";
+import MultiplayerLobby from "./components/MultiplayerLobby"; // eslint-disable-line no-unused-vars
 
 // Main App Component
 function App() {
