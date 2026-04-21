@@ -351,6 +351,10 @@ function App() {
         <SaveSelectionPage
           onLoad={loadSlot}
           onNew={startNewSlot}
+          onEnterSession={async () => {
+            setShowSaveSelection(false);
+            await loadGameData();
+          }}
         />
       </div>
       </PlayerImagesContext.Provider>
