@@ -40,7 +40,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
     if (!opponentId) return;
     setSelectedOpponent(opponentId);
     try {
-      const res = await axios.get(`${API}/career/head-to-head/${userTeam.id}/${opponentId}`);
+      const res = await API_CLIENT.get(`/career/head-to-head/${userTeam.id}/${opponentId}`);
       setHeadToHead(res.data);
     } catch (e) {
       showToast("Erreur lors du chargement du duel", "error");
