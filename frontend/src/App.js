@@ -320,7 +320,7 @@ function App() {
   };
 
   const handleSetTrainingPlan = async (playerId, trainingType) => {
-    const res = await axios.post(API + "/training/set-plan", {
+    const res = await API_CLIENT.post("/training/set-plan", {
       player_id: playerId,
       training_type: trainingType
     });
