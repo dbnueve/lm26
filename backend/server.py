@@ -2792,11 +2792,42 @@ async def get_team(team_id: str):
     return {**team, "players": roster, "champion_stats": {"picks": picks_list, "bans": bans_list}}
 
 @api_router.post("/teams/select/{team_id}")
-async def select_team(team_id: str):
-    """Select user's team"""
+async def select_team(team_id: str, request: Request):
+    """Select user's team.
+
+    Solo mode: writes `user_team` on the global GAME_STATE.
+    MP mode: reserves the team for the calling player (rejects if already
+    taken) via `sessions.assign_team`, and also mirrors onto GAME_STATE so
+    solo-code reading `user_team` during this request works.
+    """
     if team_id not in GAME_STATE["teams"]:
         raise HTTPException(status_code=404, detail="Team not found")
-    
+
+    sid = request.query_params.get("session_id")
+    token = request.query_params.get("mp_token")
+    if sid and token:
+        sess = _sessions.get_session(sid)
+        if sess is None:
+            raise HTTPException(404, f"MP session {sid} introuvable")
+        try:
+            _sessions.assign_team(sess, token, team_id)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc))
+        # In MP the shared state transitions to "regular" as soon as at least
+        # one player has picked. Individual teams still live per-player in
+        # session.players. current_week stays 0 until season actually starts.
+        if GAME_STATE.get("phase", "team_pick") in ("team_pick", "preseason"):
+            GAME_STATE["phase"] = "preseason"
+        # Advance session-level phase so the UI can react.
+        if sess.phase == "team_pick":
+            # Only flip to "running" when every joined player has a team.
+            if all(tid is not None for tid in sess.players.values()):
+                sess.phase = "running"
+                sess._dirty = True
+        GAME_STATE["user_team"] = team_id
+        save_state()
+        return {"success": True, "team": GAME_STATE["teams"][team_id]}
+
     GAME_STATE["user_team"] = team_id
     GAME_STATE["current_week"] = 0
     GAME_STATE["phase"] = "preseason"
