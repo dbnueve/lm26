@@ -78,19 +78,8 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
 
   const fetchSuggestions = async () => {
     try {
-      // MP path — read suggestions from the session's draft state.
-      if (onMpAction && mpSessionId && mpMatchId && mpToken) {
-        const res = await axios.get(`${API}/mp/${mpSessionId}/draft/suggest`, {
-          params: { token: mpToken, match_id: mpMatchId },
-        });
-        if (res.data.action && !["enemy_turn", "spectator"].includes(res.data.action)) {
-          setApiSuggestions(res.data.suggestions || []);
-        } else {
-          setApiSuggestions([]);
-        }
-        return;
-      }
-      // Solo path
+      // Unified path — MP sessions are routed via API_CLIENT's session_id
+      // interceptor; solo mode uses the default GAME_STATE. Same endpoint either way.
       const res = await API_CLIENT.get("/draft/suggest");
       if (res.data.action && res.data.action !== "enemy_turn") {
         setApiSuggestions(res.data.suggestions || []);
