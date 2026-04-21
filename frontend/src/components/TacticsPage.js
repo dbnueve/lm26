@@ -6,8 +6,7 @@ import {
   Crosshair, CurrencyDollar, Flag, Eye, MapTrifold,
   Users, Robot, CheckCircle, XCircle, Spinner
 } from "@phosphor-icons/react";
-import axios from "axios";
-import { API, PlayerImagesContext } from "../shared";
+import { API_CLIENT, PlayerImagesContext } from "../shared";
 import TeamLogo from "./TeamLogo";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 
