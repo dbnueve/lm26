@@ -126,7 +126,7 @@ const StatsPage = () => {
   useEffect(() => {
     fetch("https://ddragon.leagueoflegends.com/api/versions.json")
       .then(r => r.json()).then(v => { if (v[0]) setDdVersion(v[0]); }).catch(() => {});
-    axios.get(API + "/stats/splits").then(r => setSplits(r.data)).catch(() => {});
+    API_CLIENT.get("/stats/splits").then(r => setSplits(r.data)).catch(() => {});
   }, []);
 
   // Fetch current split
