@@ -47,7 +47,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
 
   const handleSign = async (player) => {
     try {
-      const response = await axios.post(API + "/scouting/sign", {
+      const response = await API_CLIENT.post("/scouting/sign", {
         player_id: player.id,
         offered_salary: Math.round(player.transfer_value * 0.1)
       });
