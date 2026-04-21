@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import axios from "axios";
-import { API } from "../shared";
+import { API, useSession } from "../shared";
 import { useMultiplayerSocket } from "../hooks/useMultiplayerSocket";
 
 // Composants solo réutilisés tels quels
