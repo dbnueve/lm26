@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Lightning, GameController, Star, Sword } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
+import { API_CLIENT } from "../shared";
 import TeamLogo from "./TeamLogo";
 import MatchTimeline from "./MatchTimeline";
 import DraftSystem from "./DraftSystem";
