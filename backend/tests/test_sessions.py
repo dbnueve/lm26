@@ -175,51 +175,56 @@ class _FakeWS:
         self.received.append(payload)
 
 
-@pytest.mark.asyncio
-async def test_broadcast_sends_to_all_live_subscribers():
-    s, _ = sessions.create_session("LEC", "alice", _fake_init)
-    a, b = _FakeWS(), _FakeWS()
-    sessions.subscribe(s, a)
-    sessions.subscribe(s, b)
+def test_broadcast_sends_to_all_live_subscribers():
+    async def _run():
+        s, _ = sessions.create_session("LEC", "alice", _fake_init)
+        a, b = _FakeWS(), _FakeWS()
+        sessions.subscribe(s, a)
+        sessions.subscribe(s, b)
 
-    await sessions.broadcast(s.sid, "state", {"week": 3})
+        await sessions.broadcast(s.sid, "state", {"week": 3})
 
-    assert a.received == [{"event": "state", "data": {"week": 3}}]
-    assert b.received == [{"event": "state", "data": {"week": 3}}]
+        assert a.received == [{"event": "state", "data": {"week": 3}}]
+        assert b.received == [{"event": "state", "data": {"week": 3}}]
 
-
-@pytest.mark.asyncio
-async def test_broadcast_drops_closed_sockets():
-    s, _ = sessions.create_session("LEC", "alice", _fake_init)
-    good, bad = _FakeWS(), _FakeWS(fail=True)
-    sessions.subscribe(s, good)
-    sessions.subscribe(s, bad)
-
-    await sessions.broadcast(s.sid, "state", {"x": 1})
-
-    assert good.received  # delivered
-    assert bad not in s.subscribers  # pruned
+    asyncio.run(_run())
 
 
-@pytest.mark.asyncio
-async def test_broadcast_unknown_session_is_noop():
+def test_broadcast_drops_closed_sockets():
+    async def _run():
+        s, _ = sessions.create_session("LEC", "alice", _fake_init)
+        good, bad = _FakeWS(), _FakeWS(fail=True)
+        sessions.subscribe(s, good)
+        sessions.subscribe(s, bad)
+
+        await sessions.broadcast(s.sid, "state", {"x": 1})
+
+        assert good.received  # delivered
+        assert bad not in s.subscribers  # pruned
+
+    asyncio.run(_run())
+
+
+def test_broadcast_unknown_session_is_noop():
     # Should not raise even if the sid doesn't exist.
-    await sessions.broadcast("nope", "state", {})
+    asyncio.run(sessions.broadcast("nope", "state", {}))
 
 
 # ── autosave ──────────────────────────────────────────────────────────────────
-@pytest.mark.asyncio
-async def test_autosave_flushes_dirty_sessions(monkeypatch):
+def test_autosave_flushes_dirty_sessions(monkeypatch):
     monkeypatch.setattr(sessions, "_AUTOSAVE_INTERVAL_S", 0.05)
-    s, _ = sessions.create_session("LEC", "alice", _fake_init)
-    assert s._dirty is True
 
-    sessions.start_autosave()
-    await asyncio.sleep(0.15)  # let it tick at least once
-    await sessions.stop_autosave()
+    async def _run():
+        s, _ = sessions.create_session("LEC", "alice", _fake_init)
+        assert s._dirty is True
 
-    # File should exist and session marked clean
-    path = sessions.SESSIONS_DIR / f"{s.sid}.json"
-    assert path.exists()
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    assert raw["league"] == "LEC"
+        sessions.start_autosave()
+        await asyncio.sleep(0.15)  # let it tick at least once
+        await sessions.stop_autosave()
+
+        path = sessions.SESSIONS_DIR / f"{s.sid}.json"
+        assert path.exists()
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        assert raw["league"] == "LEC"
+
+    asyncio.run(_run())
