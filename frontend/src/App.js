@@ -351,16 +351,7 @@ function App() {
         <SaveSelectionPage
           onLoad={loadSlot}
           onNew={startNewSlot}
-          onSessionJoined={(sessionId, token, side) => setMpSession({ sessionId, token, side })}
         />
-        {multiplayerSession && (
-          <MultiplayerHub
-            sessionId={multiplayerSession.sessionId}
-            token={multiplayerSession.token}
-            onExit={() => setMpSession(null)}
-            champions={champions}
-          />
-        )}
       </div>
       </PlayerImagesContext.Provider>
       </TeamLogosContext.Provider>
