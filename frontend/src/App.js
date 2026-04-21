@@ -84,12 +84,12 @@ function App() {
     try {
       const [teamsRes, scheduleRes, standingsRes, championsRes, playoffsRes, stateRes] = await withTimeout(
         Promise.all([
-          axios.get(API + "/teams"),
-          axios.get(API + "/schedule"),
-          axios.get(API + "/standings"),
-          axios.get(API + "/draft/champions"),
-          axios.get(API + "/playoffs").catch(() => ({ data: null })),
-          axios.get(API + "/game/state").catch(() => ({ data: {} })),
+          API_CLIENT.get("/teams"),
+          API_CLIENT.get("/schedule"),
+          API_CLIENT.get("/standings"),
+          API_CLIENT.get("/draft/champions"),
+          API_CLIENT.get("/playoffs").catch(() => ({ data: null })),
+          API_CLIENT.get("/game/state").catch(() => ({ data: {} })),
         ])
       );
 
@@ -101,7 +101,7 @@ function App() {
       if (stateRes.data?.phase) {
         setGameState(prev => ({ ...prev, phase: stateRes.data.phase }));
       }
-      axios.get(API + "/inbox").then(r => setUnreadInbox(r.data.unread_total || 0)).catch(() => {});
+      API_CLIENT.get("/inbox").then(r => setUnreadInbox(r.data.unread_total || 0)).catch(() => {});
     } catch (e) {
       console.error("Error loading game data:", e);
     }
