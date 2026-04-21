@@ -304,7 +304,7 @@ const SaveSelectionPage = ({ onLoad, onNew }) => {
       )}
 
       {/* ── Multijoueur ── */}
-      {onSessionJoined && <MultiplayerSlots onSessionJoined={onSessionJoined} />}
+      <MultiplayerSlots />
     </div>
   );
 };
