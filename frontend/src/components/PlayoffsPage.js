@@ -22,7 +22,7 @@ const PlayoffsPage = ({ userTeam, onPlayPlayoffMatch, showToast, onSplitEnd, onS
 
   const fetchPlayoffs = useCallback(async () => {
     try {
-      const res = await axios.get(API + "/playoffs");
+      const res = await API_CLIENT.get("/playoffs");
       setPlayoffsData(res.data);
     } catch (e) {
       console.error("Error fetching playoffs:", e);
