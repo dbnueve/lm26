@@ -28,7 +28,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
   const [activeLeague, setActiveLeague] = useState("LEC");
 
   useEffect(() => {
-    axios.get(API + "/game/state")
+    API_CLIENT.get("/game/state")
       .then(r => setActiveLeague(r.data.league || "LEC"))
       .catch(() => {});
     loadPlayers();
