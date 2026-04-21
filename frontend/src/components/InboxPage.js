@@ -324,7 +324,7 @@ const InboxPage = () => {
 
   const markRead = useCallback(async (msg) => {
     if (msg.read) return;
-    await axios.post(API + `/inbox/${msg.id}/read`).catch(() => {});
+    await API_CLIENT.post(`/inbox/${msg.id}/read`).catch(() => {});
     setData(prev => ({
       ...prev,
       messages: prev.messages.map(m => m.id === msg.id ? { ...m, read: true } : m),
