@@ -47,7 +47,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
       // In solo mode we fall back to the direct endpoint.
       const data = onSimulate
         ? await onSimulate(userDraft)
-        : (await axios.post(API + "/match/simulate", {
+        : (await API_CLIENT.post("/match/simulate", {
             match_id: match.id,
             user_draft: userDraft,
           }, { timeout: 15000 })).data;
