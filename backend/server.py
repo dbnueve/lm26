@@ -8026,6 +8026,8 @@ async def _mp2_session_swap_middleware(request, call_next):
             content={"detail": f"MP session {sid} introuvable"},
         )
 
+    mutating = request.method.upper() in ("POST", "PUT", "PATCH", "DELETE")
+
     async with _swap_lock:
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
@@ -8040,6 +8042,16 @@ async def _mp2_session_swap_middleware(request, call_next):
             sess.state.clear()
             sess.state.update(GAME_STATE)
             _sessions.mark_dirty(sid)
+            # Notify all subscribers so they refetch. Only on successful
+            # mutating requests — GETs don't touch state, failures don't either.
+            if mutating and 200 <= response.status_code < 300:
+                try:
+                    await _sessions.broadcast(sid, "state_changed", {
+                        "path": request.url.path,
+                        "method": request.method,
+                    })
+                except Exception:
+                    logger.exception("broadcast state_changed failed (sid=%s)", sid[:8])
             return response
         finally:
             GAME_STATE.clear()
