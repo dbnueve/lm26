@@ -46,7 +46,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
       })
       .catch(() => {});
     // Load last split's champion stats for overlay
-    axios.get(API + "/stats/champions", { params: { split: "last" }, signal: controller.signal })
+    API_CLIENT.get("/stats/champions", { params: { split: "last" }, signal: controller.signal })
       .then(r => {
         if (!mountedRef.current) return;
         const map = {};
