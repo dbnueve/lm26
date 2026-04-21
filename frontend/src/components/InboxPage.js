@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Envelope, EnvelopeOpen, Users, ChatsCircle, CheckCircle, ArrowLeft, Globe } from "@phosphor-icons/react";
-import { API } from "../shared";
-import axios from "axios";
+import { API_CLIENT } from "../shared";
 
 const TYPE_BOARD = "board";
 const TYPE_SOLOQ = "soloq";
