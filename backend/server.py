@@ -7888,19 +7888,8 @@ def mp2_list():
 
 
 # ── FastAPI lifecycle — autosave + reload MP sessions ─────────────────────────
-# We keep `@app.on_event` usage out of the module (deprecated) and instead
-# register handlers on the underlying router only if the app hasn't already
-# been started. `app.router.lifespan_context` is the modern hook, but existing
-# solo code doesn't use it — so we attach startup/shutdown via the router's
-# event handlers which still work without the deprecation warning in recent
-# Starlette versions.
-@app.router.on_startup.append
-def _mp2_startup_register() -> None:  # pragma: no cover - wiring only
-    # Placeholder so the decorator pattern below stays consistent if we ever
-    # migrate to `lifespan=`. Actual startup logic is in `_mp2_startup`.
-    pass
-
-
+# Attached via `router.add_event_handler` (Starlette primitive) instead of
+# `@app.on_event` to avoid the FastAPI deprecation warning.
 async def _mp2_startup() -> None:
     try:
         n = _sessions.load_all()
