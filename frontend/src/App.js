@@ -168,7 +168,7 @@ function App() {
 
   const loadUserTeam = useCallback(async (teamId) => {
     try {
-      const response = await axios.get(API + "/teams/" + teamId);
+      const response = await API_CLIENT.get("/teams/" + teamId);
       setUserTeamData(response.data);
     } catch (e) {
       console.error("Error loading user team:", e);
