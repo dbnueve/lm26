@@ -61,7 +61,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     try {
       const payload = { match_id: matchId };
       if (userDraft) payload.user_draft = userDraft;
-      const res = await axios.post(API + "/international/simulate", payload);
+      const res = await API_CLIENT.post("/international/simulate", payload);
       setIntl(res.data);
     } catch {
       const ref = await axios.get(API + "/international").catch(() => null);
