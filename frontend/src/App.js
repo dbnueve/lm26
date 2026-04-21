@@ -242,7 +242,7 @@ function App() {
   };
 
   const handleSimulateSeason = async () => {
-    await axios.post(API + "/season/simulate");
+    await API_CLIENT.post("/season/simulate");
     await loadGameData();
     await loadUserTeam(gameState.userTeam);
     await loadSplitStatus(gameState.userTeam);
