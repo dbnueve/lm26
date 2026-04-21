@@ -222,7 +222,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
     // Optimistic update
     setTactics(prev => ({ ...prev, ...patch }));
     try {
-      const res = await axios.post(API + "/tactics", patch);
+      const res = await API_CLIENT.post("/tactics", patch);
       setTactics(res.data.tactics);
       setCoherence(res.data.coherence);
     } catch { await fetchTactics(); }
