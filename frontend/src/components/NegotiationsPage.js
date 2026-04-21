@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Coins, Lock, RocketLaunch, ArrowRight } from "@phosphor-icons/react";
-import axios from "axios";
-import { API, PlayerImagesContext, toFlag, formatMoney } from "../shared";
+import { API_CLIENT, PlayerImagesContext, toFlag, formatMoney } from "../shared";
 import PlayerDetailModal from "./PlayerDetailModal";
 
 // Negotiations Page Component
