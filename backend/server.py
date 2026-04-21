@@ -7923,6 +7923,61 @@ app.router.add_event_handler("startup", _mp2_startup)
 app.router.add_event_handler("shutdown", _mp2_shutdown)
 
 
+# ── MP2 session_id middleware ─────────────────────────────────────────────────
+# Any solo endpoint automatically becomes a multiplayer endpoint when called
+# with `?session_id=<sid>`. The middleware swaps GAME_STATE to the session's
+# state around the request, so the solo code path runs untouched. Mutations
+# are copied back into the session and persisted by the autosave loop.
+#
+# Paths that already own session routing (`/api/mp2/*`, the legacy `/api/mp/*`,
+# and WebSockets) are skipped so their handlers can manage sessions directly.
+_MP2_SKIP_PATH_PREFIXES = ("/api/mp2/", "/api/mp/", "/ws/", "/api/mp2", "/api/mp")
+
+
+@app.middleware("http")
+async def _mp2_session_swap_middleware(request, call_next):
+    path = request.url.path
+    if any(path.startswith(p) for p in _MP2_SKIP_PATH_PREFIXES):
+        return await call_next(request)
+
+    sid = request.query_params.get("session_id")
+    if not sid:
+        return await call_next(request)
+
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        # Don't 404 silently — let the client know the session is gone.
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=404,
+            content={"detail": f"MP session {sid} introuvable"},
+        )
+
+    async with _swap_lock:
+        solo_snapshot = dict(GAME_STATE)
+        GAME_STATE.clear()
+        GAME_STATE.update(sess.state)
+        try:
+            _rebuild_meta_lookup()
+        except Exception:
+            logger.exception("meta rebuild on swap-in failed (sid=%s)", sid[:8])
+        try:
+            response = await call_next(request)
+            # Persist mutations back into the session.
+            sess.state.clear()
+            sess.state.update(GAME_STATE)
+            _sessions.mark_dirty(sid)
+            return response
+        finally:
+            GAME_STATE.clear()
+            GAME_STATE.update(solo_snapshot)
+            if solo_snapshot.get("league"):
+                try:
+                    _rebuild_meta_lookup()
+                except Exception:
+                    logger.exception("meta rebuild on swap-out failed")
+
+
 # Include router
 app.include_router(api_router)
 
