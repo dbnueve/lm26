@@ -249,6 +249,8 @@ def _session_to_json(s: Session) -> dict:
         "players": s.players,
         "usernames": s.usernames,
         "phase": s.phase,
+        # Sets aren't JSON-serializable — store as sorted lists.
+        "ready": {k: sorted(v) for k, v in s.ready.items()},
         "created_at": s.created_at,
         "updated_at": s.updated_at,
     }
@@ -263,6 +265,7 @@ def _json_to_session(raw: dict) -> Session:
         players=raw.get("players", {}),
         usernames=raw.get("usernames", {}),
         phase=raw.get("phase", "lobby"),
+        ready={k: set(v) for k, v in raw.get("ready", {}).items()},
         created_at=raw.get("created_at", time.time()),
         updated_at=raw.get("updated_at", time.time()),
     )
