@@ -151,9 +151,32 @@ function App() {
     }
   }, []);
 
+  // In MP, shared progression actions go through /mp2/{sid}/ready and only
+  // fire once every player has voted. Returns the inner "result" (or null if
+  // still waiting on peers). In solo, just hits the endpoint directly.
+  const mpReady = useCallback(async (action) => {
+    if (!mp2.sid || !mp2.token) return { fired: true, result: null }; // solo
+    const res = await axios.post(`${API}/mp2/${mp2.sid}/ready`, {
+      token: mp2.token,
+      action,
+    });
+    return res.data; // { info, fired, result }
+  }, [mp2.sid, mp2.token]);
+
   const handleNextSplit = async () => {
     try {
-      const res = await API_CLIENT.post("/split/next");
+      let newSplitLabel = null;
+      if (mp2.sid) {
+        const voted = await mpReady("split/next");
+        if (!voted.fired) {
+          showToast("En attente des autres joueurs…", "info");
+          return;
+        }
+        newSplitLabel = voted.result?.new_split?.label;
+      } else {
+        const res = await API_CLIENT.post("/split/next");
+        newSplitLabel = res.data?.new_split?.label;
+      }
       setShowSplitEnd(false);
       setShowInternational(false);
       setCurrentPage("dashboard");
@@ -162,7 +185,7 @@ function App() {
       const newUserTeam = gameState.userTeam;
       if (newUserTeam) await loadUserTeam(newUserTeam);
       await loadSplitStatus(newUserTeam);
-      showToast(`Nouveau split : ${res.data.new_split.label} !`, "success");
+      showToast(newSplitLabel ? `Nouveau split : ${newSplitLabel} !` : "Nouveau split !", "success");
     } catch (e) {
       console.error("Error advancing split:", e);
       showToast("Erreur lors du passage au split suivant", "error");
