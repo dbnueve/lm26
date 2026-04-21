@@ -248,6 +248,80 @@ def test_ws_hello_and_chat_fanout(client):
             assert chat_on_b["event"] == "chat"
 
 
+def test_mutating_solo_endpoint_broadcasts_state_changed(client):
+    """Phase 5b auto-broadcast: a successful POST on a solo endpoint routed
+    through the middleware emits `state_changed` to every MP2 subscriber.
+    """
+    # Alice creates + picks a team so she's a "real" player in the session
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid, tok_a = created["sid"], created["token"]
+    sess = sessions.get_session(sid)
+    team_id = next(iter(sess.state["teams"]))
+    client.post(
+        f"/api/mp2/{sid}/team", json={"token": tok_a, "team_id": team_id}
+    )
+
+    # Bob joins
+    joined = client.post(
+        "/api/mp2/join", json={"code": created["code"], "username": "bob"}
+    ).json()
+    tok_b = joined["token"]
+
+    with client.websocket_connect(f"/ws/mp2/{sid}?token={tok_b}") as ws_b:
+        # Drain hello + self peer_joined
+        assert ws_b.receive_json()["event"] == "hello"
+        assert ws_b.receive_json()["event"] == "peer_joined"
+
+        # Alice triggers a mutating solo endpoint with session_id
+        # (POST /api/tactics — updates session state and calls save_state)
+        r = client.post(
+            "/api/tactics",
+            params={"session_id": sid},
+            json={"strong_side": "top"},
+        )
+        assert r.status_code == 200, r.text
+
+        # Bob's WS should now receive state_changed
+        evt = ws_b.receive_json()
+        assert evt["event"] == "state_changed"
+        assert evt["data"]["path"] == "/api/tactics"
+        assert evt["data"]["method"] == "POST"
+
+
+def test_get_endpoint_does_not_broadcast(client):
+    """GETs don't mutate — they should NOT trigger a broadcast."""
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid, tok = created["sid"], created["token"]
+
+    with client.websocket_connect(f"/ws/mp2/{sid}?token={tok}") as ws:
+        assert ws.receive_json()["event"] == "hello"
+        assert ws.receive_json()["event"] == "peer_joined"
+
+        # Read-only call
+        r = client.get("/api/game/state", params={"session_id": sid})
+        assert r.status_code == 200
+
+        # Set a short timeout and expect nothing more
+        import queue
+        try:
+            # TestClient's websocket doesn't expose a proper timeout; we rely
+            # on the next receive to block. Instead we send a cheap roundtrip
+            # (chat) and assert it is the first message, proving no earlier
+            # state_changed is queued.
+            ws.send_json({"type": "chat", "text": "probe"})
+            evt = ws.receive_json()
+            assert evt["event"] == "chat", (
+                f"expected chat as next event, got {evt['event']} — "
+                "GET triggered an unexpected broadcast"
+            )
+        except queue.Empty:
+            pass
+
+
 def test_middleware_mutation_persists_to_session(client):
     """Call a solo endpoint that mutates state with ?session_id=X and confirm
     the mutation lands in the session, not in solo.
