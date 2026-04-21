@@ -267,7 +267,7 @@ function App() {
 
   const handleMakeOffer = async (playerId, amount, years, playerToSwapId = null, isCounterOffer = false) => {
     try {
-      const response = await axios.post(API + "/negotiations/offer", {
+      const response = await API_CLIENT.post("/negotiations/offer", {
         player_id: playerId,
         offered_amount: amount,
         contract_years: years,
