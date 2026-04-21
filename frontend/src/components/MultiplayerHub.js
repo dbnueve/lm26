@@ -22,6 +22,12 @@ import { AnimatePresence } from "framer-motion";
  * Vues MP-only : ready panel (dans dashboard), draft active, joueurs connectés
  */
 export default function MultiplayerHub({ sessionId, token, onExit, champions: championsProp }) {
+  // MP2 migration: if a new-style session is active (via SessionProvider),
+  // skip the legacy hub entirely — the solo UI already handles the session
+  // transparently via the /api middleware.
+  const mp2 = useSession();
+  if (mp2.sid) return null;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { state, connected, error: wsError, refetch } = useMultiplayerSocket(sessionId, token);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [loading, setLoading] = useState(false);
