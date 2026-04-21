@@ -106,10 +106,11 @@ function MultiplayerSlots({ onEnterSession }) {
                 </span>
               ))}
             </div>
-            {/* Si déjà connecté à cette session, bouton neutre */}
+            {/* Si déjà connecté à cette session, bouton "Entrer" */}
             {savedSid === s.sid ? (
-              <button className="btn-primary" style={{ padding: "8px 0", width: "100%" }} disabled>
-                Session active
+              <button className="btn-primary" style={{ padding: "8px 0", width: "100%" }}
+                onClick={() => onEnterSession?.()}>
+                Entrer
               </button>
             ) : mode === `join-${s.sid}` ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
