@@ -7052,12 +7052,13 @@ async def inbox_read_one(msg_id: str):
     return {"ok": True}
 
 
-# ── Multiplayer v2 — WebSockets + SQLite ──────────────────────────────────────
-import mp_db as _mp_db
-import mp_logic as _mp_logic
-import mp_websocket as _mp_ws
+# ── Multiplayer v2 — WebSockets + SQLite (DELETED) ───────────────────────────
+# The legacy `/api/mp/*` endpoints, their SQLite-backed `mp_db`, `mp_logic`,
+# and `mp_websocket` modules have been replaced by the MP-as-shared-solo
+# refactor. See `sessions.py` + the `/api/mp2/*` endpoints + the session_id
+# middleware below. Only the WebSocket imports are preserved because the new
+# `/ws/mp2/{sid}` endpoint (further down) still needs them.
 from fastapi import WebSocket, WebSocketDisconnect
-import mp_db  # also used by mp_logic
 
 
 async def _mp_broadcast_state(session_id: str) -> None:
