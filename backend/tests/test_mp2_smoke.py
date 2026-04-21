@@ -221,25 +221,31 @@ def test_ws_hello_and_chat_fanout(client):
         assert hello_a["event"] == "hello"
         assert hello_a["data"]["code"] == created["code"]
 
-        with client.websocket_connect(f"/ws/mp2/{sid}?token={tok_b}") as ws_b:
-            # alice should see bob's peer_joined
-            evt = ws_a.receive_json()
-            assert evt["event"] == "peer_joined"
-            assert evt["data"]["username"] == "bob"
+        # alice's own peer_joined broadcast also lands on her own socket
+        self_join = ws_a.receive_json()
+        assert self_join == {"event": "peer_joined",
+                             "data": {"username": "alice"}}
 
-            # bob receives his own hello
+        with client.websocket_connect(f"/ws/mp2/{sid}?token={tok_b}") as ws_b:
+            # bob joining triggers peer_joined that alice receives
+            bob_join_on_a = ws_a.receive_json()
+            assert bob_join_on_a == {"event": "peer_joined",
+                                     "data": {"username": "bob"}}
+
+            # bob receives his own hello + self peer_joined
             hello_b = ws_b.receive_json()
             assert hello_b["event"] == "hello"
+            self_join_b = ws_b.receive_json()
+            assert self_join_b == {"event": "peer_joined",
+                                   "data": {"username": "bob"}}
 
-            # bob gets his own peer_joined too (we broadcast to all, including self)
-            evt_b_peer = ws_b.receive_json()
-            assert evt_b_peer["event"] == "peer_joined"
-
-            # bob sends a chat; alice should receive it
+            # bob sends a chat; both sockets should receive it
             ws_b.send_json({"type": "chat", "text": "gl hf"})
-            chat = ws_a.receive_json()
-            assert chat["event"] == "chat"
-            assert chat["data"] == {"username": "bob", "text": "gl hf"}
+            chat_on_a = ws_a.receive_json()
+            assert chat_on_a == {"event": "chat",
+                                 "data": {"username": "bob", "text": "gl hf"}}
+            chat_on_b = ws_b.receive_json()
+            assert chat_on_b["event"] == "chat"
 
 
 def test_middleware_mutation_persists_to_session(client):
