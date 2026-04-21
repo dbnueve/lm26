@@ -1245,6 +1245,36 @@ def initialize_game(league: str = "LEC"):
     generate_schedule()
     GAME_STATE["initialized"] = True
 
+
+def build_initial_state(league: str = "LEC") -> dict:
+    """Build an isolated initial game state for `league`, without mutating
+    the global `GAME_STATE` (callers that *want* to initialise solo can still
+    call `initialize_game` directly).
+
+    Implementation: swap the global dict in-place, run `initialize_game`,
+    snapshot the result, then restore the previous contents. This reuses
+    100% of the solo initialisation logic (roster generation, ERL pool,
+    schedule) without duplicating it.
+    """
+    # Snapshot current global state
+    snapshot = dict(GAME_STATE)
+    GAME_STATE.clear()
+    try:
+        initialize_game(league)
+        isolated = dict(GAME_STATE)
+        return isolated
+    finally:
+        # Restore previous contents exactly
+        GAME_STATE.clear()
+        GAME_STATE.update(snapshot)
+        # Re-align META_LOOKUP with the restored league (solo may have been mid-game)
+        if snapshot.get("league"):
+            try:
+                _rebuild_meta_lookup()
+            except Exception:
+                logger.exception("Failed to restore META_LOOKUP after build_initial_state")
+
+
 def generate_schedule():
     """Generate 9-week LEC-style schedule: each team plays exactly twice per week.
 
