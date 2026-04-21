@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ChartLine } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
+import { API_CLIENT } from "../shared";
 
 // ── Tier calculation ──────────────────────────────────────────────────────────
 // Présence = driver principal (champion contesté = méta)
