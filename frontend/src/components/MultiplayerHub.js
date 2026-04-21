@@ -161,6 +161,9 @@ export default function MultiplayerHub({ sessionId, token, onExit, champions: ch
   }, []);
 
   // ── Returns conditionnels APRÈS les hooks ─────────────────────────────────
+  // MP2: session active → la UI solo prend le relais via le middleware.
+  if (mp2.sid) return null;
+
   if (!state) {
     return (
       <div className="app-with-sidebar" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
