@@ -132,7 +132,7 @@ const StatsPage = () => {
   // Fetch current split
   useEffect(() => {
     setLoading(true);
-    axios.get(API + "/stats/champions", { params: { split: selectedSplit } })
+    API_CLIENT.get("/stats/champions", { params: { split: selectedSplit } })
       .then(r => setData(r.data))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
