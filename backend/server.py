@@ -7888,7 +7888,19 @@ def mp2_list():
 
 
 # ── FastAPI lifecycle — autosave + reload MP sessions ─────────────────────────
-@app.on_event("startup")
+# We keep `@app.on_event` usage out of the module (deprecated) and instead
+# register handlers on the underlying router only if the app hasn't already
+# been started. `app.router.lifespan_context` is the modern hook, but existing
+# solo code doesn't use it — so we attach startup/shutdown via the router's
+# event handlers which still work without the deprecation warning in recent
+# Starlette versions.
+@app.router.on_startup.append
+def _mp2_startup_register() -> None:  # pragma: no cover - wiring only
+    # Placeholder so the decorator pattern below stays consistent if we ever
+    # migrate to `lifespan=`. Actual startup logic is in `_mp2_startup`.
+    pass
+
+
 async def _mp2_startup() -> None:
     try:
         n = _sessions.load_all()
@@ -7904,7 +7916,6 @@ async def _mp2_startup() -> None:
         logger.exception("MP2: failed to start autosave")
 
 
-@app.on_event("shutdown")
 async def _mp2_shutdown() -> None:
     try:
         await _sessions.stop_autosave()
@@ -7916,6 +7927,11 @@ async def _mp2_shutdown() -> None:
             logger.info("MP2: flushed %d dirty session(s) on shutdown", n)
     except Exception:
         logger.exception("MP2: save_all_dirty failed on shutdown")
+
+
+# Attach to the router's event hooks (Starlette primitive — not deprecated).
+app.router.add_event_handler("startup", _mp2_startup)
+app.router.add_event_handler("shutdown", _mp2_shutdown)
 
 
 # Include router
