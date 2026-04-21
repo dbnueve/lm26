@@ -114,14 +114,29 @@ if (isDevServer) {
       // app.use('/api', ...) lets Express match only /api/* paths.
       // Express strips '/api' from req.url before passing to the middleware,
       // so pathRewrite adds it back: /saves → /api/saves.
+      const BACKEND_TARGET = "http://127.0.0.1:8002";
+      // HTTP /api/* → backend
       devServer.app.use(
         createProxyMiddleware(
           (pathname) => pathname.startsWith("/api"),
           {
-            target: "http://localhost:8000",
+            target: BACKEND_TARGET,
             changeOrigin: true,
             secure: false,
             logLevel: "silent",
+          }
+        )
+      );
+      // WebSocket /ws/* → backend (MP2 uses /ws/mp2/{sid})
+      devServer.app.use(
+        createProxyMiddleware(
+          (pathname) => pathname.startsWith("/ws"),
+          {
+            target: BACKEND_TARGET,
+            changeOrigin: true,
+            secure: false,
+            ws: true,
+            logLevel: "warn",
           }
         )
       );
