@@ -74,6 +74,10 @@ function MultiplayerSlots({ onEnterSession }) {
             <div style={{ color: "#888", fontSize: 12, marginBottom: 16 }}>
               {savedSid.slice(0, 8)}…
             </div>
+            <button className="btn-primary" onClick={() => onEnterSession?.()}
+              style={{ padding: "10px 0", width: "100%", marginBottom: 8 }}>
+              Entrer dans la session
+            </button>
             <button onClick={clearSession}
               style={{ background: "none", border: "1px solid var(--danger)", color: "var(--danger)", borderRadius: 4, padding: "6px 0", fontSize: 12, cursor: "pointer", width: "100%" }}>
               Quitter la session
