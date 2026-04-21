@@ -187,7 +187,7 @@ const cancelBtnStyle = {
   color: "#666", padding: "7px 0", fontSize: 13, cursor: "pointer",
 };
 
-const SaveSelectionPage = ({ onLoad, onNew, onSessionJoined }) => {
+const SaveSelectionPage = ({ onLoad, onNew }) => {
   const [saves, setSaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
