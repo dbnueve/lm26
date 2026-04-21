@@ -189,6 +189,59 @@ def test_middleware_returns_404_on_unknown_session(client):
     assert "introuvable" in r.json()["detail"].lower()
 
 
+# ── Phase 4: WebSocket smoke ─────────────────────────────────────────────────
+def test_ws_rejects_unknown_session(client):
+    with pytest.raises(Exception):
+        with client.websocket_connect("/ws/mp2/does-not-exist?token=abc"):
+            pass  # pragma: no cover
+
+
+def test_ws_rejects_bad_token(client):
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid = created["sid"]
+    with pytest.raises(Exception):
+        with client.websocket_connect(f"/ws/mp2/{sid}?token=wrongtoken"):
+            pass  # pragma: no cover
+
+
+def test_ws_hello_and_chat_fanout(client):
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid, tok_a = created["sid"], created["token"]
+    joined = client.post(
+        "/api/mp2/join", json={"code": created["code"], "username": "bob"}
+    ).json()
+    tok_b = joined["token"]
+
+    with client.websocket_connect(f"/ws/mp2/{sid}?token={tok_a}") as ws_a:
+        hello_a = ws_a.receive_json()
+        assert hello_a["event"] == "hello"
+        assert hello_a["data"]["code"] == created["code"]
+
+        with client.websocket_connect(f"/ws/mp2/{sid}?token={tok_b}") as ws_b:
+            # alice should see bob's peer_joined
+            evt = ws_a.receive_json()
+            assert evt["event"] == "peer_joined"
+            assert evt["data"]["username"] == "bob"
+
+            # bob receives his own hello
+            hello_b = ws_b.receive_json()
+            assert hello_b["event"] == "hello"
+
+            # bob gets his own peer_joined too (we broadcast to all, including self)
+            evt_b_peer = ws_b.receive_json()
+            assert evt_b_peer["event"] == "peer_joined"
+
+            # bob sends a chat; alice should receive it
+            ws_b.send_json({"type": "chat", "text": "gl hf"})
+            chat = ws_a.receive_json()
+            assert chat["event"] == "chat"
+            assert chat["data"] == {"username": "bob", "text": "gl hf"}
+
+
 def test_middleware_mutation_persists_to_session(client):
     """Call a solo endpoint that mutates state with ?session_id=X and confirm
     the mutation lands in the session, not in solo.
