@@ -27,7 +27,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     } catch (err) {
       if (err?.response?.status === 404) {
         try {
-          const res = await axios.post(API + "/international/start");
+          const res = await API_CLIENT.post("/international/start");
           setIntl(res.data);
         } catch (e2) {
           setError(e2?.response?.data?.detail || "Impossible de démarrer le tournoi");
