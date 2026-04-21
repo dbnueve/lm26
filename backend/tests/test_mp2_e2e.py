@@ -173,6 +173,105 @@ def test_unknown_session_and_bad_token_are_rejected(client):
             pass  # pragma: no cover
 
 
+def test_team_is_reserved_and_cannot_be_double_picked(client):
+    """Two players in the same session cannot grab the same team."""
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid, tok_a = created["sid"], created["token"]
+    tok_b = client.post(
+        "/api/mp2/join", json={"code": created["code"], "username": "bob"}
+    ).json()["token"]
+
+    # Grab a team id from the session's state.
+    sess = sessions.get_session(sid)
+    team_id = next(iter(sess.state["teams"].keys()))
+
+    # Alice picks it via the solo endpoint routed through the session,
+    # carrying her mp_token so the server reserves against her slot.
+    r = client.post(
+        f"/api/teams/select/{team_id}",
+        params={"session_id": sid, "mp_token": tok_a},
+    )
+    assert r.status_code == 200, r.text
+    assert sess.players[tok_a] == team_id
+
+    # Bob tries to take the same team — server must reject with 409.
+    r = client.post(
+        f"/api/teams/select/{team_id}",
+        params={"session_id": sid, "mp_token": tok_b},
+    )
+    assert r.status_code == 409, r.text
+    assert sess.players[tok_b] is None
+
+
+def test_per_player_user_team_view(client):
+    """Each player's requests see their own user_team via mp_token."""
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid, tok_a = created["sid"], created["token"]
+    tok_b = client.post(
+        "/api/mp2/join", json={"code": created["code"], "username": "bob"}
+    ).json()["token"]
+    sess = sessions.get_session(sid)
+    ids = list(sess.state["teams"].keys())
+    team_a, team_b = ids[0], ids[1]
+
+    client.post(f"/api/teams/select/{team_a}",
+                params={"session_id": sid, "mp_token": tok_a})
+    client.post(f"/api/teams/select/{team_b}",
+                params={"session_id": sid, "mp_token": tok_b})
+
+    # Each player's read sees their own team when they include mp_token.
+    view_a = client.get("/api/game/state",
+                        params={"session_id": sid, "mp_token": tok_a}).json()
+    view_b = client.get("/api/game/state",
+                        params={"session_id": sid, "mp_token": tok_b}).json()
+    assert view_a["user_team"] == team_a
+    assert view_b["user_team"] == team_b
+
+
+def test_ready_vote_gates_season_simulate(client):
+    """Season-simulate must wait until every human votes ready."""
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid, tok_a = created["sid"], created["token"]
+    tok_b = client.post(
+        "/api/mp2/join", json={"code": created["code"], "username": "bob"}
+    ).json()["token"]
+
+    # Alice votes ready — action must NOT fire yet.
+    r = client.post(f"/api/mp2/{sid}/ready",
+                    json={"token": tok_a, "action": "season/simulate"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["fired"] is False
+    assert "alice" in body["info"]["ready"]["season/simulate"]
+
+    # Bob un-votes (harmless) then re-votes — action fires.
+    client.delete(f"/api/mp2/{sid}/ready",
+                  params={"token": tok_b, "action": "season/simulate"})
+    r = client.post(f"/api/mp2/{sid}/ready",
+                    json={"token": tok_b, "action": "season/simulate"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["fired"] is True
+    # Ready set is cleared after firing.
+    assert "season/simulate" not in body["info"]["ready"]
+
+
+def test_ready_unknown_action_is_rejected(client):
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid, tok = created["sid"], created["token"]
+    r = client.post(f"/api/mp2/{sid}/ready",
+                    json={"token": tok, "action": "bogus/action"})
+    assert r.status_code == 400
+
+
 def test_two_sessions_are_independent(client):
     """Two parallel MP sessions must not leak state into each other."""
     c1 = client.post(
