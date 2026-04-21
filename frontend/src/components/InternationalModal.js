@@ -99,7 +99,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
       if (ids.length === 0) break;
       setSimming(ids[0]);
       try {
-        const res = await axios.post(API + "/international/simulate", { match_id: ids[0] });
+        const res = await API_CLIENT.post("/international/simulate", { match_id: ids[0] });
         cur = res.data;
         setIntl(res.data);
       } catch { break; }
