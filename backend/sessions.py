@@ -56,6 +56,10 @@ class Session:
     players: dict[str, str | None] = field(default_factory=dict)  # token -> team_id
     usernames: dict[str, str] = field(default_factory=dict)        # token -> display name
     phase: str = "lobby"                    # lobby | team_pick | running | finished
+    # Ready/vote map: action_key -> set of tokens that have signaled "ready".
+    # Used to gate shared progression actions (season/simulate, split/next,
+    # etc.) until every human player has agreed. Reset after the action fires.
+    ready: dict[str, set[str]] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
     _dirty: bool = False                    # needs save
