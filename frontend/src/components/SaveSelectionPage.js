@@ -100,12 +100,10 @@ function MultiplayerSlots() {
                 </span>
               ))}
             </div>
-            {/* Rejoindre cette session spécifique */}
-            {/* Si on a déjà un token pour cette session, reprendre directement */}
-            {saved && saved.sessionId === s.id ? (
-              <button className="btn-primary" style={{ padding: "8px 0", width: "100%" }}
-                onClick={() => onSessionJoined(saved.sessionId, saved.token, saved.side)}>
-                Reprendre ma session
+            {/* Si déjà connecté à cette session, bouton neutre */}
+            {savedSid === s.id ? (
+              <button className="btn-primary" style={{ padding: "8px 0", width: "100%" }} disabled>
+                Session active
               </button>
             ) : mode === `join-${s.id}` ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -113,14 +111,7 @@ function MultiplayerSlots() {
                   placeholder="Votre pseudo" maxLength={20} />
                 {error && <div style={{ color: "#ef4444", fontSize: 12 }}>{error}</div>}
                 <button className="btn-primary" style={{ padding: "8px 0" }}
-                  onClick={async () => {
-                    setBusy(true); setError(null);
-                    try {
-                      const res = await axios.post(API + "/mp/join", { code: s.code, username: username.trim() });
-                      onSessionJoined(res.data.session_id, res.data.token, 2);
-                    } catch (e) { setError(e?.response?.data?.detail || "Erreur"); }
-                    finally { setBusy(false); }
-                  }} disabled={busy}>
+                  onClick={() => handleJoin(s.code)} disabled={busy}>
                   Rejoindre
                 </button>
                 <button style={cancelBtnStyle} onClick={() => setMode(null)}>Annuler</button>
