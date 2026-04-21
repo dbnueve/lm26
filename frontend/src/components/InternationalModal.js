@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowsClockwise, Globe, Trophy, Sword, GameController, Star } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
+import { API_CLIENT } from "../shared";
 import TeamLogo from "./TeamLogo";
 import DraftSystem from "./DraftSystem";
 import { LEAGUE_FLAG, LEAGUE_COLOR, C, btnStyle, EmptyState } from "./intlConstants";
