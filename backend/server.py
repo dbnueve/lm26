@@ -7800,6 +7800,124 @@ async def mp_websocket(websocket: WebSocket, session_id: str, token: str):
 # frontend ne l'utilisait depuis la suppression de MultiplayerGame.js.
 
 
+# ── NEW: MP-as-shared-solo endpoints (Phase 2c) ───────────────────────────────
+# These /mp2/* endpoints use the new `sessions` registry. Combined with
+# `use_session_state()` they let solo endpoints serve MP sessions transparently
+# via the `?session_id=...` query param.
+
+class _Mp2CreateBody(BaseModel):
+    league: str
+    username: str
+
+
+class _Mp2JoinBody(BaseModel):
+    code: str
+    username: str
+
+
+class _Mp2TeamBody(BaseModel):
+    token: str
+    team_id: str
+
+
+def _mp2_public_info(sess: "_sessions.Session", token: str | None = None) -> dict:
+    """Shape a session for the client. Never leaks other players' tokens."""
+    my_team = sess.players.get(token) if token else None
+    return {
+        "sid": sess.sid,
+        "code": sess.code,
+        "league": sess.league,
+        "phase": sess.phase,
+        "players": [
+            {"username": sess.usernames.get(t, "?"), "team_id": tid}
+            for t, tid in sess.players.items()
+        ],
+        "my_team_id": my_team,
+    }
+
+
+@api_router.post("/mp2/create")
+def mp2_create(body: _Mp2CreateBody):
+    """Create a new MP session backed by an isolated clone of solo GAME_STATE."""
+    try:
+        sess, token = _sessions.create_session(
+            body.league, body.username, build_initial_state
+        )
+    except Exception as exc:
+        logger.exception("mp2_create failed")
+        raise HTTPException(500, f"Création de session MP échouée: {exc}")
+    return {"sid": sess.sid, "code": sess.code, "token": token,
+            "info": _mp2_public_info(sess, token)}
+
+
+@api_router.post("/mp2/join")
+def mp2_join(body: _Mp2JoinBody):
+    """Join an existing session by its short code."""
+    try:
+        sess, token = _sessions.join_session(body.code, body.username)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
+    return {"sid": sess.sid, "code": sess.code, "token": token,
+            "info": _mp2_public_info(sess, token)}
+
+
+@api_router.get("/mp2/{sid}/info")
+def mp2_info(sid: str, token: str | None = None):
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        raise HTTPException(404, "Session introuvable")
+    return _mp2_public_info(sess, token)
+
+
+@api_router.post("/mp2/{sid}/team")
+def mp2_pick_team(sid: str, body: _Mp2TeamBody):
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        raise HTTPException(404, "Session introuvable")
+    try:
+        _sessions.assign_team(sess, body.token, body.team_id)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return _mp2_public_info(sess, body.token)
+
+
+@api_router.get("/mp2/sessions")
+def mp2_list():
+    """Debug/health listing of active sessions."""
+    return _sessions.list_sessions()
+
+
+# ── FastAPI lifecycle — autosave + reload MP sessions ─────────────────────────
+@app.on_event("startup")
+async def _mp2_startup() -> None:
+    try:
+        n = _sessions.load_all()
+        if n:
+            logger.info("MP2: restored %d session(s) from disk", n)
+    except Exception:
+        logger.exception("MP2: load_all failed at startup")
+    try:
+        _sessions.start_autosave()
+        logger.info("MP2: autosave started (%.0fs interval)",
+                    _sessions._AUTOSAVE_INTERVAL_S)
+    except Exception:
+        logger.exception("MP2: failed to start autosave")
+
+
+@app.on_event("shutdown")
+async def _mp2_shutdown() -> None:
+    try:
+        await _sessions.stop_autosave()
+    except Exception:
+        logger.exception("MP2: stop_autosave failed")
+    try:
+        n = _sessions.save_all_dirty()
+        if n:
+            logger.info("MP2: flushed %d dirty session(s) on shutdown", n)
+    except Exception:
+        logger.exception("MP2: save_all_dirty failed on shutdown")
+
+
 # Include router
 app.include_router(api_router)
 
