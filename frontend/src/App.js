@@ -274,7 +274,15 @@ function App() {
   };
 
   const handleSimulateSeason = async () => {
-    await API_CLIENT.post("/season/simulate");
+    if (mp2.sid) {
+      const voted = await mpReady("season/simulate");
+      if (!voted.fired) {
+        showToast("En attente des autres joueurs…", "info");
+        return;
+      }
+    } else {
+      await API_CLIENT.post("/season/simulate");
+    }
     await loadGameData();
     await loadUserTeam(gameState.userTeam);
     await loadSplitStatus(gameState.userTeam);
