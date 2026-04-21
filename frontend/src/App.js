@@ -189,7 +189,7 @@ function App() {
   };
 
   const startNewSlot = async (slot, league = "LEC") => {
-    await axios.post(API + `/saves/${slot}/new`, { league });
+    await API_CLIENT.post(`/saves/${slot}/new`, { league });
     localStorage.setItem(getSlotStorageKey(league), slot);
     setGameState({ initialized: true, userTeam: null, league });
     await loadGameData();
