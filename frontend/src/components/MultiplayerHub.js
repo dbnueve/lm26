@@ -23,12 +23,15 @@ import { AnimatePresence } from "framer-motion";
  */
 export default function MultiplayerHub({ sessionId, token, onExit, champions: championsProp }) {
   // MP2 migration: if a new-style session is active (via SessionProvider),
-  // skip the legacy hub entirely — the solo UI already handles the session
-  // transparently via the /api middleware.
+  // the solo UI already handles the session via the /api middleware — so we
+  // skip the legacy hub. We pass null sid/token to the legacy socket hook so
+  // it doesn't attempt any connection.
   const mp2 = useSession();
-  if (mp2.sid) return null;
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { state, connected, error: wsError, refetch } = useMultiplayerSocket(sessionId, token);
+  const legacyActive = !mp2.sid;
+  const { state, connected, error: wsError, refetch } = useMultiplayerSocket(
+    legacyActive ? sessionId : null,
+    legacyActive ? token : null,
+  );
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
