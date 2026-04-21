@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { ArrowsClockwise } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
 import TeamLogo from "./TeamLogo";
 
 // Schedule Page
