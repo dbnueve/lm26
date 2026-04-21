@@ -112,7 +112,16 @@ function App() {
   // game data on any server-pushed event. This is the simplest possible
   // sync strategy: server is truth, frontend just reacts to "something changed".
   const mp2 = useSession();
-  const onMp2Event = useCallback((event, _data) => {
+  const onMp2Event = useCallback((event, data) => {
+    // Fan-out to any listening component (e.g. TeamPicker refreshes its
+    // "taken teams" map on peer picks). Skip heartbeat noise.
+    if (event !== "ping" && event !== "pong") {
+      try {
+        window.dispatchEvent(new CustomEvent("mp2:session_event", {
+          detail: { event, data },
+        }));
+      } catch { /* CustomEvent unsupported in very old browsers — ignore */ }
+    }
     // Ignore purely informational events; react to anything state-related.
     if (event === "hello" || event === "chat" || event === "ping" || event === "pong") return;
     loadGameData();
