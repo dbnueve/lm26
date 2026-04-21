@@ -341,7 +341,7 @@ const InboxPage = () => {
   }, [markRead]);
 
   const markAllRead = useCallback(async () => {
-    await axios.post(API + "/inbox/read-all").catch(() => {});
+    await API_CLIENT.post("/inbox/read-all").catch(() => {});
     setData(prev => ({
       ...prev,
       messages: prev.messages.map(m => ({ ...m, read: true })),
