@@ -256,7 +256,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
     ].filter(id => id && !allPlayers?.[id] && !fetchedPlayers[id]);
     if (ids.length === 0) return;
     const unique = [...new Set(ids)];
-    Promise.all(unique.map(id => axios.get(API + "/players/" + id).then(r => r.data).catch(() => null)))
+    Promise.all(unique.map(id => API_CLIENT.get("/players/" + id).then(r => r.data).catch(() => null)))
       .then(results => {
         const map = {};
         results.forEach(p => { if (p) map[p.id] = p; });
