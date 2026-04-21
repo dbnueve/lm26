@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
-import { API } from "../shared";
+import { API, API_CLIENT, useSession } from "../shared";
 import TeamLogo from "./TeamLogo";
 import LeaguePicker, { LEAGUE_META } from "./LeaguePicker";
 
 const LEAGUES = ["LEC", "LCS", "LCK", "LPL", "CBLOL"];
 
-function MultiplayerSlots({ onSessionJoined }) {
+function MultiplayerSlots() {
+  const { sid: savedSid, code: savedCode, setSession, clearSession } = useSession();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState(null); // null | "create" | "join"
@@ -17,12 +18,11 @@ function MultiplayerSlots({ onSessionJoined }) {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  // Session sauvegardée dans localStorage
-  const saved = (() => { try { return JSON.parse(localStorage.getItem("mp_session")); } catch { return null; } })();
-
   useEffect(() => {
-    axios.get(API + "/mp/sessions")
-      .then(r => setSessions(r.data.filter(s => s.phase !== "finished")))
+    // Listing is public — do it without session_id so the API_CLIENT doesn't
+    // short-circuit with a stale session.
+    axios.get(API + "/mp2/sessions")
+      .then(r => setSessions((r.data || []).filter(s => s.phase !== "finished")))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -31,25 +31,24 @@ function MultiplayerSlots({ onSessionJoined }) {
     if (!username.trim()) { setError("Entrez votre pseudo"); return; }
     setBusy(true); setError(null);
     try {
-      const res = await axios.post(API + "/mp/create", { league, username: username.trim(), max_players: 10 });
-      onSessionJoined(res.data.session_id, res.data.token, 1);
+      const res = await API_CLIENT.post("/mp2/create", { league, username: username.trim() });
+      const { sid, code, token } = res.data;
+      setSession({ sid, code, token });
     } catch (e) { setError(e?.response?.data?.detail || "Erreur"); }
     finally { setBusy(false); }
   };
 
-  const handleJoin = async () => {
+  const handleJoin = async (code) => {
+    const finalCode = (code || joinCode).trim().toUpperCase();
     if (!username.trim()) { setError("Entrez votre pseudo"); return; }
-    if (!joinCode.trim()) { setError("Entrez le code"); return; }
+    if (!finalCode) { setError("Entrez le code"); return; }
     setBusy(true); setError(null);
     try {
-      const res = await axios.post(API + "/mp/join", { code: joinCode.trim().toUpperCase(), username: username.trim() });
-      onSessionJoined(res.data.session_id, res.data.token, 2);
+      const res = await API_CLIENT.post("/mp2/join", { code: finalCode, username: username.trim() });
+      const { sid, code: respCode, token } = res.data;
+      setSession({ sid, code: respCode, token });
     } catch (e) { setError(e?.response?.data?.detail || "Code invalide"); }
     finally { setBusy(false); }
-  };
-
-  const handleResume = () => {
-    onSessionJoined(saved.sessionId, saved.token, saved.side);
   };
 
   const phaseLabel = (p) => ({ waiting: "Attente", team_pick: "Sélection", regular: "Saison", playoffs: "Playoffs" }[p] || p);
