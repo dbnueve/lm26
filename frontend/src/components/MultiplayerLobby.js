@@ -1,21 +1,27 @@
 import React, { useState } from "react";
-import { API } from "../shared";
-import axios from "axios";
+import { API_CLIENT, useSession } from "../shared";
 
 /**
- * MultiplayerLobby — create or join a multiplayer session.
+ * MultiplayerLobby — create or join a multiplayer session (MP2).
+ *
  * Props:
- *   onSessionJoined(sessionId, token, side) → called once session is ready
+ *   onSessionJoined(sessionId, token, side) → legacy callback preserved for
+ *     App.js. `side` is best-effort (1 for host, 2 for joiner) but the new
+ *     MP2 flow doesn't actually use sides — each player picks any free team.
  *   onBack() → go back to main menu
+ *
+ * The component installs the session into `SessionProvider` so every
+ * subsequent solo API call carries `?session_id=X` automatically.
  */
 export default function MultiplayerLobby({ onSessionJoined, onBack }) {
+  const { setSession } = useSession();
   const [tab, setTab] = useState("create"); // "create" | "join"
   const [league, setLeague] = useState("LEC");
   const [username, setUsername] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [created, setCreated] = useState(null); // {session_id, code, token}
+  const [created, setCreated] = useState(null); // {sid, code, token}
 
   const LEAGUES = ["LEC", "LCS", "LCK", "LPL", "CBLOL"];
 
@@ -24,12 +30,11 @@ export default function MultiplayerLobby({ onSessionJoined, onBack }) {
     setError(null);
     setLoading(true);
     try {
-      const res = await axios.post(API + "/mp/create", {
+      const res = await API_CLIENT.post("/mp2/create", {
         league,
         username: username.trim(),
-        max_players: 10,
       });
-      setCreated(res.data);
+      setCreated(res.data); // { sid, code, token, info }
     } catch (e) {
       setError(e?.response?.data?.detail || "Erreur lors de la création");
     } finally {
@@ -43,13 +48,15 @@ export default function MultiplayerLobby({ onSessionJoined, onBack }) {
     setError(null);
     setLoading(true);
     try {
-      const res = await axios.post(API + "/mp/join", {
+      const res = await API_CLIENT.post("/mp2/join", {
         code: joinCode.trim().toUpperCase(),
         username: username.trim(),
       });
-      onSessionJoined(res.data.session_id, res.data.token, 2);
+      const { sid, code, token } = res.data;
+      setSession({ sid, code, token });
+      onSessionJoined(sid, token, 2);
     } catch (e) {
-      setError(e?.response?.data?.detail || "Code invalide ou partie déjà complète");
+      setError(e?.response?.data?.detail || "Code invalide ou session introuvable");
     } finally {
       setLoading(false);
     }
@@ -66,7 +73,14 @@ export default function MultiplayerLobby({ onSessionJoined, onBack }) {
           <p style={styles.hint}>En attente du joueur 2…</p>
           <button
             style={styles.btnPrimary}
-            onClick={() => onSessionJoined(created.session_id, created.token, 1)}
+            onClick={() => {
+              setSession({
+                sid: created.sid,
+                code: created.code,
+                token: created.token,
+              });
+              onSessionJoined(created.sid, created.token, 1);
+            }}
           >
             Continuer vers la sélection d&apos;équipe
           </button>
