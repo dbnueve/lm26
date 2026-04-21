@@ -305,7 +305,7 @@ function App() {
 
   const handleApplyTraining = async (playerId, trainingType) => {
     try {
-      const res = await axios.post(API + "/training/apply", {
+      const res = await API_CLIENT.post("/training/apply", {
         player_id: playerId,
         training_type: trainingType
       });
