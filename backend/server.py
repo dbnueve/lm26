@@ -7319,6 +7319,13 @@ async def _mp2_session_swap_middleware(request, call_next):
         )
 
     mutating = request.method.upper() in ("POST", "PUT", "PATCH", "DELETE")
+    # Per-request user_team resolution: in MP each player has their own team,
+    # stored in session.players[token]. Override the shared state's user_team
+    # for the duration of this request so the solo code path sees the right
+    # perspective. We restore the pre-call value on swap-out so the per-player
+    # override doesn't leak into the persisted session state.
+    token = request.query_params.get("mp_token")
+    per_player_team = sess.players.get(token) if token else None
 
     async with _swap_lock:
         solo_snapshot = dict(GAME_STATE)
@@ -7328,11 +7335,31 @@ async def _mp2_session_swap_middleware(request, call_next):
             _rebuild_meta_lookup()
         except Exception:
             logger.exception("meta rebuild on swap-in failed (sid=%s)", sid[:8])
+        # Apply per-player view of user_team. Stash the session's stored value
+        # so we can restore it afterwards and it doesn't get overwritten by a
+        # player-scoped view.
+        session_user_team_snapshot = sess.state.get("user_team")
+        if per_player_team:
+            GAME_STATE["user_team"] = per_player_team
         try:
             response = await call_next(request)
-            # Persist mutations back into the session.
+            # Persist mutations back into the session, but keep user_team
+            # at the session level (not the per-player view we swapped in).
+            # Teams picked via /teams/select/{id} update session.players[token]
+            # inside that handler, not via GAME_STATE, so this is safe.
+            new_user_team = GAME_STATE.get("user_team")
             sess.state.clear()
             sess.state.update(GAME_STATE)
+            # Restore the session-level user_team unless the handler set a new
+            # value that differs from the per-player view. This keeps solo
+            # semantics for endpoints that legitimately set user_team (/saves/load)
+            # while not letting a per-player view leak into the stored state.
+            if per_player_team and new_user_team == per_player_team:
+                # No change made by handler — restore previous session-level value.
+                if session_user_team_snapshot is not None:
+                    sess.state["user_team"] = session_user_team_snapshot
+                else:
+                    sess.state.pop("user_team", None)
             _sessions.mark_dirty(sid)
             # Notify all subscribers so they refetch. Only on successful
             # mutating requests — GETs don't touch state, failures don't either.
