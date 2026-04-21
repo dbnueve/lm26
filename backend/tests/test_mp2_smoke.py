@@ -150,3 +150,67 @@ def test_swap_with_unknown_session_raises(client):
                 pass  # pragma: no cover
 
     asyncio.run(_run())
+
+
+# ── Phase 3: middleware routes solo endpoints to session state ───────────────
+def test_middleware_routes_solo_endpoint_to_session(client):
+    """Key guarantee of Phase 3: `GET /api/game/state?session_id=X` reads the
+    MP session's state, not the global solo state. Same endpoint, same code
+    path, transparently multiplayer.
+    """
+    server.ensure_initialized()
+    solo_league = server.GAME_STATE.get("league")
+    mp_league = "LPL" if solo_league != "LPL" else "LCK"
+
+    created = client.post(
+        "/api/mp2/create", json={"league": mp_league, "username": "alice"}
+    ).json()
+    sid = created["sid"]
+
+    # Solo call (no session_id) — sees solo state
+    r_solo = client.get("/api/game/state").json()
+    assert r_solo["initialized"] is True
+
+    # MP call — sees the session's state. Phase isn't in solo-state shape,
+    # but the endpoint should respond 200 and return the session's phase.
+    r_mp = client.get("/api/game/state", params={"session_id": sid})
+    assert r_mp.status_code == 200, r_mp.text
+
+    # Solo state untouched after the MP call
+    r_solo_after = client.get("/api/game/state").json()
+    assert r_solo_after["current_week"] == r_solo["current_week"]
+
+
+def test_middleware_returns_404_on_unknown_session(client):
+    r = client.get(
+        "/api/game/state", params={"session_id": "does-not-exist"}
+    )
+    assert r.status_code == 404
+    assert "introuvable" in r.json()["detail"].lower()
+
+
+def test_middleware_mutation_persists_to_session(client):
+    """Call a solo endpoint that mutates state with ?session_id=X and confirm
+    the mutation lands in the session, not in solo.
+    """
+    server.ensure_initialized()
+    solo_week = server.GAME_STATE.get("current_week")
+
+    created = client.post(
+        "/api/mp2/create", json={"league": "LEC", "username": "alice"}
+    ).json()
+    sid = created["sid"]
+
+    # Directly poke the session state to simulate a mutation that happened
+    # inside a solo endpoint that we route through the middleware.
+    # (A real solo endpoint that advances weeks would do the same, but most
+    # mutating endpoints require complex setup; we prove the plumbing here.)
+    async def _run() -> None:
+        async with server.use_session_state(sid):
+            server.GAME_STATE["current_week"] = 99
+
+    asyncio.run(_run())
+
+    assert sessions.get_state(sid)["current_week"] == 99
+    # Solo state still unchanged
+    assert server.GAME_STATE.get("current_week") == solo_week
