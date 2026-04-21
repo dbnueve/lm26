@@ -143,7 +143,7 @@ const StatsPage = () => {
     if (selectedSplit !== "current" || splits.length < 2) { setPrevData(null); return; }
     const prevKey = splits[1]?.key;
     if (!prevKey || prevKey === "current") { setPrevData(null); return; }
-    axios.get(API + "/stats/champions", { params: { split: prevKey } })
+    API_CLIENT.get("/stats/champions", { params: { split: prevKey } })
       .then(r => setPrevData(r.data))
       .catch(() => setPrevData(null));
   }, [selectedSplit, splits]);
