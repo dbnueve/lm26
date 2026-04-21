@@ -282,7 +282,9 @@ def list_sessions() -> list[dict]:
             "code": s.code,
             "league": s.league,
             "phase": s.phase,
-            "players": len(s.players),
+            "players": list(s.usernames.values()),
+            "player_count": len(s.players),
+            "current_week": s.state.get("current_week", 0),
             "subscribers": len(s.subscribers),
             "updated_at": s.updated_at,
         }
