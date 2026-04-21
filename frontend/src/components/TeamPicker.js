@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Star } from "@phosphor-icons/react";
-import axios from "axios";
-import { API } from "../shared";
+import { API_CLIENT } from "../shared";
 import TeamLogo from "./TeamLogo";
 
 // Team Picker Component
