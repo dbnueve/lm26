@@ -7181,6 +7181,143 @@ def mp2_pick_team(sid: str, body: _Mp2TeamBody):
     return _mp2_public_info(sess, body.token)
 
 
+# ── Ready/vote gate for progression ─────────────────────────────────────────
+# Progression actions (simulate season, play next match, advance to the next
+# split/phase) are shared by every player in a session. They must not run
+# until every human has clicked "ready". The client POSTs /ready to signal
+# intent; once the last vote lands, the server runs the action and clears
+# the ready set. A companion DELETE endpoint un-votes if the player changes
+# their mind before the action fires.
+
+class _Mp2ReadyBody(BaseModel):
+    token: str
+    action: str  # e.g. "season/simulate", "split/next", "match:<match_id>"
+
+
+# Keys the server recognises. Kept as a whitelist so clients cannot spam
+# arbitrary action names into the ready registry.
+_MP2_READY_ACTIONS = {
+    "season/simulate",
+    "season/start",
+    "split/next",
+}
+_MP2_MATCH_ACTION_PREFIX = "match:"  # match:<match_id> — per-match gate
+
+
+def _mp2_validate_action(action: str) -> None:
+    if action in _MP2_READY_ACTIONS:
+        return
+    if action.startswith(_MP2_MATCH_ACTION_PREFIX) and len(action) > len(_MP2_MATCH_ACTION_PREFIX):
+        return
+    raise HTTPException(400, f"Action de ready inconnue: {action}")
+
+
+async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
+    """Execute the shared progression action under the MP session's state.
+
+    Runs inside the same GAME_STATE swap the middleware would apply for a
+    normal HTTP call — we enter swap mode manually because /mp2/* paths are
+    excluded from the middleware (they own their own session routing).
+    """
+    async with _swap_lock:
+        solo_snapshot = dict(GAME_STATE)
+        GAME_STATE.clear()
+        GAME_STATE.update(sess.state)
+        try:
+            _rebuild_meta_lookup()
+        except Exception:
+            logger.exception("meta rebuild on ready-run failed")
+        try:
+            if action == "season/simulate":
+                result = await simulate_season()  # existing solo endpoint body
+            elif action == "season/start":
+                result = await start_season()
+            elif action == "split/next":
+                result = await split_next()
+            elif action.startswith(_MP2_MATCH_ACTION_PREFIX):
+                match_id = action[len(_MP2_MATCH_ACTION_PREFIX):]
+                # Match-play gate: the actual /match/simulate call is made by
+                # the player who drafted. Here we only unlock the gate, the
+                # client re-posts /match/simulate on its own. Returning a
+                # marker payload keeps the frontend simple.
+                result = {"unlocked": True, "match_id": match_id}
+            else:
+                raise HTTPException(400, f"Action non exécutable: {action}")
+            # Persist mutations back into the session.
+            sess.state.clear()
+            sess.state.update(GAME_STATE)
+            _sessions.mark_dirty(sess.sid)
+            return result if isinstance(result, dict) else {"ok": True}
+        finally:
+            GAME_STATE.clear()
+            GAME_STATE.update(solo_snapshot)
+            if solo_snapshot.get("league"):
+                try:
+                    _rebuild_meta_lookup()
+                except Exception:
+                    logger.exception("meta rebuild on ready swap-out failed")
+
+
+@api_router.post("/mp2/{sid}/ready")
+async def mp2_ready(sid: str, body: _Mp2ReadyBody):
+    """Vote ready for a shared progression action.
+
+    Returns the session info (with `ready` map updated). When every human
+    has voted, the action runs server-side and the ready set is cleared; the
+    response also includes `fired=True` and the action's result payload.
+    """
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        raise HTTPException(404, "Session introuvable")
+    _mp2_validate_action(body.action)
+    try:
+        everyone_ready = _sessions.mark_ready(sess, body.action, body.token)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+    fired = False
+    result: dict = {}
+    if everyone_ready:
+        try:
+            result = await _mp2_run_ready_action(sess, body.action)
+            fired = True
+        finally:
+            _sessions.clear_ready(sess, body.action)
+
+    # Always notify peers so their UI updates (ready dots, or the post-action
+    # state change that fires on everyone_ready).
+    try:
+        await _sessions.broadcast(sid, "ready_changed", {
+            "action": body.action, "fired": fired,
+        })
+        if fired:
+            await _sessions.broadcast(sid, "state_changed", {
+                "trigger": body.action,
+            })
+    except Exception:
+        logger.exception("broadcast after /mp2/ready failed (sid=%s)", sid[:8])
+
+    info = _mp2_public_info(sess, body.token)
+    return {"info": info, "fired": fired, "result": result}
+
+
+@api_router.delete("/mp2/{sid}/ready")
+async def mp2_unready(sid: str, token: str, action: str):
+    """Withdraw a ready vote before the action fires."""
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        raise HTTPException(404, "Session introuvable")
+    _mp2_validate_action(action)
+    _sessions.unmark_ready(sess, action, token)
+    try:
+        await _sessions.broadcast(sid, "ready_changed", {
+            "action": action, "fired": False,
+        })
+    except Exception:
+        logger.exception("broadcast after /mp2/unready failed (sid=%s)", sid[:8])
+    return _mp2_public_info(sess, token)
+
+
 @api_router.get("/mp2/sessions")
 def mp2_list():
     """Debug/health listing of active sessions."""
