@@ -124,6 +124,18 @@ function App() {
     }
   }, []);
 
+  // ── MP2 WebSocket wiring ────────────────────────────────────────────────────
+  // When a multiplayer session is active, subscribe to its WS and refetch
+  // game data on any server-pushed event. This is the simplest possible
+  // sync strategy: server is truth, frontend just reacts to "something changed".
+  const mp2 = useSession();
+  const onMp2Event = useCallback((event, _data) => {
+    // Ignore purely informational events; react to anything state-related.
+    if (event === "hello" || event === "chat" || event === "ping" || event === "pong") return;
+    loadGameData();
+  }, [loadGameData]);
+  useMp2Socket(mp2.sid, mp2.token, onMp2Event);
+
   const loadSplitStatus = useCallback(async (userTeamId) => {
     try {
       const res = await axios.get(API + "/split/status");
