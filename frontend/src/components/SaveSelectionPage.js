@@ -81,7 +81,7 @@ function MultiplayerSlots() {
 
         {/* Sessions actives sur le serveur */}
         {!loading && sessions.map((s, i) => (
-          <motion.div key={s.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+          <motion.div key={s.sid} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
             style={cardStyle()}
           >
             <div style={{ color: "var(--text-2)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
@@ -101,11 +101,11 @@ function MultiplayerSlots() {
               ))}
             </div>
             {/* Si déjà connecté à cette session, bouton neutre */}
-            {savedSid === s.id ? (
+            {savedSid === s.sid ? (
               <button className="btn-primary" style={{ padding: "8px 0", width: "100%" }} disabled>
                 Session active
               </button>
-            ) : mode === `join-${s.id}` ? (
+            ) : mode === `join-${s.sid}` ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input style={inputStyle} value={username} onChange={e => setUsername(e.target.value)}
                   placeholder="Votre pseudo" maxLength={20} />
@@ -118,7 +118,7 @@ function MultiplayerSlots() {
               </div>
             ) : (
               <button className="btn-primary" style={{ padding: "8px 0", width: "100%" }}
-                onClick={() => { setMode(`join-${s.id}`); setError(null); }}>
+                onClick={() => { setMode(`join-${s.sid}`); setError(null); }}>
                 Rejoindre
               </button>
             )}
