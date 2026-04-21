@@ -144,7 +144,7 @@ function App() {
 
   const handleNextSplit = async () => {
     try {
-      const res = await axios.post(API + "/split/next");
+      const res = await API_CLIENT.post("/split/next");
       setShowSplitEnd(false);
       setShowInternational(false);
       setCurrentPage("dashboard");
