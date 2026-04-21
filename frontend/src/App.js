@@ -291,7 +291,7 @@ function App() {
 
   const handleSwapPlayers = async (player1Id, player2Id) => {
     try {
-      await axios.post(API + "/roster/swap", {
+      await API_CLIENT.post("/roster/swap", {
         player1_id: player1Id,
         player2_id: player2Id
       });
