@@ -50,7 +50,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
   const handleStartSeason = async () => {
     setStartingSeasonLoading(true);
     try {
-      const res = await axios.post(API + "/season/start");
+      const res = await API_CLIENT.post("/season/start");
       setAiTransfers(res.data.ai_transfers || []);
       if (onSeasonStart) onSeasonStart(); // App.js reloads game state → phase prop updates
     } catch (e) {
