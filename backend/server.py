@@ -1277,6 +1277,66 @@ def build_initial_state(league: str = "LEC") -> dict:
                 logger.exception("Failed to restore META_LOOKUP after build_initial_state")
 
 
+# ── MP session swap helper ────────────────────────────────────────────────────
+# Context manager that temporarily replaces the global GAME_STATE with a
+# session's state for the duration of a request handler. This lets every
+# solo endpoint (`/draft/action`, `/match/simulate`, `/advance-week`, ...)
+# operate on an MP session without a single line of MP-specific logic.
+#
+# Thread-safety: FastAPI/uvicorn dev is single-worker + asyncio. We still
+# guard the swap with a global asyncio.Lock so that two concurrent HTTP
+# requests (e.g. one solo + one MP, or two different MP sessions) cannot
+# interleave mutations on the same global dict.
+import contextlib as _contextlib
+import asyncio as _asyncio
+
+_swap_lock = _asyncio.Lock()
+
+
+@_contextlib.asynccontextmanager
+async def use_session_state(session_id: str | None):
+    """Swap GAME_STATE to the session's state for the duration of the block.
+
+    If session_id is None, yields immediately with the solo state in place.
+    On exit, the original state is restored exactly and the session is
+    marked dirty (autosave will flush it).
+    """
+    if not session_id:
+        yield None
+        return
+
+    sess = _sessions.get_session(session_id)
+    if sess is None:
+        raise HTTPException(404, f"MP session {session_id} introuvable")
+
+    async with _swap_lock:
+        # Snapshot solo state
+        solo_snapshot = dict(GAME_STATE)
+        GAME_STATE.clear()
+        GAME_STATE.update(sess.state)
+        try:
+            # Align META_LOOKUP with this session's league (best-effort)
+            try:
+                _rebuild_meta_lookup()
+            except Exception:
+                logger.exception("Failed to rebuild META_LOOKUP for session %s", session_id[:8])
+            yield sess
+            # Persist mutations back into the session dict object (so subscribers
+            # of sess.state see the new values — same object reference, actually)
+            sess.state.clear()
+            sess.state.update(GAME_STATE)
+            _sessions.mark_dirty(session_id)
+        finally:
+            # Restore solo state exactly
+            GAME_STATE.clear()
+            GAME_STATE.update(solo_snapshot)
+            if solo_snapshot.get("league"):
+                try:
+                    _rebuild_meta_lookup()
+                except Exception:
+                    logger.exception("Failed to restore META_LOOKUP after session %s", session_id[:8])
+
+
 def generate_schedule():
     """Generate 9-week LEC-style schedule: each team plays exactly twice per week.
 
