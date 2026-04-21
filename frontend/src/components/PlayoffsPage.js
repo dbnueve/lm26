@@ -35,7 +35,7 @@ const PlayoffsPage = ({ userTeam, onPlayPlayoffMatch, showToast, onSplitEnd, onS
 
   const simulateAIMatch = async (matchId) => {
     try {
-      const res = await axios.post(API + "/playoffs/simulate-match", { match_id: matchId });
+      const res = await API_CLIENT.post("/playoffs/simulate-match", { match_id: matchId });
       fetchPlayoffs();
       showToast(`Série simulée: ${res.data.series_score.team1}-${res.data.series_score.team2}`, "info");
       if (res.data.champion && onSplitEnd) {
