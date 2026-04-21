@@ -34,6 +34,7 @@ function MultiplayerSlots({ onEnterSession }) {
       const res = await API_CLIENT.post("/mp2/create", { league, username: username.trim() });
       const { sid, code, token } = res.data;
       setSession({ sid, code, token });
+      onEnterSession?.();
     } catch (e) { setError(e?.response?.data?.detail || "Erreur"); }
     finally { setBusy(false); }
   };
@@ -47,6 +48,7 @@ function MultiplayerSlots({ onEnterSession }) {
       const res = await API_CLIENT.post("/mp2/join", { code: finalCode, username: username.trim() });
       const { sid, code: respCode, token } = res.data;
       setSession({ sid, code: respCode, token });
+      onEnterSession?.();
     } catch (e) { setError(e?.response?.data?.detail || "Code invalide"); }
     finally { setBusy(false); }
   };
