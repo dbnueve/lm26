@@ -178,7 +178,7 @@ function App() {
   const getSlotStorageKey = (league) => `esports_manager_active_slot_${league || "LEC"}`;
 
   const loadSlot = async (slot) => {
-    const res = await axios.post(API + `/saves/${slot}/load`);
+    const res = await API_CLIENT.post(`/saves/${slot}/load`);
     const league = res.data.league || "LEC";
     localStorage.setItem(getSlotStorageKey(league), slot);
     setGameState({ initialized: res.data.initialized, userTeam: res.data.user_team, league, phase: res.data.phase || "regular" });
