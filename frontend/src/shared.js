@@ -47,7 +47,13 @@ const _sessionRef = { sid: null, token: null };
 const API_CLIENT = axios.create({ baseURL: API });
 API_CLIENT.interceptors.request.use((config) => {
   if (_sessionRef.sid) {
-    config.params = { ...(config.params || {}), session_id: _sessionRef.sid };
+    config.params = {
+      ...(config.params || {}),
+      session_id: _sessionRef.sid,
+      // Inject the caller's token so the MP2 middleware can resolve
+      // `user_team` from session.players[token] per-request.
+      ...(_sessionRef.token ? { mp_token: _sessionRef.token } : {}),
+    };
   }
   return config;
 });
