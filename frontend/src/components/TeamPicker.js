@@ -19,7 +19,7 @@ const TeamPicker = ({ teams, onSelectTeam, league = "LEC" }) => {
   const handleConfirm = async () => {
     if (selectedTeam) {
       try {
-        await axios.post(API + "/teams/select/" + selectedTeam.id);
+        await API_CLIENT.post("/teams/select/" + selectedTeam.id);
         onSelectTeam(selectedTeam);
       } catch (e) {
         console.error("Error selecting team:", e);
