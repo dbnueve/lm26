@@ -61,7 +61,7 @@ const PlayoffSeriesModal = ({ match, userTeam, teams, champions, showToast, onCl
       enemy_bans: draftState.enemy_bans || [],
     } : null;
     try {
-      const res = await axios.post(API + "/playoffs/play", { match_id: match.id, user_draft: userDraft });
+      const res = await API_CLIENT.post("/playoffs/play", { match_id: match.id, user_draft: userDraft });
       // Store new score — applied only after user clicks through timeline
       pendingScoreRef.current = { t1: res.data.series_score.team1, t2: res.data.series_score.team2 };
       setGameResult(res.data.game);
