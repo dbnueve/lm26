@@ -237,7 +237,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
       lanes: { ...prev?.lanes, [pos]: { ...prev?.lanes?.[pos], ...lanePatch } },
     }));
     try {
-      const res = await axios.post(API + "/tactics", { lanes: { [pos]: lanePatch } });
+      const res = await API_CLIENT.post("/tactics", { lanes: { [pos]: lanePatch } });
       setTactics(res.data.tactics);
       setCoherence(res.data.coherence);
     } catch { await fetchTactics(); }
