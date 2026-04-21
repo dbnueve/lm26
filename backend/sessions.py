@@ -177,6 +177,40 @@ def mark_dirty(sid: str) -> None:
         s._dirty = True
 
 
+# ── Ready/vote gates ──────────────────────────────────────────────────────────
+def mark_ready(session: Session, action: str, token: str) -> bool:
+    """Record that `token` is ready to run `action`. Returns True if everyone
+    is now ready (caller should run the action + call `clear_ready`)."""
+    if token not in session.players:
+        raise ValueError("Token invalide")
+    ready_set = session.ready.setdefault(action, set())
+    ready_set.add(token)
+    # "Everyone" = every human token currently in the session.
+    return set(session.players.keys()) <= ready_set
+
+
+def unmark_ready(session: Session, action: str, token: str) -> None:
+    """Remove a player's ready vote (e.g., they changed their mind)."""
+    ready_set = session.ready.get(action)
+    if ready_set:
+        ready_set.discard(token)
+        if not ready_set:
+            session.ready.pop(action, None)
+
+
+def clear_ready(session: Session, action: str) -> None:
+    """Clear all ready votes for `action`. Call after the action has fired."""
+    session.ready.pop(action, None)
+
+
+def ready_snapshot(session: Session) -> dict[str, list[str]]:
+    """Return a client-friendly view: action -> list of usernames that are ready."""
+    return {
+        action: [session.usernames.get(t, "?") for t in tokens]
+        for action, tokens in session.ready.items()
+    }
+
+
 # ── WebSocket fan-out ─────────────────────────────────────────────────────────
 def subscribe(session: Session, ws: Any) -> None:
     session.subscribers.add(ws)
