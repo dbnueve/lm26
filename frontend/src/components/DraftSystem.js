@@ -111,8 +111,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
       return;
     }
     try {
-      const url = API + "/draft/action";
-      const response = await axios.post(url, {
+      const response = await API_CLIENT.post("/draft/action", {
         action,
         champion,
         position
