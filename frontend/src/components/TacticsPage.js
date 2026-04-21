@@ -207,7 +207,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
 
   const fetchTactics = useCallback(async () => {
     try {
-      const res = await axios.get(API + "/tactics");
+      const res = await API_CLIENT.get("/tactics");
       setTactics(res.data.tactics);
       setCoherence(res.data.coherence);
     } catch { /* ignore */ }
