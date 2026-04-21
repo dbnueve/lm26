@@ -314,7 +314,7 @@ const InboxPage = () => {
 
   const load = useCallback(async () => {
     try {
-      const res = await axios.get(API + "/inbox");
+      const res = await API_CLIENT.get("/inbox");
       setData(res.data);
     } catch { /* ignore */ }
     setLoading(false);
