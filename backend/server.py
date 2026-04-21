@@ -7923,9 +7923,9 @@ async def mp2_websocket(websocket: WebSocket, sid: str, token: str):
         missed = 0
         while True:
             try:
-                msg = await asyncio.wait_for(websocket.receive_json(), timeout=30.0)
+                msg = await _asyncio.wait_for(websocket.receive_json(), timeout=30.0)
                 missed = 0
-            except asyncio.TimeoutError:
+            except _asyncio.TimeoutError:
                 missed += 1
                 if missed >= 2:
                     logger.info("MP2 WS heartbeat timeout sid=%s user=%s",
