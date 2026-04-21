@@ -68,7 +68,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
     // En mode MP, l'état vient de l'extérieur (mpDraftState) — pas besoin de /draft/start
     if (onMpAction) return;
     try {
-      const response = await axios.post(API + "/draft/start", matchId ? { match_id: matchId } : {});
+      const response = await API_CLIENT.post("/draft/start", matchId ? { match_id: matchId } : {});
       setDraftState(response.data);
       if (response.data.current_turn === "user") fetchSuggestions();
     } catch (e) {
