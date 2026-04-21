@@ -50,7 +50,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
   const handleSplitChange = async (splitKey) => {
     setSelectedSplit(splitKey);
     try {
-      const res = await axios.get(`${API}/career/split-stats`, { params: { split: splitKey } });
+      const res = await API_CLIENT.get(`/career/split-stats`, { params: { split: splitKey } });
       setSplitStats(res.data);
     } catch (e) {
       console.error(e);
