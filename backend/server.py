@@ -7170,14 +7170,26 @@ def mp2_info(sid: str, token: str | None = None):
 
 
 @api_router.post("/mp2/{sid}/team")
-def mp2_pick_team(sid: str, body: _Mp2TeamBody):
+async def mp2_pick_team(sid: str, body: _Mp2TeamBody):
     sess = _sessions.get_session(sid)
     if sess is None:
         raise HTTPException(404, "Session introuvable")
     try:
         _sessions.assign_team(sess, body.token, body.team_id)
     except ValueError as exc:
-        raise HTTPException(400, str(exc))
+        raise HTTPException(409, str(exc))
+    # Flip session phase once every joined human has picked.
+    if sess.phase == "team_pick" and all(tid is not None for tid in sess.players.values()):
+        sess.phase = "running"
+        sess._dirty = True
+    try:
+        await _sessions.broadcast(sid, "team_picked", {
+            "username": sess.usernames.get(body.token, "?"),
+            "team_id": body.team_id,
+            "phase": sess.phase,
+        })
+    except Exception:
+        logger.exception("broadcast team_picked failed (sid=%s)", sid[:8])
     return _mp2_public_info(sess, body.token)
 
 
