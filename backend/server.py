@@ -7229,11 +7229,11 @@ async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
             logger.exception("meta rebuild on ready-run failed")
         try:
             if action == "season/simulate":
-                result = await simulate_season()  # existing solo endpoint body
+                result = await simulate_full_season()  # existing solo endpoint body
             elif action == "season/start":
                 result = await start_season()
             elif action == "split/next":
-                result = await split_next()
+                result = await advance_to_next_split()
             elif action.startswith(_MP2_MATCH_ACTION_PREFIX):
                 match_id = action[len(_MP2_MATCH_ACTION_PREFIX):]
                 # Match-play gate: the actual /match/simulate call is made by
