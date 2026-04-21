@@ -60,23 +60,20 @@ function MultiplayerSlots() {
       </div>
       <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
 
-        {/* Session en cours dans localStorage */}
-        {saved && (
+        {/* Session en cours (restaurée via SessionProvider) */}
+        {savedSid && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             style={cardStyle("#1e3a5f", "#2563eb44")}
           >
             <div style={{ color: "#4a90d9", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Session en cours</div>
             <div style={{ color: "#e0e0e0", fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
-              Code sauvegardé
+              {savedCode || "Code sauvegardé"}
             </div>
             <div style={{ color: "#888", fontSize: 12, marginBottom: 16 }}>
-              {saved.sessionId?.slice(0, 8)}…
+              {savedSid.slice(0, 8)}…
             </div>
-            <button className="btn-primary" onClick={handleResume} style={{ padding: "10px 0", width: "100%" }}>
-              Reprendre
-            </button>
-            <button onClick={() => { localStorage.removeItem("mp_session"); window.location.reload(); }}
-              style={{ marginTop: 8, background: "none", border: "1px solid var(--danger)", color: "var(--danger)", borderRadius: 4, padding: "6px 0", fontSize: 12, cursor: "pointer", width: "100%" }}>
+            <button onClick={clearSession}
+              style={{ background: "none", border: "1px solid var(--danger)", color: "var(--danger)", borderRadius: 4, padding: "6px 0", fontSize: 12, cursor: "pointer", width: "100%" }}>
               Quitter la session
             </button>
           </motion.div>
