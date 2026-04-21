@@ -121,12 +121,12 @@ function App() {
 
   const loadSplitStatus = useCallback(async (userTeamId) => {
     try {
-      const res = await axios.get(API + "/split/status");
+      const res = await API_CLIENT.get("/split/status");
       setSplitStatus(res.data);
       if (res.data.is_offseason && userTeamId) {
         // Check if international tournament is done before showing split end
         try {
-          const intlRes = await axios.get(API + "/international");
+          const intlRes = await API_CLIENT.get("/international");
           if (intlRes.data.completed) {
             setShowSplitEnd(true);
           } else {
