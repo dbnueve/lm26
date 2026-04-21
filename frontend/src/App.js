@@ -369,7 +369,15 @@ function App() {
   };
 
   const handleSeasonStart = async () => {
-    await API_CLIENT.post("/season/start");
+    if (mp2.sid) {
+      const voted = await mpReady("season/start");
+      if (!voted.fired) {
+        showToast("En attente des autres joueurs…", "info");
+        return;
+      }
+    } else {
+      await API_CLIENT.post("/season/start");
+    }
     setGameState(prev => ({ ...prev, phase: "regular" }));
     await loadGameData();
     if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
