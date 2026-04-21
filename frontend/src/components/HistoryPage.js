@@ -21,9 +21,9 @@ const HistoryPage = ({ userTeam, showToast }) => {
     setLoading(true);
     try {
       const [eloRes, teamsRes, splitRes] = await Promise.all([
-        axios.get(`${API}/career/elo-history`),
-        axios.get(`${API}/teams`),
-        axios.get(`${API}/career/split-stats`, { params: { split: selectedSplit } })
+        API_CLIENT.get(`/career/elo-history`),
+        API_CLIENT.get(`/teams`),
+        API_CLIENT.get(`/career/split-stats`, { params: { split: selectedSplit } })
       ]);
 
       setEloHistory(eloRes.data);
