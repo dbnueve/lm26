@@ -1,7 +1,6 @@
 import React, { useState, useEffect,useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
-import { API,PlayerImagesContext } from "../shared";
+import { API_CLIENT, PlayerImagesContext } from "../shared";
 import TeamLogo from "./TeamLogo";
 import PlayerDetailModal from "./PlayerDetailModal";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
