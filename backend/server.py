@@ -7887,6 +7887,79 @@ def mp2_list():
     return _sessions.list_sessions()
 
 
+# ── MP2 unified WebSocket ─────────────────────────────────────────────────────
+# One WS per session. The server broadcasts state/chat events to every live
+# subscriber via `sessions.broadcast()`. Closed sockets are pruned
+# automatically.
+@app.websocket("/ws/mp2/{sid}")
+async def mp2_websocket(websocket: WebSocket, sid: str, token: str):
+    """WebSocket for an MP2 session.
+
+    - Validates `token` against `session.players`.
+    - Sends an initial `hello` snapshot with session info.
+    - Subscribes the socket for server-pushed broadcasts.
+    - Handles client messages: `ping` (→ `pong`), `chat` (fan-out to peers).
+    """
+    session = _sessions.get_session(sid)
+    if session is None or token not in session.players:
+        await websocket.close(code=4001)
+        return
+
+    await websocket.accept()
+    _sessions.subscribe(session, websocket)
+    username = session.usernames.get(token, "?")
+    logger.info("MP2 WS connected sid=%s user=%s", sid[:8], username)
+
+    try:
+        # Initial snapshot for this socket only
+        await websocket.send_json({
+            "event": "hello",
+            "data": _mp2_public_info(session, token),
+        })
+        # Let peers know someone joined
+        await _sessions.broadcast(sid, "peer_joined", {"username": username})
+
+        # Client message loop with 30s heartbeat timeout
+        missed = 0
+        while True:
+            try:
+                msg = await asyncio.wait_for(websocket.receive_json(), timeout=30.0)
+                missed = 0
+            except asyncio.TimeoutError:
+                missed += 1
+                if missed >= 2:
+                    logger.info("MP2 WS heartbeat timeout sid=%s user=%s",
+                                sid[:8], username)
+                    break
+                try:
+                    await websocket.send_json({"event": "ping", "data": {}})
+                except Exception:
+                    break
+                continue
+
+            kind = msg.get("type", "")
+            if kind == "ping":
+                await websocket.send_json({"event": "pong", "data": {}})
+            elif kind == "pong":
+                pass
+            elif kind == "chat":
+                text = str(msg.get("text", ""))[:200]
+                await _sessions.broadcast(sid, "chat", {
+                    "username": username,
+                    "text": text,
+                })
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        logger.warning("MP2 WS error sid=%s user=%s", sid[:8], username, exc_info=True)
+    finally:
+        _sessions.unsubscribe(session, websocket)
+        try:
+            await _sessions.broadcast(sid, "peer_left", {"username": username})
+        except Exception:
+            logger.exception("MP2 WS peer_left broadcast failed")
+
+
 # ── FastAPI lifecycle — autosave + reload MP sessions ─────────────────────────
 # Attached via `router.add_event_handler` (Starlette primitive) instead of
 # `@app.on_event` to avoid the FastAPI deprecation warning.
