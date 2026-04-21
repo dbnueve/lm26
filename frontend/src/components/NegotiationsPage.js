@@ -24,7 +24,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
   useEffect(() => {
     if (phase !== "preseason") return;
     setLoadingPlayers(true);
-    axios.get(API + "/negotiations/available")
+    API_CLIENT.get("/negotiations/available")
       .then(res => setAvailablePlayers(res.data))
       .catch(() => {})
       .finally(() => setLoadingPlayers(false));
