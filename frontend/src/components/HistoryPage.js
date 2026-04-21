@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ChartLine, Trophy, Headphones, Calendar, ArrowRight } from "@phosphor-icons/react";
-import axios from "axios";
 import TeamLogo from "./TeamLogo";
-import { API } from "../shared";
+import { API_CLIENT } from "../shared";
 
 const HistoryPage = ({ userTeam, showToast }) => {
   const [eloHistory, setEloHistory] = useState(null);
