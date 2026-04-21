@@ -22,7 +22,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
   const fetchIntl = useCallback(async () => {
     setError(null);
     try {
-      const res = await axios.get(API + "/international");
+      const res = await API_CLIENT.get("/international");
       setIntl(res.data);
     } catch (err) {
       if (err?.response?.status === 404) {
