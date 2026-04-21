@@ -64,7 +64,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
       const res = await API_CLIENT.post("/international/simulate", payload);
       setIntl(res.data);
     } catch {
-      const ref = await axios.get(API + "/international").catch(() => null);
+      const ref = await API_CLIENT.get("/international").catch(() => null);
       if (ref) setIntl(ref.data);
     }
     setSimming(null);
