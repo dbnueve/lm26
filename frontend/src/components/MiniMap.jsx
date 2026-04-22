@@ -1,136 +1,130 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 import { parseSec, KILL_TYPES } from "./timelineHelpers";
 import mapBg from "./lol_map.jpg";
 
-/* ─────────────────────────────────────────────────────────────────
-   1. WAYPOINTS — chemins de lane en % (origine haut-gauche)
-   Bleu  = spawn bas-gauche  (~12, 88)
-   Rouge = spawn haut-droit  (~88, 12)
-───────────────────────────────────────────────────────────────── */
-const WAYPOINTS = {
-  BLUE_TOP: [
-    { x: 12, y: 88 },
-    { x: 12, y: 22 },
-    { x: 18, y: 18 },
-    { x: 25, y: 18 },
-  ],
-  BLUE_JGL: [
-    { x: 12, y: 88 },
-    { x: 25, y: 75 },
-    { x: 40, y: 65 },
-    { x: 35, y: 55 },
-  ],
-  BLUE_MID: [
-    { x: 12, y: 88 },
-    { x: 25, y: 75 },
-    { x: 42, y: 58 },
-  ],
-  BLUE_BOT: [
-    { x: 12, y: 88 },
-    { x: 78, y: 88 },
-    { x: 82, y: 82 },
-    { x: 82, y: 75 },
-  ],
-  BLUE_SUP: [
-    { x: 12, y: 88 },
-    { x: 78, y: 88 },
-    { x: 82, y: 82 },
-    { x: 82, y: 78 },
-  ],
-  RED_TOP: [
-    { x: 88, y: 12 },
-    { x: 22, y: 12 },
-    { x: 18, y: 18 },
-    { x: 18, y: 25 },
-  ],
-  RED_JGL: [
-    { x: 88, y: 12 },
-    { x: 75, y: 25 },
-    { x: 60, y: 35 },
-    { x: 65, y: 45 },
-  ],
-  RED_MID: [
-    { x: 88, y: 12 },
-    { x: 75, y: 25 },
-    { x: 58, y: 42 },
-  ],
-  RED_BOT: [
-    { x: 88, y: 12 },
-    { x: 88, y: 78 },
-    { x: 82, y: 82 },
-    { x: 75, y: 82 },
-  ],
-  RED_SUP: [
-    { x: 88, y: 12 },
-    { x: 88, y: 78 },
-    { x: 82, y: 82 },
-    { x: 77, y: 82 },
-  ],
+/* ═══════════════════════════════════════════════════════════════
+   VITESSE DE DÉPLACEMENT
+   LoL map ≈ 14500 unités. Champion base speed ≈ 340 u/s.
+   340/14500 ≈ 2.34% de la carte par seconde.
+   On réduit à ~0.32%/s pour coller à l'échelle visuelle minimap.
+═══════════════════════════════════════════════════════════════ */
+const SPEED = 0.32; // %/s
+
+/* ═══════════════════════════════════════════════════════════════
+   POSITIONS CLÉS — calibrées sur la carte fournie
+   Origine : haut-gauche (0,0) → bas-droit (100,100)
+
+   Repères visuels identifiés sur l'image :
+   - Spawn Blue  : bas-gauche, zone grise ~(8, 87)
+   - Spawn Red   : haut-droit, zone grise ~(92, 9)
+   - Baron Pit   : haut-gauche rivière ~(24, 32)
+   - Drake Pit   : bas-droite rivière  ~(74, 68)
+   - Top lane    : longe le bord gauche/haut
+   - Bot lane    : longe le bord droit/bas
+   - Mid lane    : diagonale centre
+═══════════════════════════════════════════════════════════════ */
+const POS = {
+  // ── Spawns ──
+  spawn_blue: { x: 8,  y: 87 },
+  spawn_red:  { x: 92, y: 10 },
+
+  // ── Objectifs majeurs ──
+  baron:      { x: 24, y: 32 },  // fosse Baron (haut-gauche rivière)
+  herald:     { x: 24, y: 32 },  // même fosse avant 20min
+  drake:      { x: 74, y: 68 },  // fosse Drake (bas-droite rivière)
+  elder:      { x: 74, y: 68 },
+
+  // ── Scuttles (rivière) ──
+  scuttle_top: { x: 38, y: 44 }, // crabe rivière top-mid
+  scuttle_bot: { x: 62, y: 56 }, // crabe rivière bot-mid
+
+  // ── Top lane — jalons (côté blue = longe bord gauche vers haut) ──
+  blue_top_base:   { x: 12, y: 80 }, // sortie de base vers top
+  blue_top_t2:     { x: 14, y: 58 }, // entre t2 et t1
+  blue_top_t1:     { x: 15, y: 43 }, // tour T1 top blue
+  blue_top_mid:    { x: 17, y: 30 }, // milieu top lane
+  blue_top_push:   { x: 20, y: 18 }, // sous tour T1 rouge top
+
+  red_top_base:    { x: 88, y: 20 }, // sortie base rouge vers top
+  red_top_t2:      { x: 60, y: 13 }, // entre t2 t1 rouge top
+  red_top_t1:      { x: 44, y: 13 }, // tour T1 top rouge
+  red_top_mid:     { x: 32, y: 14 },
+  red_top_push:    { x: 22, y: 15 }, // sous tour T1 blue top
+
+  // ── Mid lane ──
+  blue_mid_base:   { x: 18, y: 82 }, // sortie base bleue vers mid
+  blue_mid_t1:     { x: 36, y: 64 }, // tour mid T1 blue
+  blue_mid_center: { x: 50, y: 50 }, // centre mid
+  blue_mid_push:   { x: 62, y: 38 }, // sous tour mid rouge
+
+  red_mid_base:    { x: 82, y: 18 },
+  red_mid_t1:      { x: 64, y: 36 },
+  red_mid_center:  { x: 50, y: 50 },
+  red_mid_push:    { x: 38, y: 62 },
+
+  // ── Bot lane — jalons (côté blue = longe bord bas vers droite) ──
+  blue_bot_base:   { x: 20, y: 88 }, // sortie base bleue vers bot
+  blue_bot_t2:     { x: 52, y: 88 }, // entre t2 t1 bot blue
+  blue_bot_t1:     { x: 58, y: 87 }, // tour bot T1 blue
+  blue_bot_mid:    { x: 72, y: 84 }, // milieu bot lane
+  blue_bot_push:   { x: 84, y: 75 }, // sous tour T1 rouge bot
+
+  red_bot_base:    { x: 80, y: 12 },
+  red_bot_t2:      { x: 85, y: 55 },
+  red_bot_t1:      { x: 87, y: 57 },
+  red_bot_mid:     { x: 85, y: 70 },
+  red_bot_push:    { x: 75, y: 82 }, // sous tour T1 bleue bot
+
+  // ── Jungle Blue (quadrant bas-gauche) ──
+  blue_gromp:    { x: 16, y: 73 },
+  blue_bluebuff: { x: 24, y: 64 },
+  blue_wolves:   { x: 28, y: 55 },
+  blue_raptors:  { x: 33, y: 63 },
+  blue_redbuff:  { x: 31, y: 72 },
+  blue_krugs:    { x: 37, y: 79 },
+
+  // ── Jungle Red (quadrant haut-droit) ──
+  red_gromp:    { x: 84, y: 27 },
+  red_bluebuff: { x: 76, y: 36 },
+  red_wolves:   { x: 72, y: 45 },
+  red_raptors:  { x: 67, y: 37 },
+  red_redbuff:  { x: 69, y: 28 },
+  red_krugs:    { x: 63, y: 21 },
+
+  // ── Zones de regroupement ──
+  mid_river_blue: { x: 44, y: 56 }, // rivière côté blue mid
+  mid_river_red:  { x: 56, y: 44 }, // rivière côté red mid
 };
 
-// Rôles dans l'ordre : top, jgl, mid, bot, sup
-const ROLE_KEYS_BLUE = ["BLUE_TOP", "BLUE_JGL", "BLUE_MID", "BLUE_BOT", "BLUE_SUP"];
-const ROLE_KEYS_RED  = ["RED_TOP",  "RED_JGL",  "RED_MID",  "RED_BOT",  "RED_SUP"];
-
-/* ─────────────────────────────────────────────────────────────────
-   CAMPS DE JUNGLE — aller-retour réaliste
-   Bleu side : camps dans le quadrant bas-gauche
-   Rouge side : camps dans le quadrant haut-droit
-───────────────────────────────────────────────────────────────── */
-// Séquences de camps pour chaque équipe (farming route)
-// Le jungler fait ces camps dans l'ordre puis revient au début (loop)
-const JUNGLE_ROUTE_BLUE = [
-  { x: 20, y: 70 }, // Gromp / Blue buff zone
-  { x: 28, y: 62 }, // Blue Buff
-  { x: 33, y: 55 }, // Wolves
-  { x: 38, y: 48 }, // Raptors
-  { x: 30, y: 42 }, // Red Buff
-  { x: 22, y: 55 }, // Krugs
-  { x: 15, y: 65 }, // Retour base / Gromp
-];
-
-const JUNGLE_ROUTE_RED = [
-  { x: 80, y: 30 }, // Gromp / Blue buff zone
-  { x: 72, y: 38 }, // Blue Buff
-  { x: 67, y: 45 }, // Wolves
-  { x: 62, y: 52 }, // Raptors
-  { x: 70, y: 58 }, // Red Buff
-  { x: 78, y: 45 }, // Krugs
-  { x: 85, y: 35 }, // Retour base
-];
-
-// Durée approximative par camp (secondes) — rythme réaliste
-const JUNGLE_CAMP_DURATION = 18; // ~18s par camp en early
-
-/* ─────────────────────────────────────────────────────────────────
-   2. COORDONNÉES DES ÉVÉNEMENTS sur la carte
-───────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   COORDONNÉES DES ÉVÉNEMENTS sur la carte
+═══════════════════════════════════════════════════════════════ */
 const EVENT_COORDS = {
-  drake:    { x: 72, y: 72 },
-  elder:    { x: 72, y: 72 },
-  baron:    { x: 28, y: 28 },
-  herald:   { x: 28, y: 28 },
-  mid_lane: { x: 50, y: 50 },
+  drake:    POS.drake,
+  elder:    POS.elder,
+  baron:    POS.baron,
+  herald:   POS.herald,
+  mid_lane: POS.blue_mid_center,
 
-  blue_tower_top_t1: { x: 12, y: 45 },
-  blue_tower_top_t2: { x: 12, y: 65 },
-  blue_tower_mid_t1: { x: 38, y: 62 },
-  blue_tower_bot_t1: { x: 55, y: 88 },
-  blue_inhib_top:    { x: 12, y: 78 },
-  blue_inhib_mid:    { x: 22, y: 78 },
-  blue_inhib_bot:    { x: 22, y: 88 },
+  blue_tower_top_t1: POS.blue_top_t1,
+  blue_tower_top_t2: POS.blue_top_t2,
+  blue_tower_mid_t1: POS.blue_mid_t1,
+  blue_tower_bot_t1: POS.blue_bot_t1,
+  blue_inhib_top:    { x: 13, y: 78 },
+  blue_inhib_mid:    { x: 22, y: 79 },
+  blue_inhib_bot:    { x: 23, y: 88 },
 
-  red_tower_top_t1:  { x: 45, y: 12 },
-  red_tower_top_t2:  { x: 65, y: 12 },
-  red_tower_mid_t1:  { x: 62, y: 38 },
-  red_tower_bot_t1:  { x: 88, y: 55 },
-  red_inhib_top:     { x: 78, y: 12 },
+  red_tower_top_t1:  POS.red_top_t1,
+  red_tower_top_t2:  POS.red_top_t2,
+  red_tower_mid_t1:  POS.red_mid_t1,
+  red_tower_bot_t1:  POS.red_bot_t1,
+  red_inhib_top:     { x: 77, y: 13 },
   red_inhib_mid:     { x: 78, y: 22 },
-  red_inhib_bot:     { x: 88, y: 22 },
+  red_inhib_bot:     { x: 87, y: 23 },
 
-  spawn_blue: { x: 12, y: 88 },
-  spawn_red:  { x: 88, y: 12 },
+  spawn_blue: POS.spawn_blue,
+  spawn_red:  POS.spawn_red,
 };
 
 const EVENT_ICONS = {
@@ -146,6 +140,47 @@ const EVENT_ICONS = {
   game_end:    "🏆",
 };
 
+const EVENT_PING_COLOR = {
+  kill:        "#ef4444",
+  first_blood: "#dc2626",
+  drake:       "#f97316",
+  elder:       "#a855f7",
+  baron:       "#eab308",
+  herald:      "#6366f1",
+  tower:       "#94a3b8",
+  first_tower: "#64748b",
+  inhibitor:   "#22d3ee",
+  game_end:    "#facc15",
+};
+
+const ROLE_LABELS = ["TOP", "JGL", "MID", "BOT", "SUP"];
+const MAJOR_OBJECTIVES = new Set(["drake", "baron", "elder", "herald"]);
+const TOWER_EVENTS     = new Set(["tower", "first_tower", "inhibitor"]);
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUTES DE JUNGLE avec durée réaliste par camp
+═══════════════════════════════════════════════════════════════ */
+const JUNGLE_BLUE_ROUTE = [
+  { pos: POS.blue_gromp,    dur: 22, travel: 5 },
+  { pos: POS.blue_bluebuff, dur: 20, travel: 4 },
+  { pos: POS.blue_wolves,   dur: 14, travel: 4 },
+  { pos: POS.blue_raptors,  dur: 20, travel: 5 },
+  { pos: POS.blue_redbuff,  dur: 20, travel: 4 },
+  { pos: POS.blue_krugs,    dur: 26, travel: 6 },
+];
+
+const JUNGLE_RED_ROUTE = [
+  { pos: POS.red_gromp,    dur: 22, travel: 5 },
+  { pos: POS.red_bluebuff, dur: 20, travel: 4 },
+  { pos: POS.red_wolves,   dur: 14, travel: 4 },
+  { pos: POS.red_raptors,  dur: 20, travel: 5 },
+  { pos: POS.red_redbuff,  dur: 20, travel: 4 },
+  { pos: POS.red_krugs,    dur: 26, travel: 6 },
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITAIRES
+═══════════════════════════════════════════════════════════════ */
 function getEventCoords(item) {
   if (item.x != null && item.y != null) return { x: item.x, y: item.y };
   if (EVENT_COORDS[item.type]) return EVENT_COORDS[item.type];
@@ -155,9 +190,9 @@ function getEventCoords(item) {
   const side   = isBlue ? "blue" : "red";
 
   if (item.type === "tower" || item.type === "first_tower") {
-    if (desc.includes("top") || desc.includes("haut")) return EVENT_COORDS[`${side}_tower_top_t1`];
-    if (desc.includes("bot") || desc.includes("bas"))  return EVENT_COORDS[`${side}_tower_bot_t1`];
-    return EVENT_COORDS[`${side}_tower_mid_t1`];
+    if (desc.includes("top") || desc.includes("haut")) return EVENT_COORDS[`${side}_tower_top_t1`] ?? POS.blue_mid_center;
+    if (desc.includes("bot") || desc.includes("bas"))  return EVENT_COORDS[`${side}_tower_bot_t1`] ?? POS.blue_mid_center;
+    return EVENT_COORDS[`${side}_tower_mid_t1`] ?? POS.blue_mid_center;
   }
   if (item.type === "inhibitor") {
     if (desc.includes("top") || desc.includes("haut")) return EVENT_COORDS[`${side}_inhib_top`];
@@ -165,26 +200,20 @@ function getEventCoords(item) {
     return EVENT_COORDS[`${side}_inhib_mid`];
   }
   if (item.type === "game_end") return isBlue ? EVENT_COORDS.spawn_red : EVENT_COORDS.spawn_blue;
-
-  return EVENT_COORDS.mid_lane;
+  return POS.blue_mid_center;
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   3. UTILITAIRES DE CHEMIN
-───────────────────────────────────────────────────────────────── */
-function getPosOnPath(path, progress) {
-  if (!path || path.length === 0) return { x: 50, y: 50 };
-  if (progress <= 0) return { ...path[0] };
-  if (progress >= 1) return { ...path[path.length - 1] };
+function dist(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+}
 
-  const totalSegments = path.length - 1;
-  const segIdx = Math.min(Math.floor(progress * totalSegments), totalSegments - 1);
-  const segT   = progress * totalSegments - segIdx;
-  const a = path[segIdx];
-  const b = path[segIdx + 1];
+function moveTowards(cur, tgt, speed, dt) {
+  const d = dist(cur, tgt);
+  const step = speed * dt;
+  if (d <= step || d === 0) return { ...tgt };
   return {
-    x: a.x + (b.x - a.x) * segT,
-    y: a.y + (b.y - a.y) * segT,
+    x: cur.x + (tgt.x - cur.x) * (step / d),
+    y: cur.y + (tgt.y - cur.y) * (step / d),
   };
 }
 
@@ -197,322 +226,504 @@ function calcDeathTimer(deathSec) {
   return Math.min(t, 90);
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   JUNGLER — position calculée via route aller-retour
-───────────────────────────────────────────────────────────────── */
-function getJunglerPos(matchSec, isBlue) {
-  const route = isBlue ? JUNGLE_ROUTE_BLUE : JUNGLE_ROUTE_RED;
-  const totalRouteDuration = route.length * JUNGLE_CAMP_DURATION;
-  // Offset de départ : ~90s après le début (arrivée au 1er camp)
-  const farmSec = Math.max(0, matchSec - 90);
-  const cyclePos = farmSec % totalRouteDuration;
-  const campIdx  = Math.floor(cyclePos / JUNGLE_CAMP_DURATION);
-  const campT    = (cyclePos % JUNGLE_CAMP_DURATION) / JUNGLE_CAMP_DURATION;
-
-  const currentCamp = route[campIdx % route.length];
-  const nextCamp    = route[(campIdx + 1) % route.length];
-
-  // Interpolation douce entre les camps
-  return {
-    x: currentCamp.x + (nextCamp.x - currentCamp.x) * campT,
-    y: currentCamp.y + (nextCamp.y - currentCamp.y) * campT,
-  };
+/* ═══════════════════════════════════════════════════════════════
+   CALCUL DU TEMPS DE TRAJET entre deux points
+   Utilisé pour l'anticipation des déplacements.
+═══════════════════════════════════════════════════════════════ */
+function travelTime(from, to) {
+  return dist(from, to) / SPEED;
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   4. SIMULATION DE POSITION
-───────────────────────────────────────────────────────────────── */
-function simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, deathData) {
-  const seed = (roleIndex + 1) * 231.7 + (isBlue ? 0 : 117);
-  const gameMin = matchSec / 60;
-  const spawnPos = isBlue ? EVENT_COORDS.spawn_blue : EVENT_COORDS.spawn_red;
+/* ═══════════════════════════════════════════════════════════════
+   PRÉ-CALCUL : TIMELINE D'ÉVÉNEMENTS ENRICHIE
+   Pour chaque événement majeur, on calcule quand chaque rôle
+   doit commencer à se déplacer pour arriver à temps.
 
-  // 1. GESTION DE LA MORT — position fixée à la base, pas de déplacement
-  const isDead = deathData && matchSec >= deathData.deathSec && matchSec < deathData.respawnSec;
-  if (isDead) return { ...spawnPos };
+   Logique LoL réaliste :
+   - L'objectif "se forme" (respawn timer) ~5 min avant d'être pris
+   - Les champions commencent à se regrouper ~45-90s avant l'objectif
+   - Le délai dépend de la distance de chaque joueur à l'objectif
+═══════════════════════════════════════════════════════════════ */
+function buildObjectiveTimeline(enrichedEvents) {
+  return enrichedEvents
+    .filter(ev => MAJOR_OBJECTIVES.has(ev.type))
+    .map(ev => ({
+      ...ev,
+      sec: parseSec(ev.time),
+      dest: { x: ev.mapX, y: ev.mapY },
+    }));
+}
 
-  // 2. PHASE DE LANING (< 14 min)
-  if (gameMin < 14) {
-    // JUNGLER : route de farming aller-retour dès le début
-    if (roleIndex === 1) {
-      const pos = getJunglerPos(matchSec, isBlue);
-      return applyJitter(pos, seed, matchSec);
-    }
+/* ═══════════════════════════════════════════════════════════════
+   DESTINATION CIBLE pour un rôle à un instant t
+   Prend en compte l'anticipation des objectifs futurs proches.
+═══════════════════════════════════════════════════════════════ */
+function getTargetPos(roleIndex, currentSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline) {
+  const gameMin = currentSec / 60;
+  const spawn   = isBlue ? POS.spawn_blue : POS.spawn_red;
 
-    const pathKeys = isBlue ? ROLE_KEYS_BLUE : ROLE_KEYS_RED;
-    const pathKey = pathKeys[Math.min(roleIndex, pathKeys.length - 1)];
-    const path = WAYPOINTS[pathKey];
-    const progress = Math.min(matchSec / 25, 1);
-    const pos = getPosOnPath(path, progress);
-    return applyJitter(pos, seed, matchSec);
-  }
+  // ── Mort → base ──
+  const dying = allDeaths.find(d => currentSec >= d.deathSec && currentSec < d.respawnSec);
+  if (dying) return spawn;
 
-  // 3. MID/LATE GAME (Logique par Rôle)
+  // ── Post-respawn : reste en base ~7s (animation de respawn + début déplacement) ──
+  const freshRespawn = allDeaths.find(d => currentSec >= d.respawnSec && currentSec < d.respawnSec + 7);
+  if (freshRespawn) return spawn;
 
-  // Vérifie si la botlane est au mid (événement récent au mid ou en cours)
-  const botlaneAtMid = enrichedEvents.some(ev => {
-    const evSec = parseSec(ev.time);
-    return (
-      matchSec >= evSec &&
-      matchSec <= evSec + 30 &&
-      ev.mapX != null &&
-      ev.mapX > 40 && ev.mapX < 60 &&
-      ev.mapY != null && ev.mapY > 40 && ev.mapY < 60
-    );
+  /* ──────────────────────────────────────────────────────────
+     ANTICIPATION DES OBJECTIFS
+     On cherche le prochain objectif majeur dans les 120s.
+     Si le champion doit partir maintenant pour y arriver à temps,
+     on lui donne l'objectif comme destination.
+  ────────────────────────────────────────────────────────── */
+  const upcomingObjective = objectiveTimeline.find(obj => {
+    if (obj.sec <= currentSec) return false; // déjà passé
+    const timeUntil = obj.sec - currentSec;
+    // Fenêtre d'anticipation : 90s + temps de trajet estimé depuis la zone mid
+    const anticipationWindow = 90;
+    return timeUntil <= anticipationWindow;
   });
 
-  // Recherche d'un événement récent pertinent
-  const recentEvent = [...enrichedEvents].reverse().find(ev => {
-    const evSec = parseSec(ev.time);
-    return matchSec >= evSec && matchSec <= evSec + 20 && ev.mapX != null;
-  });
-
-  let target;
-
-  // JUNGLER en mid/late : continue à farme sa jungle entre les objectifs
+  // ── JUNGLER ──
   if (roleIndex === 1) {
-    const isMajorObjective = recentEvent && ["drake", "baron", "elder", "herald"].includes(recentEvent.type);
-    if (isMajorObjective) {
-      // Le jungler va aux objectifs majeurs
-      target = { x: recentEvent.mapX, y: recentEvent.mapY };
-    } else {
-      // Sinon il continue à farmer sa jungle
-      const pos = getJunglerPos(matchSec, isBlue);
-      return applyJitter(pos, seed, matchSec);
+    // Objectif passé récemment (< 25s) → le jungler est encore dans la zone
+    const recentObj = objectiveTimeline.find(obj => {
+      const age = currentSec - obj.sec;
+      return age >= 0 && age < 25;
+    });
+    if (recentObj) return recentObj.dest;
+
+    // Objectif à venir proche → se déplacer vers l'objectif
+    if (upcomingObjective) return upcomingObjective.dest;
+
+    // Sinon → route de jungle cyclique (démarre à 1:40)
+    const JUNGLE_START = 100;
+    if (currentSec < JUNGLE_START) return spawn;
+
+    const route = isBlue ? JUNGLE_BLUE_ROUTE : JUNGLE_RED_ROUTE;
+    const totalCycle = route.reduce((s, c) => s + c.dur + c.travel, 0);
+    const elapsed = (currentSec - JUNGLE_START) % totalCycle;
+
+    let acc = 0;
+    for (let i = 0; i < route.length; i++) {
+      const campEnd = acc + route[i].dur;
+      const travelEnd = campEnd + route[i].travel;
+      if (elapsed < campEnd) return route[i].pos;
+      if (elapsed < travelEnd) return route[(i + 1) % route.length].pos;
+      acc = travelEnd;
+    }
+    return route[0].pos;
+  }
+
+  // ── LANERS (TOP=0, MID=2, BOT=3, SUP=4) ──
+
+  // Positions de lane par rôle
+  const LANE_DEST = {
+    0: isBlue ? POS.blue_top_mid  : POS.red_top_mid,
+    2: isBlue ? POS.blue_mid_center : POS.red_mid_center,
+    3: isBlue ? POS.blue_bot_mid  : POS.red_bot_mid,
+    4: isBlue ? POS.blue_bot_mid  : POS.red_bot_mid,
+  };
+  const LANE_PUSH = {
+    0: isBlue ? POS.blue_top_push : POS.red_top_push,
+    2: isBlue ? POS.blue_mid_push : POS.red_mid_push,
+    3: isBlue ? POS.blue_bot_push : POS.red_bot_push,
+    4: isBlue ? POS.blue_bot_push : POS.red_bot_push,
+  };
+
+  // ── PHASE LANING (< 14 min) ──
+  if (gameMin < 14) {
+    const dest   = LANE_DEST[roleIndex]  ?? POS.blue_mid_center;
+    const pushed = LANE_PUSH[roleIndex]  ?? POS.blue_mid_center;
+
+    // Cycle : 3min push progressif + 1min recall
+    const CYCLE    = 240;
+    const PUSH_DUR = 175;
+    const phase = currentSec % CYCLE;
+
+    if (phase < PUSH_DUR) {
+      const t = Math.min(phase / PUSH_DUR, 1);
+      const smooth = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      return {
+        x: dest.x + (pushed.x - dest.x) * smooth,
+        y: dest.y + (pushed.y - dest.y) * smooth,
+      };
+    }
+    return spawn; // recall
+  }
+
+  // ── MID/LATE GAME ──
+
+  // Objectif passé récemment → champion encore autour
+  const recentObj = objectiveTimeline.find(obj => {
+    const age = currentSec - obj.sec;
+    return age >= 0 && age < 30;
+  });
+
+  if (recentObj) {
+    const isMajor = MAJOR_OBJECTIVES.has(recentObj.type);
+    if (isMajor) {
+      // Top reste en split en général, sauf s'il était déjà en route
+      if (roleIndex === 0) return isBlue ? POS.blue_top_push : POS.red_top_push;
+      // Mid : souvent en side-lane opposée
+      if (roleIndex === 2) return isBlue ? POS.blue_bot_push : POS.red_bot_push;
+      return recentObj.dest;
     }
   }
 
-  if (!target && recentEvent) {
-    const isMajorObjective = ["drake", "baron", "elder", "herald"].includes(recentEvent.type);
-    const isTowerEvent = ["tower", "first_tower", "inhibitor"].includes(recentEvent.type);
-
-    if (isTowerEvent) {
-      const desc = (recentEvent.description || "").toLowerCase();
-      const isTopEvent = desc.includes("top") || desc.includes("haut");
-      const isBotEvent = desc.includes("bot") || desc.includes("bas");
-
-      if ((isTopEvent && roleIndex === 0) || (isBotEvent && (roleIndex === 3 || roleIndex === 4))) {
-        target = { x: recentEvent.mapX, y: recentEvent.mapY };
-      } else {
-        target = { x: 50, y: 50 }; // Les autres restent au Mid
-      }
-    }
-    else if (isMajorObjective) {
-      if (roleIndex === 0) {
-        // Top : reste en top lane même pendant un objectif majeur (pression splitpush)
-        target = isBlue ? { x: 15, y: 22 } : { x: 85, y: 78 };
-      } else if (roleIndex === 2) {
-        // Mid : reste en bot lane même pendant un objectif majeur
-        target = isBlue ? { x: 80, y: 82 } : { x: 20, y: 18 };
-      } else {
-        target = { x: recentEvent.mapX, y: recentEvent.mapY };
-      }
-    }
-    else {
-      target = { x: recentEvent.mapX, y: recentEvent.mapY };
+  // Objectif à venir → se déplacer vers l'objectif
+  if (upcomingObjective) {
+    const isMajor = MAJOR_OBJECTIVES.has(upcomingObjective.type);
+    if (isMajor) {
+      if (roleIndex === 0) return isBlue ? POS.blue_top_push : POS.red_top_push;
+      if (roleIndex === 2) return isBlue ? POS.blue_bot_push : POS.red_bot_push;
+      return upcomingObjective.dest;
     }
   }
 
-  // 4. COMPORTEMENT PAR DÉFAUT (Si pas d'événement)
-  if (!target) {
-    if (roleIndex === 0) {
-      // Top : splitpush UNIQUEMENT en top lane
-      target = isBlue ? { x: 15, y: 22 } : { x: 85, y: 78 };
-    }
-    else if (roleIndex === 2) {
-      // Mid : side-lane UNIQUEMENT en bot lane (opposé du top)
-      if (botlaneAtMid) {
-        // La botlane remonte au mid → le mid descend en bot side
-        target = isBlue ? { x: 80, y: 82 } : { x: 20, y: 18 };
-      } else {
-        // Cycle : mid → bot side → retour mid
-        const sidePhase = Math.floor(gameMin / 3) % 3;
-        if (sidePhase === 1) {
-          target = isBlue ? { x: 78, y: 82 } : { x: 22, y: 18 };
-        } else {
-          target = { x: 50, y: 50 }; // mid
-        }
-      }
-    }
-    else {
-      // Botlane (3, 4) : regroupement mid ou objectifs
-      target = { x: 50, y: 50 };
-    }
+  // Événement tour/inhibiteur récent
+  const recentTowerEv = [...enrichedEvents].reverse().find(ev => {
+    const evSec = parseSec(ev.time);
+    const age = currentSec - evSec;
+    return age >= 0 && age < 35 && TOWER_EVENTS.has(ev.type);
+  });
+
+  if (recentTowerEv) {
+    const desc = (recentTowerEv.description || "").toLowerCase();
+    const isTop = desc.includes("top") || desc.includes("haut");
+    const isBot = desc.includes("bot") || desc.includes("bas");
+    const evPos = { x: recentTowerEv.mapX, y: recentTowerEv.mapY };
+    if (isTop && roleIndex === 0) return evPos;
+    if (isBot && (roleIndex === 3 || roleIndex === 4)) return evPos;
+    return POS.blue_mid_center; // les autres convergent mid
   }
 
-  return applyJitter(target, seed, matchSec);
+  // Comportement par défaut : pression de lane
+  if (roleIndex === 0) return isBlue ? POS.blue_top_push  : POS.red_top_push;
+  if (roleIndex === 2) {
+    // Mid alterne entre mid et side-lane toutes les 3min
+    const sidePhase = Math.floor(gameMin / 3) % 2;
+    return sidePhase === 1
+      ? (isBlue ? POS.blue_bot_push : POS.red_bot_push)
+      : POS.blue_mid_center;
+  }
+  if (roleIndex === 3 || roleIndex === 4) {
+    // Botlane : pression bot ou regroupement mid
+    const phase = Math.floor(gameMin / 4) % 3;
+    return phase === 0
+      ? (isBlue ? POS.blue_bot_push : POS.red_bot_push)
+      : POS.blue_mid_center;
+  }
+
+  return POS.blue_mid_center;
 }
 
-// Helper pour éviter la répétition du Jitter
-function applyJitter(pos, seed, matchSec) {
-  const jX = Math.sin(seed + matchSec * 0.05) * 3;
-  const jY = Math.cos(seed + matchSec * 0.04) * 3;
+/* ═══════════════════════════════════════════════════════════════
+   SIMULATION PAS-À-PAS — moteur de position physique
+   On simule second par second depuis t=0.
+   Chaque champion se déplace physiquement vers sa cible
+   à vitesse constante, exactement comme sur la minimap LoL.
+═══════════════════════════════════════════════════════════════ */
+function simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline) {
+  const spawn = isBlue ? POS.spawn_blue : POS.spawn_red;
+  let pos = { ...spawn };
+  const steps = Math.floor(matchSec);
+
+  for (let t = 0; t <= steps; t++) {
+    // Mort instantanée → téléporte à la base
+    const isDyingNow = allDeaths.some(d => t >= d.deathSec && t < d.deathSec + 1);
+    if (isDyingNow) {
+      pos = { ...spawn };
+      continue;
+    }
+
+    const target = getTargetPos(roleIndex, t, isBlue, enrichedEvents, allDeaths, objectiveTimeline);
+    pos = moveTowards(pos, target, SPEED, 1);
+  }
+
+  // Interpolation sub-seconde pour la frame courante
+  const subDt = matchSec - steps;
+  if (subDt > 0) {
+    const target = getTargetPos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline);
+    pos = moveTowards(pos, target, SPEED, subDt);
+  }
+
+  // Micro-jitter organique très discret
+  const seed = (roleIndex + 1) * 137.5 + (isBlue ? 0 : 73);
   return {
-    x: Math.max(5, Math.min(95, pos.x + jX)),
-    y: Math.max(5, Math.min(95, pos.y + jY)),
+    x: Math.max(2, Math.min(98, pos.x + Math.sin(seed + matchSec * 0.09) * 0.8)),
+    y: Math.max(2, Math.min(98, pos.y + Math.cos(seed + matchSec * 0.07) * 0.8)),
   };
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   5. SOUS-COMPOSANT CHAMPION
-───────────────────────────────────────────────────────────────── */
-function ChampionAvatar({ player, roleIndex, isBlue, matchSec, deathData, enrichedEvents, size, iconSize }) {
-  const pos = simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, deathData);
-  const ddKey  = toDDragonKey(player.champion || "");
-  const isDead = deathData && matchSec >= deathData.deathSec && matchSec < deathData.respawnSec;
+/* ═══════════════════════════════════════════════════════════════
+   COMPOSANT PING
+═══════════════════════════════════════════════════════════════ */
+function PingEffect({ x, y, size, color, id }) {
+  return (
+    <>
+      <div style={{
+        position: "absolute",
+        left: `${x}%`, top: `${y}%`,
+        transform: "translate(-50%, -50%)",
+        width: size * 0.38, height: size * 0.38,
+        borderRadius: "50%",
+        border: `2px solid ${color}`,
+        animation: "pingExpand 1.6s ease-out forwards",
+        pointerEvents: "none", zIndex: 20,
+      }} />
+      <div style={{
+        position: "absolute",
+        left: `${x}%`, top: `${y}%`,
+        transform: "translate(-50%, -50%)",
+        width: size * 0.18, height: size * 0.18,
+        borderRadius: "50%",
+        border: `1.5px solid ${color}`,
+        animation: "pingExpand 1.6s ease-out 0.25s forwards",
+        pointerEvents: "none", zIndex: 20,
+      }} />
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPOSANT CHAMPION AVATAR
+═══════════════════════════════════════════════════════════════ */
+function ChampionAvatar({
+  player, roleIndex, isBlue, matchSec,
+  deathData, allDeaths, enrichedEvents, objectiveTimeline,
+  size, iconSize,
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  // Recalcul à 2 fps pour la perf (arrondi à 0.5s)
+  const pos = useMemo(
+    () => simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [roleIndex, Math.round(matchSec * 2) / 2, isBlue, enrichedEvents, allDeaths, objectiveTimeline]
+  );
+
+  const ddKey     = toDDragonKey(player.champion || "");
+  const isDead    = deathData && matchSec >= deathData.deathSec && matchSec < deathData.respawnSec;
   const remainSec = isDead ? Math.ceil(deathData.respawnSec - matchSec) : 0;
+  const totalTimer = isDead ? Math.max(1, calcDeathTimer(deathData.deathSec)) : 1;
+  const timerPct  = isDead ? remainSec / totalTimer : 0;
 
-  // Quand mort : on place l'icône à la base avec opacity 0 pendant 0.3s
-  // puis réapparaît à la base avec le timer — on ne "déplace" pas l'icône
-  const spawnPos = isBlue ? EVENT_COORDS.spawn_blue : EVENT_COORDS.spawn_red;
-  const displayPos = isDead ? spawnPos : pos;
-
+  const displayPos = isDead ? (isBlue ? POS.spawn_blue : POS.spawn_red) : pos;
   const px = (displayPos.x / 100) * size - iconSize / 2;
   const py = (displayPos.y / 100) * size - iconSize / 2;
-  const ringColor = isBlue ? "#3b82f6" : "#ef4444";
+
+  const ring    = isBlue ? "#3b82f6" : "#ef4444";
+  const arcR    = iconSize / 2 + 3;
+  const arcC    = 2 * Math.PI * arcR;
+  const arcDash = arcC * timerPct;
 
   return (
     <div
-      title={`${player.player_name} — ${player.champion}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         position: "absolute",
-        top: 0,
-        left: 0,
-        // Quand mort : pas de transition de déplacement, juste apparition à la base
+        top: 0, left: 0,
         transform: `translate(${px}px, ${py}px)`,
-        width: iconSize,
-        height: iconSize,
-        // On désactive la transition position pendant la mort pour éviter l'animation glissement → base
-        transition: isDead ? "transform 0s, opacity 0.4s 0.15s" : "transform 1.2s ease, opacity 0.3s",
-        opacity: isDead ? 1 : 1,
-        zIndex: 10,
+        width: iconSize, height: iconSize,
+        transition: isDead
+          ? "transform 0s, opacity 0.3s 0.15s"
+          : "transform 0.5s linear, opacity 0.3s",
+        zIndex: hovered ? 50 : 10,
+        cursor: "pointer",
+        pointerEvents: "auto",
       }}
     >
+      {/* Arc timer mort */}
+      {isDead && (
+        <svg style={{
+          position: "absolute",
+          top: -(arcR - iconSize / 2) - 1,
+          left: -(arcR - iconSize / 2) - 1,
+          width: arcR * 2 + 2, height: arcR * 2 + 2,
+          pointerEvents: "none", zIndex: 12,
+        }}
+          viewBox={`0 0 ${arcR * 2 + 2} ${arcR * 2 + 2}`}
+        >
+          <circle cx={arcR + 1} cy={arcR + 1} r={arcR}
+            fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="2" />
+          <circle cx={arcR + 1} cy={arcR + 1} r={arcR}
+            fill="none"
+            stroke={remainSec <= 5 ? "#fbbf24" : "#ef4444"}
+            strokeWidth="2"
+            strokeDasharray={`${arcDash} ${arcC}`}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${arcR + 1} ${arcR + 1})`}
+          />
+        </svg>
+      )}
+
       {/* Anneau équipe */}
       <div style={{
-        position: "absolute",
-        inset: -2,
+        position: "absolute", inset: -2,
         borderRadius: "50%",
-        border: `2px solid ${isDead ? "rgba(255,255,255,0.15)" : ringColor}`,
-        boxShadow: isDead ? "none" : `0 0 6px ${ringColor}88`,
+        border: `2px solid ${isDead ? "rgba(255,255,255,0.07)" : ring}`,
+        boxShadow: isDead ? "none"
+          : hovered ? `0 0 10px ${ring}, 0 0 18px ${ring}44`
+          : `0 0 5px ${ring}88`,
         pointerEvents: "none",
-        transition: "border-color 0.3s, box-shadow 0.3s",
+        transition: "box-shadow 0.3s",
       }} />
 
-      {/* Avatar */}
+      {/* Avatar champion */}
       <img
         src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${ddKey}.png`}
         alt={player.champion}
         style={{
-          width: "100%",
-          height: "100%",
+          width: "100%", height: "100%",
           borderRadius: "50%",
-          display: "block",
           objectFit: "cover",
-          filter: isDead ? "grayscale(1) brightness(0.25)" : "none",
+          display: "block",
+          filter: isDead ? "grayscale(1) brightness(0.18)" : "none",
           transition: "filter 0.4s",
         }}
         onError={e => { e.currentTarget.style.display = "none"; }}
       />
 
-      {/* Timer mort */}
+      {/* Timer de mort */}
       {isDead && (
         <div style={{
-          position: "absolute",
-          inset: 0,
+          position: "absolute", inset: 0,
           borderRadius: "50%",
-          background: "rgba(0,0,0,0.72)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          background: "rgba(0,0,0,0.8)",
+          display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <span style={{
             fontSize: Math.max(6, iconSize * 0.36),
-            fontFamily: "monospace",
+            fontFamily: "'Courier New', monospace",
             fontWeight: 900,
-            color: "#ef4444",
+            color: remainSec <= 5 ? "#fbbf24" : "#ef4444",
             lineHeight: 1,
+            animation: remainSec <= 5 ? "urgentPulse 0.6s ease-in-out infinite" : "none",
           }}>
             {remainSec}
           </span>
+        </div>
+      )}
+
+      {/* Tooltip survol */}
+      {hovered && (
+        <div style={{
+          position: "absolute",
+          bottom: "calc(100% + 6px)",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "rgba(3,7,18,0.95)",
+          border: `1px solid ${ring}44`,
+          borderRadius: 4,
+          padding: "3px 7px",
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+          zIndex: 100,
+          backdropFilter: "blur(6px)",
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: ring, letterSpacing: 0.5 }}>
+            {ROLE_LABELS[roleIndex]}
+          </div>
+          <div style={{ fontSize: 8, color: "#e2e8f0", marginTop: 1 }}>
+            {player.player_name}
+          </div>
+          <div style={{ fontSize: 8, color: "#64748b" }}>
+            {player.champion}
+          </div>
+          {isDead && (
+            <div style={{ fontSize: 8, color: "#ef4444", marginTop: 1 }}>
+              ☠ {remainSec}s
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   WRAPPER avec gestion de la disparition à la mort
-   L'icône disparaît instantanément quand le joueur meurt,
-   puis réapparaît à la base après 0.15s (évite le glissement visuel)
-───────────────────────────────────────────────────────────────── */
-function ChampionAvatarWithDeathFade(props) {
-  const { player, matchSec, deathData } = props;
-  const isDead = deathData && matchSec >= deathData.deathSec && matchSec < deathData.respawnSec;
-
-  // Fenêtre de "flash invisible" juste après la mort (0.25s)
-  // pour éviter l'animation de glissement vers la base
-  const justDied = deathData && matchSec >= deathData.deathSec && matchSec < deathData.deathSec + 0.25;
+/* ═══════════════════════════════════════════════════════════════
+   WRAPPER : flash de mort + respawn propre
+═══════════════════════════════════════════════════════════════ */
+function ChampionWithFade(props) {
+  const { matchSec, deathData } = props;
+  // Flash invisible 0.3s juste après la mort pour éviter le glissement visuel
+  const justDied = deathData &&
+    matchSec >= deathData.deathSec &&
+    matchSec < deathData.deathSec + 0.3;
 
   return (
     <div style={{
-      position: "absolute",
-      inset: 0,
+      position: "absolute", inset: 0,
       pointerEvents: "none",
       opacity: justDied ? 0 : 1,
-      transition: justDied ? "opacity 0s" : "opacity 0.3s",
+      transition: justDied ? "opacity 0s" : "opacity 0.25s",
     }}>
       <ChampionAvatar {...props} />
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   6. MINIMAP PRINCIPAL
-───────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   MINIMAP — COMPOSANT PRINCIPAL
+═══════════════════════════════════════════════════════════════ */
 export default function MiniMap({
-  leftStats    = [],
-  rightStats   = [],
-  leftNum      = 1,
-  rightNum     = 2,
+  leftStats     = [],
+  rightStats    = [],
+  leftNum       = 1,
+  rightNum      = 2,
   visibleEvents = [],
-  matchSec     = 0,
-  size         = 160,
+  matchSec      = 0,
+  size          = 160,
 }) {
   const isLeftBlue  = leftNum  === 1 || leftNum  === 100;
   const isRightBlue = rightNum === 1 || rightNum === 100;
 
-  // Enrichissement des événements avec coordonnées carte
+  // Enrichissement des événements avec leurs coords carte
   const enrichedEvents = useMemo(() =>
     visibleEvents.map(ev => {
-      const coords = getEventCoords(ev);
-      return { ...ev, mapX: coords.x, mapY: coords.y };
+      const c = getEventCoords(ev);
+      return { ...ev, mapX: c.x, mapY: c.y };
     }),
     [visibleEvents]
   );
 
-  // Calcul des morts (on garde uniquement la mort la plus récente par champion)
-  const deadChamps = useMemo(() => {
+  // Timeline des objectifs pour l'anticipation
+  const objectiveTimeline = useMemo(
+    () => buildObjectiveTimeline(enrichedEvents),
+    [enrichedEvents]
+  );
+
+  // Timeline complète des morts par champion (pour la simulation)
+  const deathTimelineByChamp = useMemo(() => {
     const map = {};
-    // Trier par temps croissant pour que la dernière mort écrase les précédentes
     [...visibleEvents]
       .sort((a, b) => parseSec(a.time) - parseSec(b.time))
       .forEach(ev => {
         if (KILL_TYPES.has(ev.type) && ev.victim_champion) {
-          const deathSec = parseSec(ev.time);
-          const respawnSec = deathSec + calcDeathTimer(deathSec);
-          // Ne garder que si le joueur est encore en timer de mort au moment actuel
-          if (matchSec < respawnSec) {
-            map[ev.victim_champion] = { deathSec, respawnSec };
-          }
+          const deathSec    = parseSec(ev.time);
+          const respawnSec  = deathSec + calcDeathTimer(deathSec);
+          if (!map[ev.victim_champion]) map[ev.victim_champion] = [];
+          map[ev.victim_champion].push({ deathSec, respawnSec });
         }
       });
     return map;
-  }, [visibleEvents, matchSec]);
+  }, [visibleEvents]);
+
+  // Mort active (pour l'affichage du timer)
+  const currentDeaths = useMemo(() => {
+    const map = {};
+    Object.entries(deathTimelineByChamp).forEach(([champ, deaths]) => {
+      const active = deaths.find(d => matchSec >= d.deathSec && matchSec < d.respawnSec);
+      if (active) map[champ] = active;
+    });
+    return map;
+  }, [deathTimelineByChamp, matchSec]);
 
   const iconSize = Math.round(size * 0.12);
 
-  // Événements récents à afficher sur la carte (8 secondes)
+  // Icônes d'événements récents (fenêtre 8s)
   const mapIcons = useMemo(() =>
     enrichedEvents.filter(ev => {
       const evSec = parseSec(ev.time);
@@ -526,102 +737,116 @@ export default function MiniMap({
     [enrichedEvents, matchSec]
   );
 
+  // Pings (fenêtre 3s)
+  const pingEvents = useMemo(() =>
+    enrichedEvents.filter(ev => {
+      const evSec = parseSec(ev.time);
+      return matchSec >= evSec && matchSec <= evSec + 3 && ev.mapX != null;
+    }),
+    [enrichedEvents, matchSec]
+  );
+
   return (
     <div style={{
       position: "relative",
-      width: size,
-      height: size,
+      width: size, height: size,
       flexShrink: 0,
       borderRadius: 6,
       overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.15)",
-      boxShadow: "0 0 16px rgba(0,0,0,0.7)",
+      border: "1px solid rgba(255,255,255,0.18)",
+      boxShadow: "0 0 0 1px rgba(0,0,0,0.9), 0 4px 28px rgba(0,0,0,0.85)",
     }}>
-      {/* Fond carte */}
-      <img
-        src={mapBg}
-        alt="map"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          display: "block",
-          pointerEvents: "none",
-        }}
-      />
 
-      {/* Icônes d'événements sur la carte */}
-      {mapIcons.map((ev, idx) => (
-        <div
-          key={`map-ev-${idx}`}
-          style={{
+      {/* Fond de carte */}
+      <img src={mapBg} alt="map" style={{
+        position: "absolute", inset: 0,
+        width: "100%", height: "100%",
+        objectFit: "cover", display: "block",
+        pointerEvents: "none",
+      }} />
+
+      {/* Vignette bords */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,0.52) 100%)",
+        pointerEvents: "none", zIndex: 2,
+      }} />
+
+      {/* Pings */}
+      {pingEvents.map((ev, i) => (
+        <PingEffect
+          key={`ping-${i}-${parseSec(ev.time)}`}
+          x={ev.mapX} y={ev.mapY}
+          size={size}
+          color={EVENT_PING_COLOR[ev.type] || "#fff"}
+          id={i}
+        />
+      ))}
+
+      {/* Icônes événements */}
+      {mapIcons.map((ev, i) => {
+        const evSec = parseSec(ev.time);
+        const age   = matchSec - evSec;
+        return (
+          <div key={`ev-${i}-${evSec}`} style={{
             position: "absolute",
-            left: `${ev.mapX}%`,
-            top:  `${ev.mapY}%`,
+            left: `${ev.mapX}%`, top: `${ev.mapY}%`,
             transform: "translate(-50%, -50%)",
-            fontSize: Math.round(iconSize * 0.8),
+            fontSize: Math.round(iconSize * 0.85),
             zIndex: 25,
             pointerEvents: "none",
-            filter: "drop-shadow(0 0 3px rgba(0,0,0,0.9))",
-            animation: "mapIconPop 0.3s ease",
-          }}
-        >
-          {EVENT_ICONS[ev.type]}
-        </div>
-      ))}
+            filter: "drop-shadow(0 0 4px rgba(0,0,0,0.95))",
+            opacity: Math.max(0, 1 - age / 8),
+            transition: "opacity 0.5s",
+            animation: age < 0.5 ? "mapIconPop 0.35s cubic-bezier(0.34,1.56,0.64,1)" : "none",
+          }}>
+            {EVENT_ICONS[ev.type]}
+          </div>
+        );
+      })}
 
-      {/* Champions équipe gauche */}
+      {/* Équipe gauche */}
       {leftStats.map((p, i) => (
-        <ChampionAvatarWithDeathFade
-          key={`left-${i}`}
-          player={p}
-          roleIndex={i}
+        <ChampionWithFade
+          key={`L-${i}`}
+          player={p} roleIndex={i}
           isBlue={isLeftBlue}
           matchSec={matchSec}
-          deathData={deadChamps[p.champion]}
+          deathData={currentDeaths[p.champion]}
+          allDeaths={deathTimelineByChamp[p.champion] || []}
           enrichedEvents={enrichedEvents}
-          size={size}
-          iconSize={iconSize}
+          objectiveTimeline={objectiveTimeline}
+          size={size} iconSize={iconSize*0.85}
         />
       ))}
 
-      {/* Champions équipe droite */}
+      {/* Équipe droite */}
       {rightStats.map((p, i) => (
-        <ChampionAvatarWithDeathFade
-          key={`right-${i}`}
-          player={p}
-          roleIndex={i}
+        <ChampionWithFade
+          key={`R-${i}`}
+          player={p} roleIndex={i}
           isBlue={isRightBlue}
           matchSec={matchSec}
-          deathData={deadChamps[p.champion]}
+          deathData={currentDeaths[p.champion]}
+          allDeaths={deathTimelineByChamp[p.champion] || []}
           enrichedEvents={enrichedEvents}
-          size={size}
-          iconSize={iconSize}
+          objectiveTimeline={objectiveTimeline}
+          size={size} iconSize={iconSize*0.85}
         />
       ))}
-
-      {/* Label LIVE */}
-      <div style={{
-        position: "absolute",
-        bottom: 4,
-        right: 5,
-        fontSize: 7,
-        fontWeight: 800,
-        letterSpacing: 1.5,
-        color: "rgba(255,255,255,0.3)",
-        textTransform: "uppercase",
-        pointerEvents: "none",
-        zIndex: 30,
-      }}>
-        LIVE
-      </div>
 
       <style>{`
         @keyframes mapIconPop {
-          from { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
-          to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+          from { transform: translate(-50%,-50%) scale(0.3); opacity: 0; }
+          to   { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+        }
+        @keyframes pingExpand {
+          from { transform: translate(-50%,-50%) scale(0.5); opacity: 0.85; }
+          to   { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
+        }
+        @keyframes urgentPulse {
+          0%,100% { color: #fbbf24; transform: scale(1); }
+          50%     { color: #f97316; transform: scale(1.18); }
         }
       `}</style>
     </div>

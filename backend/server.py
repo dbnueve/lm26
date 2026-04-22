@@ -7147,6 +7147,7 @@ def mp2_create(body: _Mp2CreateBody):
         logger.exception("mp2_create failed")
         raise HTTPException(500, f"Création de session MP échouée: {exc}")
     return {"sid": sess.sid, "code": sess.code, "token": token,
+            "username": body.username,
             "info": _mp2_public_info(sess, token)}
 
 
@@ -7158,6 +7159,7 @@ def mp2_join(body: _Mp2JoinBody):
     except ValueError as exc:
         raise HTTPException(404, str(exc))
     return {"sid": sess.sid, "code": sess.code, "token": token,
+            "username": body.username,
             "info": _mp2_public_info(sess, token)}
 
 
