@@ -92,6 +92,17 @@ function App() {
     return () => controller.abort();
   }, []);
 
+  // Defined here (before loadGameData) so loadGameData can call it after a
+  // reconnect/poll to hydrate userTeamData from the server-resolved user_team.
+  const loadUserTeam = useCallback(async (teamId) => {
+    try {
+      const response = await API_CLIENT.get("/teams/" + teamId);
+      setUserTeamData(response.data);
+    } catch (e) {
+      console.error("Error loading user team:", e);
+    }
+  }, []);
+
   const loadGameData = useCallback(async () => {
     try {
       const [teamsRes, scheduleRes, standingsRes, championsRes, playoffsRes, stateRes] = await withTimeout(
