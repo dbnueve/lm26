@@ -49,15 +49,19 @@ const TeamPicker = ({ teams, onSelectTeam, league = "LEC" }) => {
     return () => window.removeEventListener("mp2:session_event", handler);
   }, [mpActive, refreshMpState]);
 
-  // Build a map of team_id -> username (excluding my own current pick).
+  // Build a map of team_id -> username (to show who owns each taken team).
   const takenBy = {};
   for (const p of mpPlayers) {
     if (p.team_id && p.username) takenBy[p.team_id] = p.username;
   }
-  // Identify my own current pick so I can keep it selectable (toggle behavior).
-  const myPick = mpPlayers.find(p => p.team_id && p.username === mpPlayers.find(x => x.team_id === takenBy[x.team_id])?.username);
-  const myTeamId = mp.sid
-    ? mpPlayers.find(p => p.team_id && teams.some(t => t.id === p.team_id))
+  // Identify MY own pick (if any) so the "Vous" badge only shows on my team,
+  // not on any teammate's. Match by the current session username.
+  const myUsernameLc = (mp.username || "").trim().toLowerCase();
+  const myTeamId = mpActive && myUsernameLc
+    ? mpPlayers.find(
+        p => p.team_id
+          && (p.username || "").trim().toLowerCase() === myUsernameLc
+      ) || null
     : null;
 
   const handleConfirm = async () => {
