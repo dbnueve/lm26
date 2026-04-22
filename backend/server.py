@@ -7834,23 +7834,20 @@ async def _mp2_session_swap_middleware(request, call_next):
             GAME_STATE["user_team"] = per_player_team
         try:
             response = await call_next(request)
-            # Persist mutations back into the session, but keep user_team
-            # at the session level (not the per-player view we swapped in).
-            # Teams picked via /teams/select/{id} update session.players[token]
-            # inside that handler, not via GAME_STATE, so this is safe.
-            new_user_team = GAME_STATE.get("user_team")
+            # Persist mutations back into the session, but NEVER persist
+            # user_team — it is purely per-player in MP and lives in
+            # session.players[token]. Persisting it would leak the active
+            # caller's view to every subsequent caller (cf. join → see joueur1
+            # team bug).
             sess.state.clear()
             sess.state.update(GAME_STATE)
-            # Restore the session-level user_team unless the handler set a new
-            # value that differs from the per-player view. This keeps solo
-            # semantics for endpoints that legitimately set user_team (/saves/load)
-            # while not letting a per-player view leak into the stored state.
-            if per_player_team and new_user_team == per_player_team:
-                # No change made by handler — restore previous session-level value.
-                if session_user_team_snapshot is not None:
-                    sess.state["user_team"] = session_user_team_snapshot
-                else:
-                    sess.state.pop("user_team", None)
+            # Always wipe the per-request user_team override from the stored
+            # state. /teams/select/{id} writes session.players[token] directly
+            # via assign_team, which is the source of truth.
+            if session_user_team_snapshot is not None:
+                sess.state["user_team"] = session_user_team_snapshot
+            else:
+                sess.state.pop("user_team", None)
             _sessions.mark_dirty(sid)
             # Notify all subscribers so they refetch. Only on successful
             # mutating requests — GETs don't touch state, failures don't either.
