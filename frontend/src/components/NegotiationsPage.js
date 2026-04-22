@@ -5,7 +5,7 @@ import { API_CLIENT, PlayerImagesContext, toFlag, formatMoney } from "../shared"
 import PlayerDetailModal from "./PlayerDetailModal";
 
 // Negotiations Page Component
-const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSeasonStart }) => {
+const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSeasonStart, onPendingResolved }) => {
   const playerImages = React.useContext(PlayerImagesContext);
   const [availablePlayers, setAvailablePlayers] = useState([]);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
@@ -16,6 +16,15 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
   const [positionFilter, setPositionFilter] = useState("ALL");
   const [startingSeasonLoading, setStartingSeasonLoading] = useState(false);
   const [aiTransfers, setAiTransfers] = useState(null);
+  const [pendingTab, setPendingTab] = useState("incoming");
+  const [pending, setPending] = useState({ incoming: [], outgoing: [] });
+  const [counterDrafts, setCounterDrafts] = useState({});
+
+  const loadPending = React.useCallback(() => {
+    API_CLIENT.get("/negotiations/pending")
+      .then(res => setPending(res.data || { incoming: [], outgoing: [] }))
+      .catch(() => {});
+  }, []);
 
   // Use phase from parent (App.js) — no redundant GET /game/state needed
   const phase = phaseProp || "regular";
