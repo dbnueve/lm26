@@ -7371,6 +7371,15 @@ async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
         GAME_STATE.update(sess.state)
+        # Advertise every human team to MP-aware endpoints. Set *before* any
+        # handler runs so start_season / advance_to_next_split can preserve
+        # every human roster rather than reading the None user_team.
+        human_team_ids = [tid for tid in sess.players.values() if tid]
+        GAME_STATE["_mp_user_team_ids"] = human_team_ids
+        # Seed user_team with any one human so legacy single-team code paths
+        # that read user_team (history entry, etc.) still work coherently.
+        if human_team_ids and not GAME_STATE.get("user_team"):
+            GAME_STATE["user_team"] = human_team_ids[0]
         try:
             _rebuild_meta_lookup()
         except Exception:
