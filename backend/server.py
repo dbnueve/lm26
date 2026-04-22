@@ -7620,6 +7620,9 @@ def mp2_draft_get(sid: str, token: str | None = None):
     sess = _sessions.get_session(sid)
     if sess is None:
         raise HTTPException(404, "Session introuvable")
+    # Require a valid session token to prevent sid-only enumeration.
+    if token is None or token not in sess.players:
+        raise HTTPException(403, "Token invalide")
     return _mp_draft_public(sess, token)
 
 
