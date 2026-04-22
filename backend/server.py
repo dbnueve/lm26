@@ -487,66 +487,66 @@ PLAYER_META_STATS = {
 LEC_TEAMS = [
     {"id": "g2",  "name": "G2 Esports",    "abbr": "G2",   "country": "EU", "rating": 92, "budget": 5000000, "prestige": 95},
     {"id": "kc",  "name": "Karmine Corp",  "abbr": "KC",   "country": "FR", "rating": 90, "budget": 4200000, "prestige": 89},
-    {"id": "navi","name": "Natus Vincere", "abbr": "NAVI", "country": "UA", "rating": 86, "budget": 3800000, "prestige": 82},
+    {"id": "navi","name": "Natus Vincere", "abbr": "NAVI", "country": "UA", "rating": 84, "budget": 3800000, "prestige": 82},
     {"id": "vit", "name": "Team Vitality", "abbr": "VIT",  "country": "FR", "rating": 85, "budget": 4200000, "prestige": 83},
-    {"id": "koi", "name": "Movistar KOI",  "abbr": "KOI",  "country": "ES", "rating": 84, "budget": 3800000, "prestige": 85},
-    {"id": "gx",  "name": "GIANTX",        "abbr": "GX",   "country": "ES", "rating": 83, "budget": 3200000, "prestige": 78},
+    {"id": "koi", "name": "Movistar KOI",  "abbr": "KOI",  "country": "ES", "rating": 89, "budget": 3800000, "prestige": 85},
+    {"id": "gx",  "name": "GIANTX",        "abbr": "GX",   "country": "ES", "rating": 86, "budget": 3200000, "prestige": 78},
     {"id": "bds", "name": "Shifters",      "abbr": "SFT",  "country": "FR", "rating": 81, "budget": 3200000, "prestige": 74},
     {"id": "th",  "name": "Team Heretics", "abbr": "TH",   "country": "ES", "rating": 81, "budget": 3400000, "prestige": 77},
-    {"id": "fnc", "name": "Fnatic",        "abbr": "FNC",  "country": "EU", "rating": 79, "budget": 4500000, "prestige": 94},
+    {"id": "fnc", "name": "Fnatic",        "abbr": "FNC",  "country": "EU", "rating": 82, "budget": 4500000, "prestige": 94},
     {"id": "sk",  "name": "SK Gaming",     "abbr": "SK",   "country": "DE", "rating": 77, "budget": 3000000, "prestige": 75}
 ]
 
 # Real LEC 2026 Rosters (Starters only)
 REAL_ROSTERS = {
     "fnc": {
-        "TOP":     {"name": "Empyros",   "full_name": "Panagiotis Tantis",        "nationality": "GR", "age": 20, "rating": 80, "potential": 91},
-        "JUNGLE":  {"name": "Razork",    "full_name": "Iván Martín Díaz",         "nationality": "ES", "age": 25, "rating": 85, "potential": 84},
-        "MID":     {"name": "Vladi",     "full_name": "Vladimiros Kourtidis",     "nationality": "GR", "age": 22, "rating": 85, "potential": 90},
-        "ADC":     {"name": "Upset",     "full_name": "Elias Lipp",               "nationality": "DE", "age": 26, "rating": 88, "potential": 92},
-        "SUPPORT": {"name": "Lospa",     "full_name": "Park Joon-hyeong",         "nationality": "KR", "age": 23, "rating": 78, "potential": 88}
+        "TOP":     {"name": "Empyros",   "full_name": "Panagiotis Tantis",        "nationality": "GR", "age": 20, "rating": 78, "potential": 85},
+        "JUNGLE":  {"name": "Razork",    "full_name": "Iván Martín Díaz",         "nationality": "ES", "age": 25, "rating": 83, "potential": 88},
+        "MID":     {"name": "Vladi",     "full_name": "Vladimiros Kourtidis",     "nationality": "GR", "age": 22, "rating": 83, "potential": 90},
+        "ADC":     {"name": "Upset",     "full_name": "Elias Lipp",               "nationality": "DE", "age": 26, "rating": 83, "potential": 92},
+        "SUPPORT": {"name": "Lospa",     "full_name": "Park Joon-hyeong",         "nationality": "KR", "age": 23, "rating": 77, "potential": 88}
     },
     "g2": {
-        "TOP":     {"name": "BrokenBlade","full_name": "Sergen Çelik",            "nationality": "DE", "age": 25, "rating": 90, "potential": 91},
-        "JUNGLE":  {"name": "SkewMond",  "full_name": "Rudy Semaan",              "nationality": "LB", "age": 23, "rating": 91, "potential": 93},
-        "MID":     {"name": "Caps",      "full_name": "Rasmus Borregaard Winther","nationality": "DK", "age": 26, "rating": 92, "potential": 96},
-        "ADC":     {"name": "Hans Sama", "full_name": "Steven Liv",               "nationality": "FR", "age": 26, "rating": 90, "potential": 93},
-        "SUPPORT": {"name": "Labrov",    "full_name": "Labros Papoutsakis",       "nationality": "GR", "age": 24, "rating": 89, "potential": 89}
+        "TOP":     {"name": "BrokenBlade","full_name": "Sergen Çelik",            "nationality": "DE", "age": 25, "rating": 86, "potential": 91},
+        "JUNGLE":  {"name": "SkewMond",  "full_name": "Rudy Semaan",              "nationality": "LB", "age": 23, "rating": 89, "potential": 95},
+        "MID":     {"name": "Caps",      "full_name": "Rasmus Borregaard Winther","nationality": "DK", "age": 26, "rating": 90, "potential": 95},
+        "ADC":     {"name": "Hans Sama", "full_name": "Steven Liv",               "nationality": "FR", "age": 26, "rating": 87, "potential": 93},
+        "SUPPORT": {"name": "Labrov",    "full_name": "Labros Papoutsakis",       "nationality": "GR", "age": 24, "rating": 86, "potential": 89}
     },
     "gx": {
         "TOP":     {"name": "Lot",       "full_name": "Eren Yıldız",              "nationality": "TR", "age": 22, "rating": 83, "potential": 88},
         "JUNGLE":  {"name": "ISMA",      "full_name": "Ismaïl Boualem",           "nationality": "FR", "age": 22, "rating": 84, "potential": 88},
-        "MID":     {"name": "Jackies",   "full_name": "Adam Jeřábek",             "nationality": "CZ", "age": 21, "rating": 82, "potential": 89},
+        "MID":     {"name": "Jackies",   "full_name": "Adam Jeřábek",             "nationality": "CZ", "age": 21, "rating": 83, "potential": 89},
         "ADC":     {"name": "Noah",      "full_name": "Oh Hyeon-taek",            "nationality": "KR", "age": 23, "rating": 85, "potential": 89},
         "SUPPORT": {"name": "Jun",       "full_name": "Yoon Se-jun",              "nationality": "KR", "age": 25, "rating": 86, "potential": 85}
     },
     "kc": {
-        "TOP":     {"name": "Canna",     "full_name": "Kim Chang-dong",           "nationality": "KR", "age": 25, "rating": 91, "potential": 90},
-        "JUNGLE":  {"name": "Yike",      "full_name": "Martin Sundelin",          "nationality": "SE", "age": 23, "rating": 90, "potential": 90},
-        "MID":     {"name": "kyeahoo",   "full_name": "Kang Ye-hoo",              "nationality": "KR", "age": 20, "rating": 90, "potential": 94},
-        "ADC":     {"name": "Caliste",   "full_name": "Caliste Henry-Hennebert", "nationality": "FR", "age": 22, "rating": 91, "potential": 93},
-        "SUPPORT": {"name": "Busio",     "full_name": "Alan Cwalina",             "nationality": "PL", "age": 21, "rating": 90, "potential": 91}
+        "TOP":     {"name": "Canna",     "full_name": "Kim Chang-dong",           "nationality": "KR", "age": 25, "rating": 88, "potential": 90},
+        "JUNGLE":  {"name": "Yike",      "full_name": "Martin Sundelin",          "nationality": "SE", "age": 23, "rating": 89, "potential": 90},
+        "MID":     {"name": "kyeahoo",   "full_name": "Kang Ye-hoo",              "nationality": "KR", "age": 20, "rating": 87, "potential": 94},
+        "ADC":     {"name": "Caliste",   "full_name": "Caliste Henry-Hennebert", "nationality": "FR", "age": 22, "rating": 88, "potential": 93},
+        "SUPPORT": {"name": "Busio",     "full_name": "Alan Cwalina",             "nationality": "PL", "age": 21, "rating": 89, "potential": 91}
     },
     "koi": {
-        "TOP":     {"name": "Myrwn",     "full_name": "Alex Villarejo",           "nationality": "ES", "age": 22, "rating": 86, "potential": 89},
-        "JUNGLE":  {"name": "Elyoya",    "full_name": "Javier Prades Batalla",    "nationality": "ES", "age": 25, "rating": 91, "potential": 92},
-        "MID":     {"name": "jojopyun",  "full_name": "Joon Pyun",               "nationality": "CA", "age": 22, "rating": 90, "potential": 92},
-        "ADC":     {"name": "Supa",      "full_name": "David Martínez García",    "nationality": "ES", "age": 23, "rating": 89, "potential": 90},
-        "SUPPORT": {"name": "Alvaro",    "full_name": "Álvaro Fernández del Amo", "nationality": "ES", "age": 23, "rating": 87, "potential": 88}
+        "TOP":     {"name": "Myrwn",     "full_name": "Alex Villarejo",           "nationality": "ES", "age": 22, "rating": 83, "potential": 89},
+        "JUNGLE":  {"name": "Elyoya",    "full_name": "Javier Prades Batalla",    "nationality": "ES", "age": 25, "rating": 89, "potential": 92},
+        "MID":     {"name": "jojopyun",  "full_name": "Joon Pyun",               "nationality": "CA", "age": 22, "rating": 88, "potential": 92},
+        "ADC":     {"name": "Supa",      "full_name": "David Martínez García",    "nationality": "ES", "age": 23, "rating": 86, "potential": 90},
+        "SUPPORT": {"name": "Alvaro",    "full_name": "Álvaro Fernández del Amo", "nationality": "ES", "age": 23, "rating": 85, "potential": 88}
     },
     "navi": {
         "TOP":     {"name": "Maynter",   "full_name": "Volodymyr Sorokin",        "nationality": "UA", "age": 21, "rating": 83, "potential": 89},
         "JUNGLE":  {"name": "Rhilech",   "full_name": "Enes Uçan",               "nationality": "TR", "age": 22, "rating": 85, "potential": 89},
-        "MID":     {"name": "Poby",      "full_name": "Yun Sung-won",             "nationality": "KR", "age": 22, "rating": 85, "potential": 90},
+        "MID":     {"name": "Poby",      "full_name": "Yun Sung-won",             "nationality": "KR", "age": 22, "rating": 83, "potential": 90},
         "ADC":     {"name": "SamD",      "full_name": "Lee Jae-hoon",             "nationality": "KR", "age": 23, "rating": 84, "potential": 91},
         "SUPPORT": {"name": "Parus",     "full_name": "Polat Çiçek",              "nationality": "TR", "age": 24, "rating": 83, "potential": 87}
     },
     "sk": {
-        "TOP":     {"name": "Wunder",    "full_name": "Martin Hansen",            "nationality": "DK", "age": 26, "rating": 77, "potential": 83},
-        "JUNGLE":  {"name": "Skeanz",    "full_name": "Duncan Marquet",           "nationality": "FR", "age": 24, "rating": 77, "potential": 84},
+        "TOP":     {"name": "Wunder",    "full_name": "Martin Hansen",            "nationality": "DK", "age": 26, "rating": 78, "potential": 83},
+        "JUNGLE":  {"name": "Skeanz",    "full_name": "Duncan Marquet",           "nationality": "FR", "age": 24, "rating": 79, "potential": 84},
         "MID":     {"name": "Lider",     "full_name": "Adam Ilyasov",             "nationality": "RU", "age": 24, "rating": 75, "potential": 84},
         "ADC":     {"name": "Jopa",      "full_name": "Josip Čančar",             "nationality": "HR", "age": 22, "rating": 80, "potential": 88},
-        "SUPPORT": {"name": "Mikyx",     "full_name": "Mihael Mehle",             "nationality": "SI", "age": 27, "rating": 85, "potential": 84}
+        "SUPPORT": {"name": "Mikyx",     "full_name": "Mihael Mehle",             "nationality": "SI", "age": 27, "rating": 84, "potential": 88}
     },
     "bds": {
         "TOP":     {"name": "Rooster",   "full_name": "Shin Yun-hwan",            "nationality": "KR", "age": 22, "rating": 82, "potential": 89},
@@ -557,17 +557,17 @@ REAL_ROSTERS = {
     },
     "th": {
         "TOP":     {"name": "Tracyn",    "full_name": "Sebastian Wojtoń",         "nationality": "PL", "age": 21, "rating": 81, "potential": 89},
-        "JUNGLE":  {"name": "Sheo",      "full_name": "Théo Borile",              "nationality": "FR", "age": 24, "rating": 85, "potential": 86},
+        "JUNGLE":  {"name": "Sheo",      "full_name": "Théo Borile",              "nationality": "FR", "age": 24, "rating": 83, "potential": 88},
         "MID":     {"name": "Serin",     "full_name": "Tolga Ölmez",              "nationality": "TR", "age": 21, "rating": 81, "potential": 92},
-        "ADC":     {"name": "Ice",       "full_name": "Yoon Sang-hoon",           "nationality": "KR", "age": 22, "rating": 79, "potential": 90},
-        "SUPPORT": {"name": "Stend",     "full_name": "Paul Lardin",              "nationality": "DE", "age": 23, "rating": 78, "potential": 86}
+        "ADC":     {"name": "Ice",       "full_name": "Yoon Sang-hoon",           "nationality": "KR", "age": 22, "rating": 81, "potential": 90},
+        "SUPPORT": {"name": "Stend",     "full_name": "Paul Lardin",              "nationality": "DE", "age": 23, "rating": 80, "potential": 86}
     },
     "vit": {
         "TOP":     {"name": "Naak Nako", "full_name": "Kaan Okan",               "nationality": "TR", "age": 22, "rating": 85, "potential": 90},
         "JUNGLE":  {"name": "Lyncas",    "full_name": "Linas Nauncikas",          "nationality": "LT", "age": 22, "rating": 84, "potential": 90},
-        "MID":     {"name": "Humanoid",  "full_name": "Marek Brázda",             "nationality": "CZ", "age": 26, "rating": 88, "potential": 90},
-        "ADC":     {"name": "Carzzy",    "full_name": "Matyáš Orság",             "nationality": "CZ", "age": 24, "rating": 85, "potential": 90},
-        "SUPPORT": {"name": "Fleshy",    "full_name": "Kadir Kemiksiz",           "nationality": "TR", "age": 22, "rating": 84, "potential": 89}
+        "MID":     {"name": "Humanoid",  "full_name": "Marek Brázda",             "nationality": "CZ", "age": 26, "rating": 85, "potential": 90},
+        "ADC":     {"name": "Carzzy",    "full_name": "Matyáš Orság",             "nationality": "CZ", "age": 24, "rating": 83, "potential": 90},
+        "SUPPORT": {"name": "Fleshy",    "full_name": "Kadir Kemiksiz",           "nationality": "TR", "age": 22, "rating": 82, "potential": 89}
     },
     # ── LCK 2026 (from OraclesElixir CSV) ───────────────────────────────────
     "t1": {
