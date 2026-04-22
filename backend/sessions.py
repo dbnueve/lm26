@@ -280,6 +280,7 @@ def _json_to_session(raw: dict) -> Session:
         usernames=raw.get("usernames", {}),
         phase=raw.get("phase", "lobby"),
         ready={k: set(v) for k, v in raw.get("ready", {}).items()},
+        mp_draft=raw.get("mp_draft"),
         created_at=raw.get("created_at", time.time()),
         updated_at=raw.get("updated_at", time.time()),
     )
