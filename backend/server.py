@@ -4074,43 +4074,13 @@ async def make_offer(offer: NegotiationOffer):
     accepted = True if offer.is_counter_offer else random.random() < acceptance_chance
     
     if accepted:
-        # Transfer the player
-        old_team_id = player["team_id"]
-        old_team = GAME_STATE["teams"][old_team_id]
-        old_team["roster"].remove(player["id"])
-        old_team["budget"] += offer.offered_amount
-
-        player["team_id"] = GAME_STATE["user_team"]
-        player["salary"] = int(offer.offered_amount * TRANSFER_SALARY_PCT)
-        player["contract_years"] = offer.contract_years
-        player["is_starter"] = True  # le joueur acheté devient titulaire
-
-        user_team["roster"].append(player["id"])
-        user_team["budget"] -= offer.offered_amount
-
-        # Si un joueur existant est désigné pour céder sa place, le passer en sub
-        swapped_out_name = None
-        if offer.player_to_swap_id:
-            swap_target = GAME_STATE["players"].get(offer.player_to_swap_id)
-            if swap_target and swap_target["team_id"] == GAME_STATE["user_team"]:
-                swap_target["is_starter"] = False
-                swapped_out_name = swap_target.get("name")
-
-        # Remplaçant cohérent pour l'équipe vendeuse
-        replacement = _find_coherent_replacement(player, old_team_id)
-        GAME_STATE["players"][replacement["id"]] = replacement
-        old_team["roster"].append(replacement["id"])
-
-        # Track transfer for recap message
-        GAME_STATE.setdefault("mercato_recap", []).append({
-            "player": player["name"],
-            "position": player["position"],
-            "rating": player["rating"],
-            "amount": offer.offered_amount,
-            "buyer": GAME_STATE["user_team"],
-            "seller": old_team.get("abbr", old_team_id),
-        })
-
+        player, swapped_out_name = _execute_transfer(
+            player=player,
+            buyer_team_id=GAME_STATE["user_team"],
+            offered_amount=offer.offered_amount,
+            contract_years=offer.contract_years,
+            swap_player_id=offer.player_to_swap_id,
+        )
         save_state()
         msg = f"{player['name']} a rejoint votre équipe !"
         if swapped_out_name:
