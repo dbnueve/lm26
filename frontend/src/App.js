@@ -680,6 +680,11 @@ function App() {
               await loadGameData();
               if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
             }}
+            onPendingResolved={async () => {
+              if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
+              await loadGameData();
+              API_CLIENT.get("/inbox").then(r => setUnreadInbox(r.data.unread_total || 0)).catch(() => {});
+            }}
           />
         )}
 
