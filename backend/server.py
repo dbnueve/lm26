@@ -7400,7 +7400,13 @@ async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
                 result = {"unlocked": True, "match_id": match_id}
             else:
                 raise HTTPException(400, f"Action non exécutable: {action}")
-            # Persist mutations back into the session.
+            # Persist mutations back into the session. Strip MP-only hints
+            # so they don't leak into per-player views on the next swap.
+            GAME_STATE.pop("_mp_user_team_ids", None)
+            # user_team in sess.state must stay None — each player's team is
+            # tracked via sess.players and restored by the middleware on a
+            # per-token basis.
+            GAME_STATE["user_team"] = None
             sess.state.clear()
             sess.state.update(GAME_STATE)
             _sessions.mark_dirty(sess.sid)
