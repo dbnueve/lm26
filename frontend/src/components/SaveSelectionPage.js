@@ -133,9 +133,23 @@ function MultiplayerSlots({ onEnterSession }) {
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
               {(s.players || []).map((p, j) => (
-                <span key={j} style={{ background: "#1a1a2e", border: "1px solid #333", borderRadius: 4, padding: "2px 8px", fontSize: 11, color: "#aaa" }}>
+                <button
+                  key={j}
+                  type="button"
+                  onClick={() => handleReconnect(s.code, p)}
+                  disabled={busy}
+                  title={`Se reconnecter comme ${p}`}
+                  style={{
+                    background: "#1a1a2e", border: "1px solid #333", borderRadius: 4,
+                    padding: "2px 8px", fontSize: 11, color: "#aaa",
+                    cursor: busy ? "wait" : "pointer",
+                    fontFamily: "inherit",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4a90d9"; e.currentTarget.style.color = "#e0e0e0"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#333"; e.currentTarget.style.color = "#aaa"; }}
+                >
                   {p}
-                </span>
+                </button>
               ))}
             </div>
             {/* Si déjà connecté à cette session, bouton "Entrer" */}
