@@ -19,6 +19,7 @@ GAME_STATE: dict = {
     "playoffs_bracket": None,
     "history": [],
     "negotiations": [],
+    "pending_negotiations": [],
     "draft_state": None,
     "champion_stats": {},
     "meta_champions": None,
