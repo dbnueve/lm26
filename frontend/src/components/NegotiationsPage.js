@@ -99,6 +99,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
     const result = await onMakeOffer(selectedPlayer.id, offerAmount, contractYears, playerToSwap?.id);
     setNegotiationResult(result);
     if (result.accepted) setSelectedPlayer(null);
+    if (result.pending) loadPending();
   };
 
   const handleStartSeason = async () => {
