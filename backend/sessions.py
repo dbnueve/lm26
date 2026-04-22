@@ -264,6 +264,7 @@ def _session_to_json(s: Session) -> dict:
         "phase": s.phase,
         # Sets aren't JSON-serializable — store as sorted lists.
         "ready": {k: sorted(v) for k, v in s.ready.items()},
+        "mp_draft": s.mp_draft,
         "created_at": s.created_at,
         "updated_at": s.updated_at,
     }
