@@ -473,6 +473,14 @@ function App() {
     return res.data;
   };
 
+  const handleSetTeamTrainingPlan = async (trainingType) => {
+    const res = await API_CLIENT.post("/training/set-team-plan", {
+      training_type: trainingType
+    });
+    await loadUserTeam(gameState.userTeam);
+    return res.data;
+  };
+
   const handleSeasonStart = async () => {
     if (mp2.sid) {
       const voted = await mpReady("season/start");
