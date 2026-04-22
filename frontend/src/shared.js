@@ -36,6 +36,7 @@ const SessionContext = React.createContext({
   sid: null,
   code: null,
   token: null,
+  username: null,
   setSession: () => {},
   clearSession: () => {},
 });
