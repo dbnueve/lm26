@@ -140,7 +140,7 @@ function App() {
     } catch (e) {
       console.error("Error loading game data:", e);
     }
-  }, []);
+  }, [loadUserTeam]);
 
   // ── MP2 WebSocket wiring ────────────────────────────────────────────────────
   // When a multiplayer session is active, subscribe to its WS and refetch
