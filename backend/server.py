@@ -7226,6 +7226,45 @@ def mp2_join(body: _Mp2JoinBody):
             "info": _mp2_public_info(sess, token)}
 
 
+@api_router.post("/mp2/reconnect")
+def mp2_reconnect(body: _Mp2JoinBody):
+    """Re-attach to an existing session as an already-registered username.
+
+    Searches `session.usernames` for a token whose display name matches
+    `body.username` (case-insensitive). Returns the existing token so the
+    client can restore its session without creating a new slot.
+
+    NOTE: no authentication — trivially spoofable. Intended for LAN/Tailscale
+    coop between trusted players. Do not expose this to the public internet.
+    """
+    code = (body.code or "").strip().upper()
+    wanted = (body.username or "").strip().lower()
+    if not code or not wanted:
+        raise HTTPException(400, "Code et pseudo requis")
+
+    sess = _sessions.get_session_by_code(code) if hasattr(_sessions, "get_session_by_code") else None
+    if sess is None:
+        # Fallback: scan the registry by code.
+        for candidate in _sessions.list_sessions():
+            if getattr(candidate, "code", "").upper() == code:
+                sess = candidate
+                break
+    if sess is None:
+        raise HTTPException(404, f"Session {code} introuvable")
+
+    match = next(
+        (tok for tok, name in sess.usernames.items()
+         if (name or "").strip().lower() == wanted),
+        None,
+    )
+    if match is None:
+        raise HTTPException(404, f"Pseudo '{body.username}' inconnu dans cette session")
+
+    return {"sid": sess.sid, "code": sess.code, "token": match,
+            "username": sess.usernames.get(match, body.username),
+            "info": _mp2_public_info(sess, match)}
+
+
 @api_router.get("/mp2/{sid}/info")
 def mp2_info(sid: str, token: str | None = None):
     sess = _sessions.get_session(sid)
