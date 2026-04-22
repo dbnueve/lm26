@@ -47,7 +47,7 @@ function MultiplayerSlots({ onEnterSession }) {
     try {
       const res = await API_CLIENT.post("/mp2/join", { code: finalCode, username: username.trim() });
       const { sid, code: respCode, token } = res.data;
-      setSession({ sid, code: respCode, token });
+      setSession({ sid, code: respCode, token, username: username.trim() });
       onEnterSession?.();
     } catch (e) { setError(e?.response?.data?.detail || "Code invalide"); }
     finally { setBusy(false); }
