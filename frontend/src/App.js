@@ -121,20 +121,31 @@ function App() {
       setStandings(standingsRes.data);
       setChampions(championsRes.data);
       setPlayoffBracket(playoffsRes.data?.active ? playoffsRes.data : null);
-      const serverUserTeam = stateRes.data?.user_team || null;
-      if (stateRes.data?.phase || serverUserTeam) {
-        setGameState(prev => ({
-          ...prev,
-          ...(stateRes.data.phase ? { phase: stateRes.data.phase } : {}),
-          // Sync user_team from the server. Critical in MP: after a reconnect,
-          // the middleware resolves user_team from session.players[token] and
-          // we need that value here so we don't bounce to TeamPicker.
-          ...(serverUserTeam && serverUserTeam !== prev.userTeam ? { userTeam: serverUserTeam } : {}),
-        }));
-        if (serverUserTeam) {
-          // Fire and forget — userTeamData hydration shouldn't block loadGameData.
-          loadUserTeam(serverUserTeam);
+      // Sync user_team from the server. Critical in MP:
+      //   - After reconnect, middleware resolves user_team from
+      //     session.players[token] → must hydrate so we land on the dashboard.
+      //   - After fresh MP create/join (no team yet), server returns null
+      //     → must overwrite any leftover userTeam from a previous solo slot,
+      //     otherwise we skip TeamPicker and land on a stale team's dashboard.
+      // We only authoritatively sync when the server actually returned a
+      // user_team field (not when /game/state failed and stateRes.data is {}).
+      const stateData = stateRes.data || {};
+      const serverHasState = "user_team" in stateData;
+      const serverUserTeam = stateData.user_team || null;
+      setGameState(prev => {
+        const next = { ...prev };
+        if (stateData.phase) next.phase = stateData.phase;
+        if (serverHasState && serverUserTeam !== prev.userTeam) {
+          next.userTeam = serverUserTeam;
         }
+        return next;
+      });
+      if (serverUserTeam) {
+        // Fire and forget — userTeamData hydration shouldn't block loadGameData.
+        loadUserTeam(serverUserTeam);
+      } else if (serverHasState) {
+        // Server says no team picked → clear stale data from a previous slot.
+        setUserTeamData(null);
       }
       API_CLIENT.get("/inbox").then(r => setUnreadInbox(r.data.unread_total || 0)).catch(() => {});
     } catch (e) {
