@@ -137,6 +137,51 @@ function App() {
   }, [loadGameData]);
   useMp2Socket(mp2.sid, mp2.token, onMp2Event);
 
+  // Keep the roster (players + their team_ids) in sync whenever an MP session
+  // is active. Used to drive PvP detection in <MatchSimulation />.
+  const refreshMp2Roster = useCallback(async () => {
+    if (!mp2.sid) return;
+    try {
+      const res = await axios.get(`${API}/mp2/${mp2.sid}/info`, {
+        params: mp2.token ? { token: mp2.token } : {},
+      });
+      setMp2Players(res.data?.players || []);
+    } catch (e) {
+      // Non-fatal: the UI falls back to solo behaviour if roster is missing.
+      console.warn("mp2 roster refresh failed:", e);
+    }
+  }, [mp2.sid, mp2.token]);
+
+  useEffect(() => {
+    if (!mp2.sid) { setMp2Players([]); return; }
+    refreshMp2Roster();
+    const handler = (evt) => {
+      const ev = evt?.detail?.event;
+      // Roster changes on team_picked / peer_joined / ready_changed / state_changed.
+      if (["team_picked", "peer_joined", "ready_changed", "state_changed"].includes(ev)) {
+        refreshMp2Roster();
+      }
+      // When a PvP match gate fires ("match:<id>" trigger), open the draft
+      // on every peer simultaneously. We use the schedule to look up the
+      // full match record the modal needs.
+      if (ev === "state_changed" && typeof evt?.detail?.data?.trigger === "string"
+          && evt.detail.data.trigger.startsWith("match:")) {
+        const mid = evt.detail.data.trigger.slice("match:".length);
+        setSchedule((current) => {
+          const m = current.find((x) => x.id === mid);
+          if (m) {
+            setActiveMatch(m);
+            setPvpDraftMatch(m);
+            setShowDraft(true);
+          }
+          return current;
+        });
+      }
+    };
+    window.addEventListener("mp2:session_event", handler);
+    return () => window.removeEventListener("mp2:session_event", handler);
+  }, [mp2.sid, refreshMp2Roster]);
+
   const loadSplitStatus = useCallback(async (userTeamId) => {
     try {
       const res = await API_CLIENT.get("/split/status");
