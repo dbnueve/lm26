@@ -4113,6 +4113,179 @@ async def make_offer(offer: NegotiationOffer):
                 }
             }
 
+
+# ── User-to-user pending negotiations ────────────────────────────────────────
+
+def _pending_view(n: dict) -> dict:
+    """Enrich a pending negotiation with team names for the client."""
+    from_team = GAME_STATE["teams"].get(n.get("from_team_id"), {})
+    to_team = GAME_STATE["teams"].get(n.get("to_team_id"), {})
+    player = GAME_STATE["players"].get(n.get("player_id"), {})
+    return {
+        **n,
+        "from_team_name": from_team.get("name"),
+        "from_team_abbr": from_team.get("abbr"),
+        "to_team_name": to_team.get("name"),
+        "to_team_abbr": to_team.get("abbr"),
+        "player_still_available": bool(player) and player.get("team_id") == n.get("to_team_id"),
+    }
+
+
+@api_router.get("/negotiations/pending")
+async def list_pending_negotiations():
+    """Pending offers for the current user's team (incoming + outgoing)."""
+    user_team_id = GAME_STATE.get("user_team")
+    if not user_team_id:
+        raise HTTPException(status_code=400, detail="No team selected")
+
+    pendings = GAME_STATE.get("pending_negotiations", [])
+    incoming = [_pending_view(n) for n in pendings if n.get("to_team_id") == user_team_id]
+    outgoing = [_pending_view(n) for n in pendings if n.get("from_team_id") == user_team_id]
+    return {"incoming": incoming, "outgoing": outgoing}
+
+
+@api_router.post("/negotiations/{negotiation_id}/accept")
+async def accept_pending_negotiation(negotiation_id: str):
+    """Target user accepts an incoming offer → transfer executes now."""
+    user_team_id = GAME_STATE.get("user_team")
+    if not user_team_id:
+        raise HTTPException(status_code=400, detail="No team selected")
+
+    neg = _find_pending(negotiation_id)
+    if not neg:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    if neg.get("to_team_id") != user_team_id:
+        raise HTTPException(status_code=403, detail="Cette offre ne vous est pas destinée")
+
+    player = GAME_STATE["players"].get(neg["player_id"])
+    if not player or player.get("team_id") != user_team_id:
+        _remove_pending(negotiation_id)
+        raise HTTPException(status_code=409, detail="Le joueur n'est plus dans votre effectif")
+
+    buyer_team_id = neg["from_team_id"]
+    buyer_team = GAME_STATE["teams"].get(buyer_team_id)
+    if not buyer_team:
+        _remove_pending(negotiation_id)
+        raise HTTPException(status_code=409, detail="Équipe acheteuse introuvable")
+
+    offered = int(neg.get("offered_amount", 0))
+    if offered > buyer_team.get("budget", 0):
+        _remove_pending(negotiation_id)
+        _add_inbox_message(
+            msg_type="transfer_offer",
+            sender=GAME_STATE["teams"][user_team_id].get("name", "?"),
+            subject=f"Offre annulée pour {player['name']}",
+            body=f"L'acheteur n'a plus le budget nécessaire. Offre annulée.",
+        )
+        save_state()
+        raise HTTPException(status_code=409, detail="L'acheteur n'a plus le budget nécessaire")
+
+    player, _swapped = _execute_transfer(
+        player=player,
+        buyer_team_id=buyer_team_id,
+        offered_amount=offered,
+        contract_years=int(neg.get("contract_years", 2)),
+        swap_player_id=neg.get("swap_player_id"),
+    )
+    _remove_pending(negotiation_id)
+
+    seller_name = GAME_STATE["teams"][user_team_id].get("name", "?")
+    _add_inbox_message(
+        msg_type="transfer_offer",
+        sender=seller_name,
+        subject=f"{player['name']} — transfert accepté",
+        body=f"{seller_name} accepte votre offre de {offered:,}€ pour {player['name']}.",
+    )
+    save_state()
+    return {"success": True, "accepted": True, "player": player}
+
+
+@api_router.post("/negotiations/{negotiation_id}/reject")
+async def reject_pending_negotiation(negotiation_id: str):
+    """Target user rejects — offer disappears, no money moves (none was held)."""
+    user_team_id = GAME_STATE.get("user_team")
+    if not user_team_id:
+        raise HTTPException(status_code=400, detail="No team selected")
+
+    neg = _find_pending(negotiation_id)
+    if not neg:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    if neg.get("to_team_id") != user_team_id:
+        raise HTTPException(status_code=403, detail="Cette offre ne vous est pas destinée")
+
+    seller_name = GAME_STATE["teams"][user_team_id].get("name", "?")
+    player_name = neg.get("player_name", "?")
+    _remove_pending(negotiation_id)
+    _add_inbox_message(
+        msg_type="transfer_offer",
+        sender=seller_name,
+        subject=f"Offre refusée pour {player_name}",
+        body=f"{seller_name} refuse votre offre pour {player_name}.",
+    )
+    save_state()
+    return {"success": True, "accepted": False}
+
+
+class CounterOfferBody(BaseModel):
+    counter_amount: int = Field(ge=0, le=50_000_000)
+
+
+@api_router.post("/negotiations/{negotiation_id}/counter")
+async def counter_pending_negotiation(negotiation_id: str, body: CounterOfferBody):
+    """Target user proposes a new price. The offer flips direction:
+    now the original buyer sees it as 'incoming' and can accept/reject.
+    """
+    user_team_id = GAME_STATE.get("user_team")
+    if not user_team_id:
+        raise HTTPException(status_code=400, detail="No team selected")
+
+    neg = _find_pending(negotiation_id)
+    if not neg:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    if neg.get("to_team_id") != user_team_id:
+        raise HTTPException(status_code=403, detail="Cette offre ne vous est pas destinée")
+
+    # Flip: seller becomes the sender, buyer becomes the recipient.
+    original_buyer = neg["from_team_id"]
+    original_seller = neg["to_team_id"]
+    neg["from_team_id"] = original_seller
+    neg["to_team_id"] = original_buyer
+    neg["offered_amount"] = int(body.counter_amount)
+    neg["counter_amount"] = int(body.counter_amount)
+    neg["status"] = "countered"
+
+    seller_name = GAME_STATE["teams"][original_seller].get("name", "?")
+    _add_inbox_message(
+        msg_type="transfer_offer",
+        sender=seller_name,
+        subject=f"Contre-offre pour {neg.get('player_name', '?')}",
+        body=(
+            f"{seller_name} propose {body.counter_amount:,}€ pour "
+            f"{neg.get('player_name', '?')}."
+        ),
+    )
+    save_state()
+    return {"success": True, "negotiation": _pending_view(neg)}
+
+
+@api_router.post("/negotiations/{negotiation_id}/withdraw")
+async def withdraw_pending_negotiation(negotiation_id: str):
+    """Sender cancels their own outgoing offer before the target responds."""
+    user_team_id = GAME_STATE.get("user_team")
+    if not user_team_id:
+        raise HTTPException(status_code=400, detail="No team selected")
+
+    neg = _find_pending(negotiation_id)
+    if not neg:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    if neg.get("from_team_id") != user_team_id:
+        raise HTTPException(status_code=403, detail="Seul l'auteur peut retirer l'offre")
+
+    _remove_pending(negotiation_id)
+    save_state()
+    return {"success": True}
+
+
 # Draft System
 
 @api_router.get("/draft/champions")
