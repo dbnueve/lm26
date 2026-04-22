@@ -7,11 +7,13 @@ import MatchTimeline from "./MatchTimeline";
 import MatchResultScoreboard from "./MatchResultScoreboard";
 
 // Match Simulation Component
-const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftCompleted, draftState, onSimulate }) => {
+const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftCompleted, draftState, onSimulate, mpActive = false, mpPlayers = [], mpReady }) => {
   const [phase, setPhase] = useState(draftCompleted ? "ready" : "pre");
   const [matchResult, setMatchResult] = useState(null);
   const [simError, setSimError] = useState(null);
   const [simulating, setSimulating] = useState(false);
+  const [pvpReadying, setPvpReadying] = useState(false);
+  const [pvpVoted, setPvpVoted] = useState(false);
   const simLockRef = useRef(false);
   const timeoutRef = useRef(null);
   const mountedRef = useRef(true);
@@ -27,6 +29,37 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
   const opponent = match.team1 === userTeam.id ? match.team2 : match.team1;
   const opponentTeam = teams.find(t => t.id === opponent);
   const isTeam1 = match.team1 === userTeam.id;
+
+  // PvP = both sides of the match are taken by human players inside the
+  // current MP session. In that case we replace "Simulation Rapide" +
+  // "Phase de Draft" with a single "Prêt à jouer" vote — the draft opens
+  // automatically on both peers once every human has confirmed.
+  const humanTeams = new Set(
+    (mpPlayers || [])
+      .filter(p => p && p.team_id)
+      .map(p => p.team_id)
+  );
+  const isPvp = mpActive && humanTeams.has(match.team1) && humanTeams.has(match.team2);
+  const opponentUsername = (mpPlayers || []).find(p => p?.team_id === opponent)?.username;
+
+  const handlePvpReady = async () => {
+    if (!mpReady || pvpReadying || pvpVoted) return;
+    setPvpReadying(true);
+    try {
+      const res = await mpReady(`match:${match.id}`);
+      setPvpVoted(true);
+      // If the gate fires immediately (last player to vote), App.js receives
+      // the state_changed event and opens DraftSystem; nothing else to do.
+      // Otherwise we stay in "pre" with the "En attente..." UI.
+      if (res?.fired) {
+        // no-op — state_changed listener in App.js will open the draft
+      }
+    } catch (e) {
+      console.error("PvP ready vote failed:", e);
+    } finally {
+      setPvpReadying(false);
+    }
+  };
 
   const startMatch = async () => {
     if (simLockRef.current) return;
