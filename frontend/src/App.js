@@ -444,8 +444,86 @@ function App() {
     setShowDraft(false);
     setDraftCompleted(true);
     setDraftState(completedDraft);
+    setPvpDraftMatch(null);
+    setMpDraftState(null);
     showToast("Draft terminée! Prêt à lancer le match!", "success");
   };
+
+  // ── MP2 versus draft helpers ────────────────────────────────────────────────
+  // Determine whether the currently active match is a PvP (both teams owned by
+  // different humans in this session). Used to flip DraftSystem into MP mode.
+  const isPvpMatch = React.useMemo(() => {
+    if (!mp2.sid || !activeMatch) return false;
+    const t1 = mp2Players.find(p => p.team_id === activeMatch.team1);
+    const t2 = mp2Players.find(p => p.team_id === activeMatch.team2);
+    return Boolean(t1 && t2 && t1.username !== t2.username);
+  }, [mp2.sid, activeMatch, mp2Players]);
+
+  // My side in the versus draft (1=blue/team1, 2=red/team2). Derived from the
+  // streamed mpDraftState so it stays in sync across reconnects.
+  const mpMySide = mpDraftState?._mySide ?? null;
+  const mpMyTurn = Boolean(mpDraftState && !mpDraftState.completed
+    && mpDraftState.current_side === mpMySide);
+  const mpLabel = React.useMemo(() => {
+    if (!mpDraftState) return null;
+    if (mpDraftState.completed) return "Draft terminée";
+    const kind = mpDraftState.current_action === "ban" ? "Ban" : "Pick";
+    return mpMyTurn ? `À toi — ${kind}` : `Tour adverse — ${kind}`;
+  }, [mpDraftState, mpMyTurn]);
+
+  // Fetch the versus draft state (used on mount + on WS updates).
+  const fetchMpDraft = useCallback(async () => {
+    if (!mp2.sid || !mp2.token) return;
+    try {
+      const res = await axios.get(`${API}/mp2/${mp2.sid}/draft`, {
+        params: { token: mp2.token },
+      });
+      setMpDraftState(res.data || null);
+    } catch (e) {
+      console.warn("mp2 draft fetch failed:", e);
+    }
+  }, [mp2.sid, mp2.token]);
+
+  // Kick off the shared draft for a PvP match (either player can start it).
+  const startMpDraft = useCallback(async (matchId) => {
+    if (!mp2.sid || !mp2.token) return;
+    try {
+      const res = await axios.post(`${API}/mp2/${mp2.sid}/draft/start`, {
+        token: mp2.token, match_id: matchId,
+      });
+      setMpDraftState(res.data || null);
+    } catch (e) {
+      // Most likely: draft already started by peer. Fall back to fetch.
+      fetchMpDraft();
+    }
+  }, [mp2.sid, mp2.token, fetchMpDraft]);
+
+  // Called by <DraftSystem> in MP mode. Posts the action; state arrives via WS.
+  const onMpDraftAction = useCallback(async (champion, action) => {
+    if (!mp2.sid || !mp2.token) return;
+    try {
+      const res = await axios.post(`${API}/mp2/${mp2.sid}/draft/action`, {
+        token: mp2.token, action, champion,
+      });
+      setMpDraftState(res.data || null);
+    } catch (e) {
+      const msg = e?.response?.data?.detail || "Action draft refusée";
+      showToast(msg, "error");
+    }
+  }, [mp2.sid, mp2.token]);
+
+  // When a PvP draft opens, start/fetch the versus draft state and keep it
+  // in sync with WS `mp_draft_update` broadcasts.
+  useEffect(() => {
+    if (!showDraft || !isPvpMatch || !pvpDraftMatch) return;
+    startMpDraft(pvpDraftMatch.id);
+    const handler = (evt) => {
+      const ev = evt?.detail?.event;
+      if (ev === "mp_draft_update") fetchMpDraft();
+    };
+    window.addEventListener("mp2:session_event", handler);
+    return () => window.removeEventListener("mp2:session_event", handler);
+  }, [showDraft, isPvpMatch, pvpDraftMatch, startMpDraft, fetchMpDraft]);
 
   if (showSaveSelection) {
     return (
