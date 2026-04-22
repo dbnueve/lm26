@@ -144,7 +144,7 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
         </div>
 
         <div style={{ padding: 24 }}>
-          {phase === "pre" && (
+          {phase === "pre" && !isPvp && (
             <div style={{ textAlign: "center" }}>
               <h3 className="font-heading" style={{ fontSize: 24, marginBottom: 24 }}>
                 Préparation du Match
@@ -168,6 +168,29 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
                   Simulation Rapide
                 </button>
               </div>
+            </div>
+          )}
+
+          {phase === "pre" && isPvp && (
+            <div style={{ textAlign: "center" }}>
+              <h3 className="font-heading" style={{ fontSize: 24, marginBottom: 12 }}>
+                Match Joueur vs Joueur
+              </h3>
+              <p style={{ color: "var(--text-2)", marginBottom: 24 }}>
+                {opponentUsername
+                  ? <>Face à <strong>{opponentUsername}</strong>. La draft s'ouvrira dès que vous êtes tous les deux prêts.</>
+                  : "La draft s'ouvrira dès que les deux joueurs sont prêts."}
+              </p>
+              <button
+                className="btn-primary"
+                onClick={handlePvpReady}
+                disabled={pvpReadying || pvpVoted}
+                data-testid="pvp-ready-btn"
+                style={{ padding: "16px 32px", fontSize: 18 }}
+              >
+                <Sword size={22} style={{ marginRight: 8 }} />
+                {pvpVoted ? "En attente de l'adversaire…" : pvpReadying ? "Envoi…" : "Prêt à jouer"}
+              </button>
             </div>
           )}
 
