@@ -231,6 +231,81 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
         </button>
       </div>
 
+      {(pending.incoming.length > 0 || pending.outgoing.length > 0) && (
+        <div style={{ marginBottom: 24, padding: 16, background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 4 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <button
+              className={pendingTab === "incoming" ? "btn-primary" : "btn-secondary"}
+              onClick={() => setPendingTab("incoming")}
+              data-testid="pending-tab-incoming"
+            >
+              Reçues ({pending.incoming.length})
+            </button>
+            <button
+              className={pendingTab === "outgoing" ? "btn-primary" : "btn-secondary"}
+              onClick={() => setPendingTab("outgoing")}
+              data-testid="pending-tab-outgoing"
+            >
+              Envoyées ({pending.outgoing.length})
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {pendingTab === "incoming" && pending.incoming.length === 0 && (
+              <div style={{ color: "var(--text-2)", fontSize: 13 }}>Aucune offre reçue.</div>
+            )}
+            {pendingTab === "outgoing" && pending.outgoing.length === 0 && (
+              <div style={{ color: "var(--text-2)", fontSize: 13 }}>Aucune offre envoyée.</div>
+            )}
+            {(pendingTab === "incoming" ? pending.incoming : pending.outgoing).map(n => (
+              <div key={n.id} style={{
+                padding: "12px 14px", background: "var(--bg)", borderRadius: 3,
+                border: "1px solid var(--border)",
+                display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center"
+              }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>
+                    {n.player_name} <span className={"pos-badge pos-" + n.player_position} style={{ fontSize: 10, marginLeft: 6 }}>{n.player_position}</span>
+                    <span style={{ marginLeft: 8, fontSize: 12, color: "var(--text-2)" }}>({n.player_rating})</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text-2)" }}>
+                    {pendingTab === "incoming"
+                      ? <>De <strong>{n.from_team_name || n.from_team_abbr}</strong></>
+                      : <>Vers <strong>{n.to_team_name || n.to_team_abbr}</strong></>}
+                    {" · "}{formatMoney(n.offered_amount)} EUR / {n.contract_years} an(s)
+                    {n.status === "countered" && <span style={{ color: "var(--amber)", marginLeft: 6 }}>● contre-offre</span>}
+                  </div>
+                </div>
+                {pendingTab === "incoming" ? (
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input
+                      type="number"
+                      placeholder="Contre-offre"
+                      value={counterDrafts[n.id] || ""}
+                      onChange={e => setCounterDrafts(d => ({ ...d, [n.id]: e.target.value }))}
+                      style={{ width: 110, padding: "6px 8px", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 2, color: "var(--text)" }}
+                      data-testid={"counter-input-" + n.id}
+                    />
+                    <button className="btn-secondary" onClick={() => handleCounterPending(n.id)} data-testid={"counter-btn-" + n.id}>
+                      Contre
+                    </button>
+                    <button className="btn-primary" onClick={() => handleAcceptPending(n.id)} data-testid={"accept-btn-" + n.id}>
+                      <Check size={14} />
+                    </button>
+                    <button className="btn-secondary" onClick={() => handleRejectPending(n.id)} data-testid={"reject-btn-" + n.id}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button className="btn-secondary" onClick={() => handleWithdrawPending(n.id)} data-testid={"withdraw-btn-" + n.id}>
+                    Retirer
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{ marginBottom: 24, display: "flex", gap: 8 }}>
         {["ALL", "TOP", "JUNGLE", "MID", "ADC", "SUPPORT"].map(pos => (
           <button
