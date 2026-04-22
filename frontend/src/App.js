@@ -63,6 +63,15 @@ function App() {
 
   // Multiplayer state: now lives in SessionProvider (shared.js). The legacy
   // `multiplayerSession` glue that gated MultiplayerHub has been removed.
+  //
+  // In MP we also track the full players roster (token-less view from
+  // /mp2/{sid}/info) so we can detect PvP matches (both teams taken by humans)
+  // and drive the shared "ready to play" gate + auto-draft open across peers.
+  const [mp2Players, setMp2Players] = useState([]); // [{username, team_id}]
+  // When a PvP match gate fires (both players voted "Prêt"), we auto-open
+  // the DraftSystem for each peer. This carries the match metadata across
+  // the async WS event → state change → render boundary.
+  const [pvpDraftMatch, setPvpDraftMatch] = useState(null);
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
