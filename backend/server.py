@@ -4934,12 +4934,51 @@ def _compute_draft_suggestions(
 
 
 @api_router.get("/draft/suggest")
-async def draft_suggest():
+async def draft_suggest(request: Request):
     """
     Return top suggestions for the current user draft turn with Delta-Analyzer explanation.
     Includes comp_gain, counter targets, and reason label.
+
+    En mode MP versus (shared draft) on reconstruit un `draft_state` virtuel à
+    partir de `session.mp_draft` côté caller (token → side), car le draft
+    partagé n'écrit `GAME_STATE["draft_state"]` qu'à la fin.
     """
     draft = GAME_STATE.get("draft_state")
+
+    # MP-shared draft override: if a versus draft is in progress, synthesize
+    # the solo-shape draft from the caller's point of view.
+    sid = request.query_params.get("session_id")
+    token = request.query_params.get("mp_token")
+    mp_draft = None
+    if sid:
+        sess = _sessions.get_session(sid)
+        if sess is not None and sess.mp_draft and not sess.mp_draft.get("completed"):
+            mp_draft = sess.mp_draft
+
+    if mp_draft:
+        my_side = mp_draft.get("side", {}).get(token)
+        if my_side is None:
+            return {"suggestions": [], "action": None}
+        opp_side = 2 if my_side == 1 else 1
+        ms, os_ = str(my_side), str(opp_side)
+        user_bans = list(mp_draft["bans"].get(ms, []))
+        enemy_bans = list(mp_draft["bans"].get(os_, []))
+        user_picks = [dict(p) for p in mp_draft["picks"].get(ms, [])]
+        enemy_picks = [dict(p) for p in mp_draft["picks"].get(os_, [])]
+        draft = {
+            "step": mp_draft["step"],
+            "user_bans": user_bans,
+            "enemy_bans": enemy_bans,
+            "user_picks": user_picks,
+            "enemy_picks": enemy_picks,
+            "banned_champions": user_bans + enemy_bans,
+            "picked_champions": [p["champion"] for p in user_picks]
+                               + [p["champion"] for p in enemy_picks],
+            "user_picked_champions": [p["champion"] for p in user_picks],
+            "enemy_picked_champions": [p["champion"] for p in enemy_picks],
+            "fearless_excluded": list(mp_draft.get("fearless_excluded", [])),
+        }
+
     if not draft:
         raise HTTPException(status_code=400, detail="No draft in progress")
 
@@ -4947,9 +4986,20 @@ async def draft_suggest():
     if step >= len(DRAFT_SEQUENCE):
         return {"suggestions": [], "action": None}
 
-    actor, action_type = DRAFT_SEQUENCE[step]
-    if actor != "user":
-        return {"suggestions": [], "action": "enemy_turn"}
+    # En mode MP, l'acteur courant dépend du side du caller (pas de la séquence
+    # brute qui alterne user/enemy à partir de side 1).
+    if mp_draft:
+        seq = mp_draft.get("sequence", [])
+        if step >= len(seq):
+            return {"suggestions": [], "action": None}
+        action_type, current_side = seq[step]
+        my_side = mp_draft.get("side", {}).get(token)
+        if current_side != my_side:
+            return {"suggestions": [], "action": "enemy_turn"}
+    else:
+        actor, action_type = DRAFT_SEQUENCE[step]
+        if actor != "user":
+            return {"suggestions": [], "action": "enemy_turn"}
 
     fearless     = set(draft.get("fearless_excluded", []))
     unavailable  = set(draft["banned_champions"] + draft["picked_champions"]) | fearless
