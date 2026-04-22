@@ -3586,7 +3586,7 @@ class SimulateMatchRequest(BaseModel):
     user_draft: Optional[Dict] = None
 
 @api_router.post("/match/simulate")
-async def simulate_match(request: SimulateMatchRequest):
+async def simulate_match(request: SimulateMatchRequest, http_request: Request):
     """Simulate a specific match"""
     if GAME_STATE.get("phase") == "preseason":
         raise HTTPException(status_code=400, detail="Lancez la saison depuis la page Négociations avant de jouer des matchs")
