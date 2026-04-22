@@ -180,8 +180,12 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
     const oppKey = myKey === 1 ? 2 : 1;
     const bansMe = mpDraftState.bans?.[myKey] || mpDraftState.bans?.[String(myKey)] || [];
     const bansOpp = mpDraftState.bans?.[oppKey] || mpDraftState.bans?.[String(oppKey)] || [];
-    const picksMe = (mpDraftState.picks?.[myKey] || mpDraftState.picks?.[String(myKey)] || []).map(c => ({ champion: c }));
-    const picksOpp = (mpDraftState.picks?.[oppKey] || mpDraftState.picks?.[String(oppKey)] || []).map(c => ({ champion: c }));
+    // Backend returns picks already as [{champion, position}, …]. Do NOT re-wrap
+    // (le re-wrap produisait {champion: {champion, position}} et cassait les
+    // checks de duplication côté client dès le premier pick).
+    const toPick = (raw) => (typeof raw === "string" ? { champion: raw } : { ...raw });
+    const picksMe = (mpDraftState.picks?.[myKey] || mpDraftState.picks?.[String(myKey)] || []).map(toPick);
+    const picksOpp = (mpDraftState.picks?.[oppKey] || mpDraftState.picks?.[String(oppKey)] || []).map(toPick);
     return {
       phase: mpDraftState.completed ? "complete" : (isBan ? "ban_phase" : "pick_phase"),
       step,
