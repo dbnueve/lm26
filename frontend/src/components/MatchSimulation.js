@@ -18,6 +18,11 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
   const timeoutRef = useRef(null);
   const mountedRef = useRef(true);
 
+  // In PvP, only side 1 (team1 / blue) actually posts /match/simulate.
+  // Side 2 waits for the peer-triggered state_changed event → the updated
+  // match prop carries match_details → we flip to the timeline phase.
+  const isSide1 = mpActive && match.team1 === userTeam.id;
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
