@@ -33,7 +33,7 @@ function MultiplayerSlots({ onEnterSession }) {
     try {
       const res = await API_CLIENT.post("/mp2/create", { league, username: username.trim() });
       const { sid, code, token } = res.data;
-      setSession({ sid, code, token });
+      setSession({ sid, code, token, username: username.trim() });
       onEnterSession?.();
     } catch (e) { setError(e?.response?.data?.detail || "Erreur"); }
     finally { setBusy(false); }
