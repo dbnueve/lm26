@@ -6026,7 +6026,10 @@ def _generate_transfer_recap_message():
 @api_router.post("/season/start")
 async def start_season():
     """Launch the season from preseason: run AI transfers then begin week 1."""
-    if not GAME_STATE["user_team"]:
+    # MP mode: any one human team selected is enough to proceed. The solo
+    # user_team check is relaxed when _mp_user_team_ids is populated.
+    mp_human_teams = GAME_STATE.get("_mp_user_team_ids") or []
+    if not GAME_STATE["user_team"] and not mp_human_teams:
         raise HTTPException(status_code=400, detail="No team selected")
     if GAME_STATE.get("phase") != "preseason":
         raise HTTPException(status_code=400, detail="Season already started or not in preseason")
