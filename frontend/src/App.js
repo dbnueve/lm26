@@ -443,7 +443,25 @@ function App() {
   const handleDraftComplete = (completedDraft) => {
     setShowDraft(false);
     setDraftCompleted(true);
-    setDraftState(completedDraft);
+    // MP versus-draft payload carries bans/picks keyed by side (1/2) with
+    // a _mySide hint. Normalise to the solo shape (user_* / enemy_*) so the
+    // rest of the pipeline (MatchSimulation → /match/simulate user_draft)
+    // is unchanged.
+    let normalised = completedDraft;
+    if (completedDraft && (completedDraft.bans || completedDraft.picks)) {
+      const mySide = completedDraft._mySide ?? 1;
+      const oppSide = mySide === 1 ? 2 : 1;
+      const ms = String(mySide);
+      const os = String(oppSide);
+      normalised = {
+        ...completedDraft,
+        user_bans:    completedDraft.bans?.[ms]  || completedDraft.bans?.[mySide]  || [],
+        enemy_bans:   completedDraft.bans?.[os]  || completedDraft.bans?.[oppSide] || [],
+        user_picks:  (completedDraft.picks?.[ms] || completedDraft.picks?.[mySide] || []),
+        enemy_picks: (completedDraft.picks?.[os] || completedDraft.picks?.[oppSide] || []),
+      };
+    }
+    setDraftState(normalised);
     setPvpDraftMatch(null);
     setMpDraftState(null);
     showToast("Draft terminée! Prêt à lancer le match!", "success");
