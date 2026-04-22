@@ -222,14 +222,21 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
                 Draft Terminée!
               </h3>
               <p style={{ color: "var(--text-2)", marginBottom: 24 }}>
-                Les équipes sont prêtes. Lancez le match!
+                {isPvp && !isSide1
+                  ? `En attente de ${opponentUsername || "l'adversaire"}…`
+                  : "Les équipes sont prêtes. Lancez le match!"}
               </p>
               <button
                 className="btn-primary"
                 onClick={startMatch}
-                disabled={simLockRef.current}
+                disabled={simLockRef.current || (isPvp && !isSide1)}
                 data-testid="launch-match-after-draft-btn"
-                style={{ padding: "16px 32px", fontSize: 18 }}
+                style={{
+                  padding: "16px 32px", fontSize: 18,
+                  opacity: (isPvp && !isSide1) ? 0.5 : 1,
+                  cursor: (isPvp && !isSide1) ? "not-allowed" : "pointer",
+                }}
+                title={(isPvp && !isSide1) ? "Le joueur côté bleu (team1) lance le match" : ""}
               >
                 <GameController size={24} style={{ marginRight: 8 }} />
                 Lancer le Match
