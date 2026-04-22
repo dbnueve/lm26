@@ -72,6 +72,9 @@ function App() {
   // the DraftSystem for each peer. This carries the match metadata across
   // the async WS event → state change → render boundary.
   const [pvpDraftMatch, setPvpDraftMatch] = useState(null);
+  // Versus draft state streamed from the server (via `mp_draft_update` WS
+  // broadcasts + /mp2/{sid}/draft fetch). Null in solo or before start.
+  const [mpDraftState, setMpDraftState] = useState(null);
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
