@@ -31,6 +31,23 @@ const MatchSimulation = ({ match, userTeam, teams, onClose, onStartDraft, draftC
     };
   }, []);
 
+  // Side-2 reconciliation: when side 1 has posted /match/simulate, the WS
+  // state_changed broadcast triggers App.js → loadGameData → the updated
+  // match prop now carries `match_details`. Flip the UI into the timeline.
+  useEffect(() => {
+    if (!match?.match_details) return;
+    if (phase === "timeline" || phase === "result") return;
+    setMatchResult({
+      match_details: match.match_details,
+      score1: match.score1,
+      score2: match.score2,
+      winner: match.winner,
+      team1: match.team1,
+      team2: match.team2,
+    });
+    setPhase("timeline");
+  }, [match?.match_details, match?.id, phase]);
+
   const opponent = match.team1 === userTeam.id ? match.team2 : match.team1;
   const opponentTeam = teams.find(t => t.id === opponent);
   const isTeam1 = match.team1 === userTeam.id;
