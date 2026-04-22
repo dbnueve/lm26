@@ -219,6 +219,29 @@ function App() {
     return () => window.removeEventListener("mp2:session_event", handler);
   }, [mp2.sid, refreshMp2Roster]);
 
+  // When the schedule refreshes (typically after a state_changed broadcast),
+  // re-resolve `activeMatch` from the fresh data. Critical for PvP side 2:
+  // side 1 posts /match/simulate → backend writes `match_details` → schedule
+  // updates → this effect pushes the updated match into MatchSimulation, which
+  // flips its phase to "timeline". Without this, side 2 stays stuck on
+  // "Draft terminée — en attente…".
+  useEffect(() => {
+    if (!activeMatch?.id || !schedule?.length) return;
+    const fresh = schedule.find(m => m.id === activeMatch.id);
+    if (!fresh) return;
+    // Shallow identity check on the few fields MatchSimulation reads. Avoids
+    // a setState loop when the schedule reference changes but match contents
+    // are identical.
+    if (
+      fresh.match_details === activeMatch.match_details
+      && fresh.score1 === activeMatch.score1
+      && fresh.score2 === activeMatch.score2
+      && fresh.winner === activeMatch.winner
+      && fresh.played === activeMatch.played
+    ) return;
+    setActiveMatch(fresh);
+  }, [schedule, activeMatch?.id, activeMatch?.match_details, activeMatch?.score1, activeMatch?.score2, activeMatch?.winner, activeMatch?.played]);
+
   const loadSplitStatus = useCallback(async (userTeamId) => {
     try {
       const res = await API_CLIENT.get("/split/status");
