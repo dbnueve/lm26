@@ -7522,7 +7522,11 @@ def _mp_draft_find_match(state: dict, match_id: str) -> dict | None:
 
 
 def _mp_draft_public(sess: "_sessions.Session", token: str | None) -> dict | None:
-    """Return the draft state with `_mySide` hint for the caller."""
+    """Return the draft state with `_mySide` hint for the caller.
+
+    Explicitly whitelists non-sensitive fields — NEVER spread `sess.mp_draft`
+    directly because `side` maps auth tokens to player sides and must not leak.
+    """
     d = sess.mp_draft
     if not d:
         return None
@@ -7531,7 +7535,15 @@ def _mp_draft_public(sess: "_sessions.Session", token: str | None) -> dict | Non
     seq = d.get("sequence", [])
     current = seq[step] if 0 <= step < len(seq) else None
     return {
-        **d,
+        "match_id": d.get("match_id"),
+        "team1_id": d.get("team1_id"),
+        "team2_id": d.get("team2_id"),
+        "step": step,
+        "sequence": seq,
+        "bans": d.get("bans", {"1": [], "2": []}),
+        "picks": d.get("picks", {"1": [], "2": []}),
+        "fearless_excluded": d.get("fearless_excluded", []),
+        "completed": d.get("completed", False),
         "_mySide": my_side,
         "current_side": current[1] if current else None,
         "current_action": current[0] if current else None,
