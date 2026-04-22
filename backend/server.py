@@ -3670,13 +3670,31 @@ async def simulate_match(request: SimulateMatchRequest):
     apply_match_result_updates(winner_id, loser_id, result, w_stats, l_stats, week=match.get("week"))
     _generate_match_inbox_messages(winner_id, loser_id, result, w_stats=w_stats, l_stats=l_stats, week=match.get("week"))
 
-    # Simulate other matches of the same week
+    # Simulate other matches of the same week.
+    # En mode MP, on exclut TOUS les matchs qui impliquent n'importe quelle
+    # équipe choisie par un joueur de la session — sinon le joueur A qui simule
+    # son match auto-simulerait aussi le match de B (et B se retrouverait avec
+    # un résultat imposé sans avoir joué sa draft).
     current_week = match["week"]
     other_results = []
+    mp_player_teams: set = set()
+    sid_current = request_session_id_var.get() if "request_session_id_var" in dir() else None
+    # Simpler: lire directement depuis sessions via le sid stashé par le middleware.
+    try:
+        _active_sid = _MP2_ACTIVE_SID.get()
+    except Exception:
+        _active_sid = None
+    if _active_sid:
+        _sess = _sessions.get_session(_active_sid)
+        if _sess:
+            mp_player_teams = {tid for tid in _sess.players.values() if tid}
+    # Toujours inclure user_team (cas solo)
+    mp_player_teams.add(GAME_STATE["user_team"])
+
     for other_match in GAME_STATE["schedule"]:
         if other_match["week"] != current_week or other_match["played"]:
             continue
-        if GAME_STATE["user_team"] in [other_match["team1"], other_match["team2"]]:
+        if mp_player_teams & {other_match["team1"], other_match["team2"]}:
             continue
         t1_power = calculate_team_power(other_match["team1"])
         t2_power = calculate_team_power(other_match["team2"])
