@@ -56,15 +56,10 @@ const TeamPicker = ({ teams, onSelectTeam, league = "LEC" }) => {
   for (const p of mpPlayers) {
     if (p.team_id && p.username) takenBy[p.team_id] = p.username;
   }
-  // Identify MY own pick (if any) so the "Vous" badge only shows on my team,
-  // not on any teammate's. Match by the current session username.
-  const myUsernameLc = (mp.username || "").trim().toLowerCase();
-  const myTeamId = mpActive && myUsernameLc
-    ? mpPlayers.find(
-        p => p.team_id
-          && (p.username || "").trim().toLowerCase() === myUsernameLc
-      ) || null
-    : null;
+  // Authoritative "my team" comes from the backend `/info` response
+  // (sess.players[myToken]). The badge "Vous" must only appear on MY pick,
+  // never on another player's team.
+  const myTeamId = myMpTeamId ? { team_id: myMpTeamId } : null;
 
   const handleConfirm = async () => {
     if (!selectedTeam) return;
