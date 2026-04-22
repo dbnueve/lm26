@@ -164,8 +164,10 @@ function MultiplayerSlots({ onEnterSession }) {
                   placeholder="Votre pseudo" maxLength={20} />
                 {error && <div style={{ color: "#ef4444", fontSize: 12 }}>{error}</div>}
                 <button className="btn-primary" style={{ padding: "8px 0" }}
-                  onClick={() => handleJoin(s.code)} disabled={busy}>
-                  Rejoindre
+                  onClick={() => handleJoinOrReconnect(s)} disabled={busy}>
+                  {(s.players || []).some(p => (p || "").toLowerCase() === username.trim().toLowerCase() && username.trim())
+                    ? "Se reconnecter"
+                    : "Rejoindre"}
                 </button>
                 <button style={cancelBtnStyle} onClick={() => setMode(null)}>Annuler</button>
               </div>
