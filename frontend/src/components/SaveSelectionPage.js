@@ -39,12 +39,29 @@ function MultiplayerSlots({ onEnterSession }) {
     finally { setBusy(false); }
   };
 
-  const handleJoin = async (code) => {
-    const finalCode = (code || joinCode).trim().toUpperCase();
+  const handleJoin = async (codeArg) => {
+    // codeArg may be a string (passed explicitly) or a React SyntheticEvent
+    // (when this is wired directly as an onClick handler). Normalize.
+    const codeStr = typeof codeArg === "string" ? codeArg : "";
+    const finalCode = (codeStr || joinCode).trim().toUpperCase();
     if (!username.trim()) { setError("Entrez votre pseudo"); return; }
     if (!finalCode) { setError("Entrez le code"); return; }
     setBusy(true); setError(null);
     try {
+      // First try reconnect — if the pseudo already exists in this session,
+      // reuse its token. Otherwise fall back to creating a new slot via /join.
+      try {
+        const r = await API_CLIENT.post("/mp2/reconnect", {
+          code: finalCode, username: username.trim(),
+        });
+        const { sid, code: respCode, token, username: respName } = r.data;
+        setSession({ sid, code: respCode, token, username: respName || username.trim() });
+        onEnterSession?.();
+        return;
+      } catch (reconnectErr) {
+        // 404 from /reconnect = pseudo not in session → fall through to /join.
+        if (reconnectErr?.response?.status !== 404) throw reconnectErr;
+      }
       const res = await API_CLIENT.post("/mp2/join", { code: finalCode, username: username.trim() });
       const { sid, code: respCode, token } = res.data;
       setSession({ sid, code: respCode, token, username: username.trim() });
