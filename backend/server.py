@@ -3915,25 +3915,140 @@ def _find_coherent_replacement(sold_player: dict, team_id: str) -> dict:
     return replacement
 
 
+def _is_human_team(team_id: str) -> bool:
+    """True if this team is controlled by a human user in the current session."""
+    humans = GAME_STATE.get("_mp_user_team_ids") or []
+    return bool(team_id) and team_id in humans
+
+
+def _execute_transfer(player: dict, buyer_team_id: str, offered_amount: int,
+                      contract_years: int, swap_player_id: str | None) -> tuple[dict, str | None]:
+    """Move player to buyer_team, pay seller, handle swap + replacement.
+
+    Returns (transferred_player, swapped_out_name). Assumes validation done.
+    """
+    old_team_id = player["team_id"]
+    old_team = GAME_STATE["teams"][old_team_id]
+    buyer_team = GAME_STATE["teams"][buyer_team_id]
+
+    old_team["roster"].remove(player["id"])
+    old_team["budget"] += offered_amount
+
+    player["team_id"] = buyer_team_id
+    player["salary"] = int(offered_amount * TRANSFER_SALARY_PCT)
+    player["contract_years"] = contract_years
+    player["is_starter"] = True
+
+    buyer_team["roster"].append(player["id"])
+    buyer_team["budget"] -= offered_amount
+
+    swapped_out_name = None
+    if swap_player_id:
+        swap_target = GAME_STATE["players"].get(swap_player_id)
+        if swap_target and swap_target["team_id"] == buyer_team_id:
+            swap_target["is_starter"] = False
+            swapped_out_name = swap_target.get("name")
+
+    # Replacement only when the seller is an AI team. Humans manage their own roster.
+    if not _is_human_team(old_team_id):
+        replacement = _find_coherent_replacement(player, old_team_id)
+        GAME_STATE["players"][replacement["id"]] = replacement
+        old_team["roster"].append(replacement["id"])
+
+    GAME_STATE.setdefault("mercato_recap", []).append({
+        "player": player["name"],
+        "position": player["position"],
+        "rating": player["rating"],
+        "amount": offered_amount,
+        "buyer": buyer_team_id,
+        "seller": old_team.get("abbr", old_team_id),
+    })
+    return player, swapped_out_name
+
+
+def _find_pending(pid: str) -> dict | None:
+    for n in GAME_STATE.get("pending_negotiations", []):
+        if n.get("id") == pid:
+            return n
+    return None
+
+
+def _remove_pending(pid: str) -> None:
+    GAME_STATE["pending_negotiations"] = [
+        n for n in GAME_STATE.get("pending_negotiations", [])
+        if n.get("id") != pid
+    ]
+
+
 @api_router.post("/negotiations/offer")
 async def make_offer(offer: NegotiationOffer):
-    """Make a transfer offer for a player"""
+    """Make a transfer offer for a player.
+
+    If the target belongs to another human user (multi), creates a pending
+    negotiation + inbox message and returns pending=True without transferring.
+    Otherwise falls back to the AI decision flow (solo or IA target in multi).
+    """
     if not GAME_STATE["user_team"]:
         raise HTTPException(status_code=400, detail="No team selected")
     if GAME_STATE.get("phase") != "preseason":
         raise HTTPException(status_code=403, detail="Negotiations are only open during preseason/offseason")
-    
+
     player = GAME_STATE["players"].get(offer.player_id)
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
-    
+
     if player["team_id"] == GAME_STATE["user_team"]:
         raise HTTPException(status_code=400, detail="Player already on your team")
-    
+
     user_team = GAME_STATE["teams"][GAME_STATE["user_team"]]
     if offer.offered_amount > user_team["budget"]:
         raise HTTPException(status_code=400, detail="Insufficient budget")
-    
+
+    target_team_id = player["team_id"]
+    target_team = GAME_STATE["teams"][target_team_id]
+
+    # Human-vs-human: create pending offer and notify via inbox.
+    # Counter-offer acceptances from a human target still take this path
+    # — the accept endpoint is what finalises the transfer.
+    if _is_human_team(target_team_id) and not offer.is_counter_offer:
+        pending = {
+            "id": str(uuid.uuid4()),
+            "status": "pending",
+            "direction": "incoming",  # from the target's perspective
+            "from_team_id": GAME_STATE["user_team"],
+            "to_team_id": target_team_id,
+            "player_id": player["id"],
+            "player_name": player["name"],
+            "player_position": player["position"],
+            "player_rating": player["rating"],
+            "offered_amount": offer.offered_amount,
+            "contract_years": offer.contract_years,
+            "swap_player_id": offer.player_to_swap_id,
+            "counter_amount": None,
+            "created_week": GAME_STATE.get("current_week", 0),
+            "created_season": GAME_STATE.get("season"),
+            "created_split": GAME_STATE.get("current_split"),
+        }
+        GAME_STATE.setdefault("pending_negotiations", []).append(pending)
+        _add_inbox_message(
+            msg_type="transfer_offer",
+            sender=user_team.get("name", "Autre équipe"),
+            subject=f"Offre pour {player['name']}",
+            body=(
+                f"{user_team.get('name', '?')} propose {offer.offered_amount:,}€ "
+                f"sur {offer.contract_years} an(s) pour {player['name']} "
+                f"({player['position']}, {player['rating']})."
+            ),
+        )
+        save_state()
+        return {
+            "success": True,
+            "accepted": False,
+            "pending": True,
+            "negotiation_id": pending["id"],
+            "message": f"Offre envoyée à {target_team.get('name', '?')}. En attente de réponse.",
+        }
+
     # AI decision based on offer vs player value
     base_value = player["transfer_value"]
     offer_ratio = offer.offered_amount / base_value
