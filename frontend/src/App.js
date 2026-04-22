@@ -613,6 +613,9 @@ function App() {
             onStartDraft={() => setShowDraft(true)}
             draftCompleted={draftCompleted}
             draftState={draftState}
+            mpActive={!!mp2.sid}
+            mpPlayers={mp2Players}
+            mpReady={mpReady}
           />
         )}
       </AnimatePresence>
