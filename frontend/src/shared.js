@@ -70,9 +70,9 @@ function SessionProvider({ children }) {
   const [session, setSessionState] = React.useState(() => {
     try {
       const raw = window.localStorage.getItem("lm26.mp2.session");
-      return raw ? JSON.parse(raw) : { sid: null, code: null, token: null };
+      return raw ? JSON.parse(raw) : { sid: null, code: null, token: null, username: null };
     } catch {
-      return { sid: null, code: null, token: null };
+      return { sid: null, code: null, token: null, username: null };
     }
   });
 
@@ -81,6 +81,7 @@ function SessionProvider({ children }) {
       sid: next?.sid || null,
       code: next?.code || null,
       token: next?.token || null,
+      username: next?.username || null,
     };
     _sessionRef.sid = normalized.sid;
     _sessionRef.token = normalized.token;
