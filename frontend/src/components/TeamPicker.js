@@ -18,6 +18,7 @@ const TeamPicker = ({ teams, onSelectTeam, league = "LEC" }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [mpPlayers, setMpPlayers] = useState([]); // [{ username, team_id }]
+  const [myMpTeamId, setMyMpTeamId] = useState(null); // authoritative per-caller
   const mp = useSession();
   const mpActive = !!mp.sid;
 
@@ -29,6 +30,7 @@ const TeamPicker = ({ teams, onSelectTeam, league = "LEC" }) => {
     try {
       const res = await axios.get(`${API}/mp2/${mp.sid}/info`, { params: { token: mp.token } });
       setMpPlayers(res.data?.players || []);
+      setMyMpTeamId(res.data?.my_team_id || null);
     } catch (e) {
       console.warn("mp2 info fetch failed:", e);
     }
