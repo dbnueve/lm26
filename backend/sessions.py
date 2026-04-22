@@ -60,6 +60,19 @@ class Session:
     # Used to gate shared progression actions (season/simulate, split/next,
     # etc.) until every human player has agreed. Reset after the action fires.
     ready: dict[str, set[str]] = field(default_factory=dict)
+    # Shared versus-draft state when two humans face each other for a match.
+    # None when no PvP draft is active. Shape:
+    #   {
+    #     "match_id": str,
+    #     "team1_id": str, "team2_id": str,     # blue=team1, red=team2
+    #     "side": {token1: 1, token2: 2},
+    #     "step": int,                          # 0..len(sequence)
+    #     "sequence": [["ban"|"pick", 1|2], ...],
+    #     "bans":  {"1": [...], "2": [...]},
+    #     "picks": {"1": [{"champion": str, "position": str}, ...], "2": [...]},
+    #     "completed": bool,
+    #   }
+    mp_draft: dict | None = None
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
     _dirty: bool = False                    # needs save
