@@ -6190,13 +6190,14 @@ async def advance_to_next_split():
     for team_data in relevant_teams:
         team = {**team_data, "wins": 0, "losses": 0, "roster": []}
         GAME_STATE["teams"][team["id"]] = team
-        
-        if team["id"] == user_team_id:
-            # Restore user's saved roster (no changes from split data)
-            for pid, player in saved_user_players.items():
-                player["team_id"] = user_team_id
+
+        if team["id"] in protected_team_ids:
+            # Restore the human team's saved roster (no changes from split data)
+            human_roster = saved_human_rosters.get(team["id"], {})
+            for pid, player in human_roster.items():
+                player["team_id"] = team["id"]
                 GAME_STATE["players"][pid] = player
-            team["roster"] = list(saved_user_players.keys())
+            team["roster"] = list(human_roster.keys())
         else:
             # AI team gets fresh roster from next split data or generated
             if next_data and team["id"] in next_data.get("rosters", {}):
