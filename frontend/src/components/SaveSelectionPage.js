@@ -53,6 +53,38 @@ function MultiplayerSlots({ onEnterSession }) {
     finally { setBusy(false); }
   };
 
+  // Reconnexion: récupère le token d'un joueur déjà inscrit par son pseudo.
+  // Utilisé quand on clique un badge pseudo (ex: "test", "apercu") ou qu'on
+  // tape un pseudo déjà présent dans la session.
+  const handleReconnect = async (code, pseudo) => {
+    const finalCode = (code || joinCode).trim().toUpperCase();
+    const finalName = (pseudo || username).trim();
+    if (!finalName) { setError("Entrez votre pseudo"); return; }
+    if (!finalCode) { setError("Entrez le code"); return; }
+    setBusy(true); setError(null);
+    try {
+      const res = await API_CLIENT.post("/mp2/reconnect", { code: finalCode, username: finalName });
+      const { sid, code: respCode, token, username: respName } = res.data;
+      setSession({ sid, code: respCode, token, username: respName || finalName });
+      onEnterSession?.();
+    } catch (e) {
+      setError(e?.response?.data?.detail || "Reconnexion impossible");
+    } finally { setBusy(false); }
+  };
+
+  // Handler "intelligent" pour les cartes de sessions existantes: si le
+  // pseudo saisi correspond déjà à un joueur de la session → reconnect,
+  // sinon → join classique (nouveau slot).
+  const handleJoinOrReconnect = async (sess) => {
+    const name = username.trim();
+    if (!name) { setError("Entrez votre pseudo"); return; }
+    const existing = (sess.players || []).some(
+      p => (p || "").toLowerCase() === name.toLowerCase()
+    );
+    if (existing) return handleReconnect(sess.code, name);
+    return handleJoin(sess.code);
+  };
+
   const phaseLabel = (p) => ({ waiting: "Attente", team_pick: "Sélection", regular: "Saison", playoffs: "Playoffs" }[p] || p);
 
   return (
