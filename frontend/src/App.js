@@ -686,8 +686,7 @@ function App() {
         {currentPage === "training" && userTeamData && (
           <TrainingPage
             userTeam={userTeamData}
-            onApplyTraining={handleApplyTraining}
-            onSetTrainingPlan={handleSetTrainingPlan}
+            onSetTeamTrainingPlan={handleSetTeamTrainingPlan}
           />
         )}
 
