@@ -5325,6 +5325,44 @@ async def set_training_plan(request: TrainingPlanRequest):
     return {"success": True, "player": player, "applied_now": applied}
 
 
+class TeamTrainingPlanRequest(BaseModel):
+    training_type: str  # scrims, vod_review, bootcamp, rest, or "" to clear
+
+
+@api_router.post("/training/set-team-plan")
+async def set_team_training_plan(request: TeamTrainingPlanRequest):
+    """Set the same training plan for all 5 starters of the user's team."""
+    valid = {"scrims", "vod_review", "bootcamp", "rest", ""}
+    if request.training_type not in valid:
+        raise HTTPException(status_code=400, detail="Type invalide")
+
+    user_team_id = GAME_STATE.get("user_team")
+    user_team = GAME_STATE["teams"].get(user_team_id, {})
+    starters = [
+        p for p in GAME_STATE["players"].values()
+        if p.get("team_id") == user_team_id and p.get("is_starter")
+    ]
+
+    applied_count = 0
+    downgraded_to_rest = 0
+    for player in starters:
+        player["training_plan"] = request.training_type or None
+        if request.training_type:
+            result = _execute_training_plan(player, user_team)
+            if result:
+                applied_count += 1
+                if request.training_type != "rest" and result == "rest":
+                    downgraded_to_rest += 1
+
+    save_state()
+    return {
+        "success": True,
+        "applied_count": applied_count,
+        "total_starters": len(starters),
+        "downgraded_to_rest": downgraded_to_rest,
+    }
+
+
 # Roster Management
 
 class RosterSwapRequest(BaseModel):
