@@ -37,7 +37,52 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
       .then(res => setAvailablePlayers(res.data))
       .catch(() => {})
       .finally(() => setLoadingPlayers(false));
-  }, [phase]);
+    loadPending();
+  }, [phase, loadPending]);
+
+  const refreshAfterMutation = async () => {
+    loadPending();
+    if (onPendingResolved) await onPendingResolved();
+  };
+
+  const handleAcceptPending = async (negId) => {
+    try {
+      await API_CLIENT.post(`/negotiations/${negId}/accept`);
+      await refreshAfterMutation();
+    } catch (e) {
+      console.error("Accept failed:", e);
+    }
+  };
+
+  const handleRejectPending = async (negId) => {
+    try {
+      await API_CLIENT.post(`/negotiations/${negId}/reject`);
+      await refreshAfterMutation();
+    } catch (e) {
+      console.error("Reject failed:", e);
+    }
+  };
+
+  const handleCounterPending = async (negId) => {
+    const amount = parseInt(counterDrafts[negId], 10);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    try {
+      await API_CLIENT.post(`/negotiations/${negId}/counter`, { counter_amount: amount });
+      setCounterDrafts(d => ({ ...d, [negId]: "" }));
+      await refreshAfterMutation();
+    } catch (e) {
+      console.error("Counter failed:", e);
+    }
+  };
+
+  const handleWithdrawPending = async (negId) => {
+    try {
+      await API_CLIENT.post(`/negotiations/${negId}/withdraw`);
+      await refreshAfterMutation();
+    } catch (e) {
+      console.error("Withdraw failed:", e);
+    }
+  };
 
   const filteredPlayers = useMemo(() =>
     positionFilter === "ALL"
