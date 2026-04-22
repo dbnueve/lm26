@@ -6125,21 +6125,35 @@ async def advance_to_next_split():
         new_split_num = meta["split_number"]
         new_teams_list = list(GAME_STATE["teams"].keys())
     
-    # 3 — Save current user roster BEFORE reinit (must survive the reset)
-    saved_user_roster_ids = list(user_team.get("roster", []))
-    saved_user_players = {
-        pid: dict(GAME_STATE["players"][pid])
-        for pid in saved_user_roster_ids
-        if pid in GAME_STATE["players"]
-    }
-    # Age players by 0.5 year, reduce contract
-    for p in saved_user_players.values():
-        p["age"] = round(p.get("age", 22) + 0.5, 1)
-        p["contract_years"] = max(0, p.get("contract_years", 1) - 1)
-        # Slight natural rating evolution
-        delta = random.randint(-2, 3)
-        p["rating"] = max(50, min(99, p["rating"] + delta))
-        p["potential"] = p.get("potential", p["rating"])
+    # 3 — Save current human rosters BEFORE reinit (must survive the reset).
+    # In MP sessions every human team must be preserved, not just user_team.
+    mp_human_teams = GAME_STATE.get("_mp_user_team_ids") or []
+    protected_team_ids: set[str] = set()
+    if user_team_id:
+        protected_team_ids.add(user_team_id)
+    protected_team_ids.update(tid for tid in mp_human_teams if tid)
+
+    # Map: team_id -> {pid: dict(player)} of its roster snapshot.
+    saved_human_rosters: dict[str, dict] = {}
+    for tid in protected_team_ids:
+        team_snap = GAME_STATE["teams"].get(tid, {})
+        roster_ids = list(team_snap.get("roster", []))
+        roster_players = {
+            pid: dict(GAME_STATE["players"][pid])
+            for pid in roster_ids
+            if pid in GAME_STATE["players"]
+        }
+        # Age players by 0.5 year, reduce contract, slight natural evolution
+        for p in roster_players.values():
+            p["age"] = round(p.get("age", 22) + 0.5, 1)
+            p["contract_years"] = max(0, p.get("contract_years", 1) - 1)
+            delta = random.randint(-2, 3)
+            p["rating"] = max(50, min(99, p["rating"] + delta))
+            p["potential"] = p.get("potential", p["rating"])
+        saved_human_rosters[tid] = roster_players
+
+    # Legacy alias for the primary user_team (used by downstream blocks below).
+    saved_user_players = saved_human_rosters.get(user_team_id, {})
     
     # 4 — Re-initialize game world (AI teams get fresh rosters)
     GAME_STATE["current_split"] = new_split_num
