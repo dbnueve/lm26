@@ -7242,13 +7242,7 @@ def mp2_reconnect(body: _Mp2JoinBody):
     if not code or not wanted:
         raise HTTPException(400, "Code et pseudo requis")
 
-    sess = _sessions.get_session_by_code(code) if hasattr(_sessions, "get_session_by_code") else None
-    if sess is None:
-        # Fallback: scan the registry by code.
-        for candidate in _sessions.list_sessions():
-            if getattr(candidate, "code", "").upper() == code:
-                sess = candidate
-                break
+    sess = _sessions.get_session_by_code(code)
     if sess is None:
         raise HTTPException(404, f"Session {code} introuvable")
 
