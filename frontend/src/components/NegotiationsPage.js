@@ -425,10 +425,19 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
 
                 {/* Result banner */}
                 {negotiationResult && (
-                  <div style={{ padding: 14, background: negotiationResult.accepted ? "rgba(0,230,118,0.1)" : "rgba(255,51,102,0.1)", border: "1px solid " + (negotiationResult.accepted ? "var(--success)" : "var(--danger)"), borderRadius: 2 }}>
+                  <div style={{
+                    padding: 14,
+                    background: negotiationResult.accepted ? "rgba(0,230,118,0.1)" : negotiationResult.pending ? "rgba(255,193,7,0.1)" : "rgba(255,51,102,0.1)",
+                    border: "1px solid " + (negotiationResult.accepted ? "var(--success)" : negotiationResult.pending ? "var(--amber)" : "var(--danger)"),
+                    borderRadius: 2
+                  }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      {negotiationResult.accepted ? <Check size={18} style={{ color: "var(--success)" }} /> : <X size={18} style={{ color: "var(--danger)" }} />}
-                      <strong>{negotiationResult.accepted ? "Offre acceptée !" : "Offre refusée"}</strong>
+                      {negotiationResult.accepted
+                        ? <Check size={18} style={{ color: "var(--success)" }} />
+                        : negotiationResult.pending
+                          ? <Coins size={18} style={{ color: "var(--amber)" }} />
+                          : <X size={18} style={{ color: "var(--danger)" }} />}
+                      <strong>{negotiationResult.accepted ? "Offre acceptée !" : negotiationResult.pending ? "Offre envoyée" : "Offre refusée"}</strong>
                     </div>
                     <div style={{ fontSize: 13 }}>{negotiationResult.message}</div>
                     {negotiationResult.counter_offer && (
