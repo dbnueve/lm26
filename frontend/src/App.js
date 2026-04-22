@@ -703,11 +703,26 @@ function App() {
 
       <AnimatePresence>
         {showDraft && (
-          <DraftSystem
-            champions={champions}
-            onComplete={handleDraftComplete}
-            onCancel={() => setShowDraft(false)}
-          />
+          isPvpMatch ? (
+            <DraftSystem
+              champions={champions}
+              onComplete={handleDraftComplete}
+              onCancel={() => setShowDraft(false)}
+              onMpAction={onMpDraftAction}
+              mpDraftState={mpDraftState}
+              mpMyTurn={mpMyTurn}
+              mpLabel={mpLabel}
+              mpSessionId={mp2.sid}
+              mpMatchId={pvpDraftMatch?.id}
+              mpToken={mp2.token}
+            />
+          ) : (
+            <DraftSystem
+              champions={champions}
+              onComplete={handleDraftComplete}
+              onCancel={() => setShowDraft(false)}
+            />
+          )
         )}
       </AnimatePresence>
 
