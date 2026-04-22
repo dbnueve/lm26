@@ -8,7 +8,7 @@ import LeaguePicker, { LEAGUE_META } from "./LeaguePicker";
 const LEAGUES = ["LEC", "LCS", "LCK", "LPL", "CBLOL"];
 
 function MultiplayerSlots({ onEnterSession }) {
-  const { sid: savedSid, code: savedCode, setSession, clearSession } = useSession();
+  const { sid: savedSid, code: savedCode, username: savedUsername, setSession, clearSession } = useSession();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState(null); // null | "create" | "join"
