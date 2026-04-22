@@ -3,7 +3,7 @@ import { formatMoney } from "../shared";
 import { motion } from "framer-motion";
 import {
   Sword, ChartBar, Fire, ClockCounterClockwise,
-  Check, Lightning, TrendUp, X
+  Check, Lightning, TrendUp, X, Users
 } from "@phosphor-icons/react";
 
 const TRAINING_OPTIONS = [
@@ -51,30 +51,42 @@ const TRAINING_OPTIONS = [
 
 const PlanBadge = ({ plan }) => {
   const opt = TRAINING_OPTIONS.find(o => o.id === plan);
-  if (!opt) return <span style={{ fontSize: 12, color: "var(--text-2)" }}>Aucun plan</span>;
+  if (!opt) return <span style={{ fontSize: 11, color: "var(--text-2)" }}>—</span>;
   const Icon = opt.icon;
   return (
     <span style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      fontSize: 11, fontWeight: 700,
-      padding: "3px 8px", borderRadius: 2,
+      display: "inline-flex", alignItems: "center", gap: 4,
+      fontSize: 10, fontWeight: 700,
+      padding: "2px 6px", borderRadius: 2,
       background: opt.color + "22", color: opt.color,
       border: `1px solid ${opt.color}55`,
     }}>
-      <Icon size={12} /> {opt.name}
+      <Icon size={10} /> {opt.name}
     </span>
   );
 };
 
-const TrainingPage = ({ userTeam, onSetTrainingPlan }) => {
+const TrainingPage = ({ userTeam, onSetTeamTrainingPlan }) => {
   const [notification, setNotification] = useState(null);
-  const [editing, setEditing]           = useState(null); // playerId being edited
-  const [saving, setSaving]             = useState(null);  // playerId being saved
+  const [saving, setSaving]             = useState(false);
 
   const starters = useMemo(
     () => userTeam.players?.filter(p => p.is_starter) || [],
     [userTeam.players]
   );
+
+  // Team plan = plan commun si tous les titulaires l'ont, sinon null
+  const teamPlan = useMemo(() => {
+    if (!starters.length) return null;
+    const first = starters[0].training_plan;
+    return starters.every(p => p.training_plan === first) ? first : null;
+  }, [starters]);
+
+  const allDone  = starters.length > 0 && starters.every(p => p.training_done_this_week);
+  const totalCost = useMemo(() => {
+    const opt = TRAINING_OPTIONS.find(o => o.id === teamPlan);
+    return (opt?.cost || 0) * starters.length;
+  }, [teamPlan, starters.length]);
 
   const notifyTimeoutRef = useRef(null);
   useEffect(() => () => {
@@ -87,21 +99,22 @@ const TrainingPage = ({ userTeam, onSetTrainingPlan }) => {
     notifyTimeoutRef.current = setTimeout(() => setNotification(null), 3500);
   };
 
-  const handleSetPlan = async (player, trainingType) => {
-    setSaving(player.id);
+  const handleSetPlan = async (trainingType) => {
+    setSaving(true);
     try {
-      const result = await onSetTrainingPlan(player.id, trainingType);
+      const result = await onSetTeamTrainingPlan(trainingType);
       const planName = TRAINING_OPTIONS.find(o => o.id === trainingType)?.name || "Aucun";
-      if (result.applied_now) {
-        notify(`Plan "${planName}" défini et appliqué immédiatement pour ${player.name}`);
+      if (!trainingType) {
+        notify("Plan collectif supprimé");
+      } else if (result.downgraded_to_rest > 0) {
+        notify(`Plan "${planName}" défini — ${result.downgraded_to_rest} joueur(s) rabattus sur Repos (budget insuffisant)`, false);
       } else {
-        notify(`Plan "${planName}" planifié pour ${player.name} — s'applique après chaque match`);
+        notify(`Plan "${planName}" défini pour les 5 titulaires`);
       }
-      setEditing(null);
     } catch (e) {
       notify(e?.response?.data?.detail || "Erreur", false);
     } finally {
-      setSaving(null);
+      setSaving(false);
     }
   };
 
@@ -109,10 +122,10 @@ const TrainingPage = ({ userTeam, onSetTrainingPlan }) => {
     <div className="animate-slide-up">
       <div style={{ marginBottom: 24 }}>
         <h2 className="font-heading" style={{ fontSize: 32, marginBottom: 4 }}>
-          Planning d'Entraînement
+          Entraînement Collectif
         </h2>
         <div style={{ fontSize: 13, color: "var(--text-2)" }}>
-          Définissez un programme pour chaque joueur — il s'applique automatiquement après chaque match
+          Choisissez un programme hebdomadaire pour toute l'équipe — appliqué aux 5 titulaires après chaque match
         </div>
       </div>
 
@@ -132,135 +145,134 @@ const TrainingPage = ({ userTeam, onSetTrainingPlan }) => {
         </motion.div>
       )}
 
-      {/* Player rows */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Sélecteur collectif */}
+      <div className="card" style={{ padding: 20, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Users size={20} style={{ color: "var(--accent)" }} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>Programme de l'équipe</div>
+              <div style={{ fontSize: 11, color: "var(--text-2)" }}>
+                {teamPlan
+                  ? `Plan actuel appliqué aux 5 titulaires · Coût total ${formatMoney(totalCost)}/sem.`
+                  : "Aucun plan commun défini"}
+              </div>
+            </div>
+          </div>
+          {teamPlan && (
+            <button
+              style={{ background: "none", border: "1px solid var(--border)", cursor: "pointer", color: "var(--text-2)", padding: "6px 12px", fontSize: 12, borderRadius: 2, display: "inline-flex", alignItems: "center", gap: 6 }}
+              onClick={() => handleSetPlan("")}
+              disabled={saving}
+            >
+              <X size={12} /> Supprimer
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          {TRAINING_OPTIONS.map(opt => {
+            const weeklyCost = opt.cost * starters.length;
+            const tooExpensive = weeklyCost > userTeam.budget;
+            const isCurrentPlan = teamPlan === opt.id;
+            const Icon = opt.icon;
+            return (
+              <motion.button
+                key={opt.id}
+                whileHover={!tooExpensive && !saving ? { y: -2 } : {}}
+                onClick={() => !tooExpensive && !saving && handleSetPlan(opt.id)}
+                disabled={tooExpensive || saving}
+                style={{
+                  padding: "16px 10px",
+                  background: isCurrentPlan ? opt.color + "22" : "var(--surface-2)",
+                  border: `1px solid ${isCurrentPlan ? opt.color : "var(--border)"}`,
+                  borderRadius: 4, cursor: tooExpensive || saving ? "not-allowed" : "pointer",
+                  opacity: tooExpensive ? 0.45 : 1,
+                  textAlign: "center",
+                }}
+              >
+                <Icon size={22} style={{ color: opt.color, marginBottom: 8, display: "block", margin: "0 auto 8px" }} />
+                <div style={{ fontSize: 13, fontWeight: 700, color: isCurrentPlan ? opt.color : "var(--text-1)", marginBottom: 2 }}>
+                  {opt.name}
+                </div>
+                <div style={{ fontSize: 10, color: opt.color, marginBottom: 6, fontWeight: 600 }}>{opt.label}</div>
+                <div style={{ fontSize: 10, color: "var(--text-2)", lineHeight: 1.5 }}>
+                  Fat. {opt.fatigue} · Moral {opt.moral}
+                  <br />
+                  <span style={{ color: "var(--accent)" }}>Forme {opt.form}</span>
+                  <br />
+                  <span style={{ color: "var(--text-2)" }}>{opt.dev}</span>
+                </div>
+                <div style={{ fontSize: 11, color: "var(--amber)", marginTop: 6, fontWeight: 600 }}>
+                  {opt.cost > 0
+                    ? `${formatMoney(weeklyCost)}/sem.`
+                    : "Gratuit"}
+                </div>
+                {tooExpensive && (
+                  <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 3 }}>Budget insuf.</div>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* État des titulaires */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ fontSize: 12, color: "var(--text-2)", marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+          <span>État des titulaires</span>
+          {allDone && (
+            <span style={{ color: "var(--success)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Check size={12} /> Entraînement appliqué cette semaine
+            </span>
+          )}
+        </div>
         {starters.map(player => {
-          const fatiguePct  = player.fatigue || 0;
+          const fatiguePct   = player.fatigue || 0;
           const fatigueColor = fatiguePct >= 70 ? "var(--danger)" : fatiguePct >= 45 ? "var(--amber)" : "var(--success)";
-          const isEditing   = editing === player.id;
-          const isSaving    = saving  === player.id;
-          const planDone    = player.training_done_this_week;
+          const planDone     = player.training_done_this_week;
 
           return (
-            <motion.div
+            <div
               key={player.id}
               className="card"
-              style={{ padding: "16px 20px", overflow: "hidden" }}
-              layout
+              style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}
             >
-              {/* Main row */}
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <span className={"pos-badge pos-" + player.position} style={{ flexShrink: 0 }}>
-                  {player.position}
-                </span>
+              <span className={"pos-badge pos-" + player.position} style={{ flexShrink: 0 }}>
+                {player.position}
+              </span>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{player.name}</div>
-                  <div style={{ display: "flex", gap: 12, fontSize: 11 }}>
-                    <span style={{ color: fatigueColor }}>Fatigue {fatiguePct}%</span>
-                    <span style={{ color: "var(--text-2)" }}>Moral {player.moral}%</span>
-                    {player.form_bonus > 0 && (
-                      <span style={{ color: "var(--accent)" }}>
-                        <Lightning size={10} style={{ verticalAlign: "middle" }} /> Forme +{player.form_bonus}
-                      </span>
-                    )}
-                  </div>
-                  {/* Fatigue bar */}
-                  <div style={{ marginTop: 6, height: 2, background: "var(--border)", borderRadius: 1 }}>
-                    <div style={{ width: `${fatiguePct}%`, height: "100%", background: fatigueColor, borderRadius: 1, transition: "width .3s" }} />
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
-                  <div className="font-stats" style={{ fontSize: 22, fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>
-                    {player.rating}
-                  </div>
-                  {/* Status */}
-                  {planDone ? (
-                    <span style={{ fontSize: 10, color: "var(--success)", display: "flex", alignItems: "center", gap: 3 }}>
-                      <Check size={10} /> Appliqué
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{player.name}</div>
+                <div style={{ display: "flex", gap: 12, fontSize: 11 }}>
+                  <span style={{ color: fatigueColor }}>Fatigue {fatiguePct}%</span>
+                  <span style={{ color: "var(--text-2)" }}>Moral {player.moral}%</span>
+                  {player.form_bonus > 0 && (
+                    <span style={{ color: "var(--accent)" }}>
+                      <Lightning size={10} style={{ verticalAlign: "middle" }} /> Forme +{player.form_bonus}
                     </span>
-                  ) : player.training_plan ? (
-                    <span style={{ fontSize: 10, color: "var(--text-2)" }}>En attente</span>
-                  ) : null}
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  <PlanBadge plan={player.training_plan} />
-                  <button
-                    className={isEditing ? "btn-secondary" : "btn-primary"}
-                    style={{ fontSize: 12, padding: "5px 12px", minWidth: 80 }}
-                    onClick={() => setEditing(isEditing ? null : player.id)}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? "…" : isEditing ? "Annuler" : "Modifier"}
-                  </button>
-                  {player.training_plan && !isEditing && (
-                    <button
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-2)", padding: 4 }}
-                      title="Supprimer le plan"
-                      onClick={() => handleSetPlan(player, "")}
-                    >
-                      <X size={14} />
-                    </button>
                   )}
+                </div>
+                <div style={{ marginTop: 5, height: 2, background: "var(--border)", borderRadius: 1 }}>
+                  <div style={{ width: `${fatiguePct}%`, height: "100%", background: fatigueColor, borderRadius: 1, transition: "width .3s" }} />
                 </div>
               </div>
 
-              {/* Training selector (expanded) */}
-              {isEditing && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  style={{ marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 14 }}
-                >
-                  <div style={{ fontSize: 12, color: "var(--text-2)", marginBottom: 10 }}>
-                    Choisir le programme hebdomadaire :
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                    {TRAINING_OPTIONS.map(opt => {
-                      const tooExpensive = opt.cost > userTeam.budget;
-                      const isCurrentPlan = player.training_plan === opt.id;
-                      const Icon = opt.icon;
-                      return (
-                        <motion.button
-                          key={opt.id}
-                          whileHover={!tooExpensive ? { y: -2 } : {}}
-                          onClick={() => !tooExpensive && handleSetPlan(player, opt.id)}
-                          disabled={tooExpensive || isSaving}
-                          style={{
-                            padding: "12px 8px",
-                            background: isCurrentPlan ? opt.color + "22" : "var(--surface-2)",
-                            border: `1px solid ${isCurrentPlan ? opt.color : "var(--border)"}`,
-                            borderRadius: 4, cursor: tooExpensive ? "not-allowed" : "pointer",
-                            opacity: tooExpensive ? 0.45 : 1,
-                            textAlign: "center",
-                          }}
-                        >
-                          <Icon size={18} style={{ color: opt.color, marginBottom: 6, display: "block", margin: "0 auto 6px" }} />
-                          <div style={{ fontSize: 12, fontWeight: 700, color: isCurrentPlan ? opt.color : "var(--text-1)", marginBottom: 2 }}>
-                            {opt.name}
-                          </div>
-                          <div style={{ fontSize: 10, color: opt.color, marginBottom: 4, fontWeight: 600 }}>{opt.label}</div>
-                          <div style={{ fontSize: 10, color: "var(--text-2)", lineHeight: 1.4 }}>
-                            Fat. {opt.fatigue} · Moral {opt.moral}
-                            <br />
-                            <span style={{ color: "var(--accent)" }}>Forme {opt.form}</span>
-                          </div>
-                          <div style={{ fontSize: 10, color: "var(--amber)", marginTop: 4 }}>
-                            {opt.cost > 0 ? formatMoney(opt.cost) + "/sem." : "Gratuit"}
-                          </div>
-                          {tooExpensive && (
-                            <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 2 }}>Budget insuf.</div>
-                          )}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0, minWidth: 90 }}>
+                <PlanBadge plan={player.training_plan} />
+                {planDone ? (
+                  <span style={{ fontSize: 10, color: "var(--success)", display: "flex", alignItems: "center", gap: 3 }}>
+                    <Check size={10} /> Appliqué
+                  </span>
+                ) : player.training_plan ? (
+                  <span style={{ fontSize: 10, color: "var(--text-2)" }}>En attente</span>
+                ) : null}
+              </div>
+
+              <div className="font-stats" style={{ fontSize: 20, fontWeight: 700, color: "var(--accent)", lineHeight: 1, flexShrink: 0, minWidth: 36, textAlign: "right" }}>
+                {player.rating}
+              </div>
+            </div>
           );
         })}
       </div>
@@ -269,13 +281,13 @@ const TrainingPage = ({ userTeam, onSetTrainingPlan }) => {
       <div style={{ marginTop: 24, padding: "12px 16px", background: "var(--surface-1)", borderRadius: 2, fontSize: 12, color: "var(--text-2)", lineHeight: 1.9 }}>
         <strong style={{ color: "var(--text-1)" }}>Fonctionnement :</strong>
         <br />
-        · Le plan s'applique automatiquement dès sa définition, puis après chaque match joué
+        · Le plan collectif s'applique immédiatement aux 5 titulaires, puis se relance automatiquement après chaque match
         <br />
         · <Lightning size={12} style={{ verticalAlign: "middle", color: "var(--accent)" }} /> <strong>Forme</strong> = bonus temporaire pour le match suivant, décroît de 1 après chaque match
         <br />
         · <TrendUp size={12} style={{ verticalAlign: "middle", color: "var(--success)" }} /> <strong>Développement</strong> = progression lente et permanente (accumulation sur plusieurs semaines)
         <br />
-        · Le coût est prélevé automatiquement chaque semaine — si budget insuffisant, "Repos" est appliqué à la place
+        · Coût prélevé chaque semaine pour chaque titulaire — si budget insuffisant, "Repos" est appliqué à la place
       </div>
     </div>
   );
