@@ -156,6 +156,17 @@ def join_session(code: str, username: str) -> tuple[Session, str]:
     return session, token
 
 
+def get_session_by_code(code: str) -> Session | None:
+    """Look up a live session by its 6-char display code (case-insensitive)."""
+    if not code:
+        return None
+    wanted = code.strip().upper()
+    for s in _SESSIONS.values():
+        if (s.code or "").upper() == wanted:
+            return s
+    return None
+
+
 def get_session(sid: str) -> Session | None:
     return _SESSIONS.get(sid)
 
