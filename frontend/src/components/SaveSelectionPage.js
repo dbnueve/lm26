@@ -69,10 +69,10 @@ function MultiplayerSlots({ onEnterSession }) {
           >
             <div style={{ color: "#4a90d9", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Session en cours</div>
             <div style={{ color: "#e0e0e0", fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
-              {savedCode || "Code sauvegardé"}
+              {savedUsername || "Joueur"}
             </div>
-            <div style={{ color: "#888", fontSize: 12, marginBottom: 16 }}>
-              {savedSid.slice(0, 8)}…
+            <div style={{ color: "#888", fontSize: 12, marginBottom: 16, fontFamily: "monospace", letterSpacing: 2 }}>
+              {savedCode || savedSid.slice(0, 8) + "…"}
             </div>
             <button className="btn-primary" onClick={() => onEnterSession?.()}
               style={{ padding: "10px 0", width: "100%", marginBottom: 8 }}>
