@@ -3678,17 +3678,12 @@ async def simulate_match(request: SimulateMatchRequest, http_request: Request):
     current_week = match["week"]
     other_results = []
     mp_player_teams: set = set()
-    sid_current = request_session_id_var.get() if "request_session_id_var" in dir() else None
-    # Simpler: lire directement depuis sessions via le sid stashé par le middleware.
-    try:
-        _active_sid = _MP2_ACTIVE_SID.get()
-    except Exception:
-        _active_sid = None
-    if _active_sid:
-        _sess = _sessions.get_session(_active_sid)
-        if _sess:
+    _sid = http_request.query_params.get("session_id")
+    if _sid:
+        _sess = _sessions.get_session(_sid)
+        if _sess is not None:
             mp_player_teams = {tid for tid in _sess.players.values() if tid}
-    # Toujours inclure user_team (cas solo)
+    # Toujours inclure user_team (cas solo + filet pour le caller MP)
     mp_player_teams.add(GAME_STATE["user_team"])
 
     for other_match in GAME_STATE["schedule"]:
