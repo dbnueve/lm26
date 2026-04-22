@@ -110,8 +110,20 @@ function App() {
       setStandings(standingsRes.data);
       setChampions(championsRes.data);
       setPlayoffBracket(playoffsRes.data?.active ? playoffsRes.data : null);
-      if (stateRes.data?.phase) {
-        setGameState(prev => ({ ...prev, phase: stateRes.data.phase }));
+      const serverUserTeam = stateRes.data?.user_team || null;
+      if (stateRes.data?.phase || serverUserTeam) {
+        setGameState(prev => ({
+          ...prev,
+          ...(stateRes.data.phase ? { phase: stateRes.data.phase } : {}),
+          // Sync user_team from the server. Critical in MP: after a reconnect,
+          // the middleware resolves user_team from session.players[token] and
+          // we need that value here so we don't bounce to TeamPicker.
+          ...(serverUserTeam && serverUserTeam !== prev.userTeam ? { userTeam: serverUserTeam } : {}),
+        }));
+        if (serverUserTeam) {
+          // Fire and forget — userTeamData hydration shouldn't block loadGameData.
+          loadUserTeam(serverUserTeam);
+        }
       }
       API_CLIENT.get("/inbox").then(r => setUnreadInbox(r.data.unread_total || 0)).catch(() => {});
     } catch (e) {
