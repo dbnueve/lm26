@@ -7336,6 +7336,242 @@ def mp2_list():
     return _sessions.list_sessions()
 
 
+# ── MP2 versus draft (2 humans face off) ──────────────────────────────────────
+# When both humans in an MP session are scheduled to play each other, they go
+# through a shared alternating pick/ban instead of the solo draft (where the
+# opponent side is played by AI). The flow:
+#   1. A client posts /mp2/{sid}/draft/start with {token, match_id}.
+#      Server initialises `session.mp_draft`, determines sides from
+#      team1/team2 of the match (team1=blue=side 1, team2=red=side 2), and
+#      broadcasts `mp_draft_update`.
+#   2. Clients POST /mp2/{sid}/draft/action on their turn. Server validates
+#      side, applies the action, advances step, broadcasts.
+#   3. When step == len(sequence), mp_draft.completed = True. The state is
+#      reconciled into session.state["draft_state"] so that a subsequent
+#      /match/simulate?session_id=...&user_draft=... can consume the same
+#      picks for either player.
+#
+# Reconnect: since `mp_draft` is persisted on the session, a dropped client
+# refetches via GET /mp2/{sid}/draft. No timeout — the draft just waits.
+
+class _Mp2DraftStartBody(BaseModel):
+    token: str
+    match_id: str
+
+
+class _Mp2DraftActionBody(BaseModel):
+    token: str
+    action: str  # "ban" | "pick"
+    champion: str
+    position: str | None = None
+
+
+# Reuse the solo DRAFT_SEQUENCE but remap actor strings to numeric sides:
+#   user  -> 1 (blue / team1)
+#   enemy -> 2 (red  / team2)
+def _mp_draft_sequence() -> list:
+    return [[kind, 1 if actor == "user" else 2] for (actor, kind) in DRAFT_SEQUENCE]
+
+
+def _mp_draft_find_match(state: dict, match_id: str) -> dict | None:
+    """Look up a match by id in the session's schedule or playoffs bracket."""
+    for m in state.get("schedule", []) or []:
+        if m.get("id") == match_id:
+            return m
+    bracket = state.get("playoffs_bracket") or {}
+    for m in bracket.get("matches", []) or []:
+        if m.get("id") == match_id:
+            return m
+    return None
+
+
+def _mp_draft_public(sess: "_sessions.Session", token: str | None) -> dict | None:
+    """Return the draft state with `_mySide` hint for the caller."""
+    d = sess.mp_draft
+    if not d:
+        return None
+    my_side = d.get("side", {}).get(token) if token else None
+    step = d.get("step", 0)
+    seq = d.get("sequence", [])
+    current = seq[step] if 0 <= step < len(seq) else None
+    return {
+        **d,
+        "_mySide": my_side,
+        "current_side": current[1] if current else None,
+        "current_action": current[0] if current else None,
+    }
+
+
+def _mp_draft_all_champs(d: dict) -> set[str]:
+    taken: set[str] = set()
+    for side in ("1", "2"):
+        taken.update(d["bans"].get(side, []))
+        taken.update(p["champion"] for p in d["picks"].get(side, []))
+    return taken
+
+
+def _mp_draft_needed_positions(picks: list) -> list:
+    taken = {p["position"] for p in picks if p.get("position")}
+    all_pos = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"]
+    needed = [p for p in all_pos if p not in taken]
+    return needed if needed else all_pos
+
+
+@api_router.post("/mp2/{sid}/draft/start")
+async def mp2_draft_start(sid: str, body: _Mp2DraftStartBody):
+    """Initialise a shared versus draft between the 2 humans in the session."""
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        raise HTTPException(404, "Session introuvable")
+    if body.token not in sess.players:
+        raise HTTPException(403, "Token invalide")
+
+    match = _mp_draft_find_match(sess.state, body.match_id)
+    if match is None:
+        raise HTTPException(404, f"Match {body.match_id} introuvable dans la session")
+
+    team1_id = match.get("team1")
+    team2_id = match.get("team2")
+    # Find which token plays team1 and which plays team2.
+    token_t1 = next((t for t, tid in sess.players.items() if tid == team1_id), None)
+    token_t2 = next((t for t, tid in sess.players.items() if tid == team2_id), None)
+    if token_t1 is None or token_t2 is None:
+        raise HTTPException(409, "Ce match n'est pas un PvP entre 2 joueurs de la session")
+
+    # Fearless: reuse solo logic for playoff matches.
+    fearless: list = []
+    try:
+        bracket = sess.state.get("playoffs_bracket") or {}
+        if any(m.get("id") == body.match_id for m in bracket.get("matches", []) or []):
+            fearless = sorted(_get_fearless_used(match))
+    except Exception:
+        logger.exception("mp2_draft_start: fearless lookup failed")
+
+    sess.mp_draft = {
+        "match_id": body.match_id,
+        "team1_id": team1_id,
+        "team2_id": team2_id,
+        "side": {token_t1: 1, token_t2: 2},
+        "step": 0,
+        "sequence": _mp_draft_sequence(),
+        "bans":  {"1": [], "2": []},
+        "picks": {"1": [], "2": []},
+        "fearless_excluded": fearless,
+        "completed": False,
+    }
+    sess._dirty = True
+    try:
+        await _sessions.broadcast(sid, "mp_draft_update", {"reason": "start"})
+    except Exception:
+        logger.exception("broadcast mp_draft_update(start) failed (sid=%s)", sid[:8])
+    return _mp_draft_public(sess, body.token)
+
+
+@api_router.get("/mp2/{sid}/draft")
+def mp2_draft_get(sid: str, token: str | None = None):
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        raise HTTPException(404, "Session introuvable")
+    return _mp_draft_public(sess, token)
+
+
+@api_router.post("/mp2/{sid}/draft/action")
+async def mp2_draft_action(sid: str, body: _Mp2DraftActionBody):
+    sess = _sessions.get_session(sid)
+    if sess is None:
+        raise HTTPException(404, "Session introuvable")
+    d = sess.mp_draft
+    if not d:
+        raise HTTPException(400, "Aucun draft MP en cours")
+    if d.get("completed"):
+        raise HTTPException(400, "Draft déjà complet")
+
+    my_side = d.get("side", {}).get(body.token)
+    if my_side is None:
+        raise HTTPException(403, "Token sans side dans ce draft")
+
+    step = d["step"]
+    seq = d["sequence"]
+    if step >= len(seq):
+        raise HTTPException(400, "Draft déjà complet")
+    expected_kind, expected_side = seq[step]
+    if expected_side != my_side:
+        raise HTTPException(409, "Ce n'est pas votre tour")
+    if body.action != expected_kind:
+        raise HTTPException(400, f"Action attendue: {expected_kind}")
+
+    champ = body.champion
+    if champ in _mp_draft_all_champs(d):
+        raise HTTPException(400, "Champion déjà pris/banni")
+    if body.action == "pick" and champ in d.get("fearless_excluded", []):
+        raise HTTPException(400, f"{champ} interdit par la règle Fearless")
+
+    side_key = str(my_side)
+    if body.action == "ban":
+        d["bans"][side_key].append(champ)
+    else:
+        position = body.position
+        if not position:
+            meta = META_LOOKUP.get(champ)
+            if meta:
+                position = meta.get("position")
+        if not position:
+            needed = _mp_draft_needed_positions(d["picks"][side_key])
+            if needed:
+                position = needed[0]
+        d["picks"][side_key].append({"champion": champ, "position": position})
+
+    d["step"] = step + 1
+    if d["step"] >= len(seq):
+        d["completed"] = True
+        _reconcile_mp_draft_into_state(sess)
+
+    sess._dirty = True
+    try:
+        await _sessions.broadcast(sid, "mp_draft_update", {
+            "reason": "action",
+            "step": d["step"],
+            "completed": d["completed"],
+        })
+    except Exception:
+        logger.exception("broadcast mp_draft_update(action) failed (sid=%s)", sid[:8])
+    return _mp_draft_public(sess, body.token)
+
+
+def _reconcile_mp_draft_into_state(sess: "_sessions.Session") -> None:
+    """Mirror the completed versus draft into session.state['draft_state'] so
+    that the solo /match/simulate path sees the right picks/bans from either
+    player's perspective. Each player is `user` from their own side.
+    """
+    d = sess.mp_draft
+    if not d:
+        return
+    # We store a "symmetric" draft_state: the solo code reads user_* and
+    # enemy_* based on whoever's request it's serving. At /match/simulate
+    # time, the request carries user_draft in the body, so this mirror is
+    # really only useful for UI fetches. We write it from side-1's POV
+    # (blue = user) and let the request body override as needed.
+    sess.state["draft_state"] = {
+        "step": d["step"],
+        "phase": "complete",
+        "current_turn": None,
+        "user_bans":  list(d["bans"].get("1", [])),
+        "enemy_bans": list(d["bans"].get("2", [])),
+        "user_picks":  [dict(p) for p in d["picks"].get("1", [])],
+        "enemy_picks": [dict(p) for p in d["picks"].get("2", [])],
+        "banned_champions": list(d["bans"].get("1", []))
+                         + list(d["bans"].get("2", [])),
+        "picked_champions": [p["champion"] for p in d["picks"].get("1", [])]
+                         + [p["champion"] for p in d["picks"].get("2", [])],
+        "user_picked_champions":  [p["champion"] for p in d["picks"].get("1", [])],
+        "enemy_picked_champions": [p["champion"] for p in d["picks"].get("2", [])],
+        "fearless_excluded": list(d.get("fearless_excluded", [])),
+        # Extra metadata used by /match/simulate in MP mode
+        "_mp_side1_team": d.get("team1_id"),
+        "_mp_side2_team": d.get("team2_id"),
+    }
+
+
 # ── MP2 unified WebSocket ─────────────────────────────────────────────────────
 # One WS per session. The server broadcasts state/chat events to every live
 # subscriber via `sessions.broadcast()`. Closed sockets are pruned
