@@ -128,15 +128,45 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
   const handleStartSeason = async () => {
     setStartingSeasonLoading(true);
     try {
-      const res = await API_CLIENT.post("/season/start");
-      setAiTransfers(res.data.ai_transfers || []);
-      if (onSeasonStart) onSeasonStart(); // App.js reloads game state → phase prop updates
+      // In MP, delegate to App.js handler which gates via /mp2/*/ready so the
+      // mercato only closes when every human player has voted.
+      // In solo, same handler just calls /season/start directly.
+      if (onSeasonStart) {
+        const result = await onSeasonStart();
+        // result may be: undefined (solo), or { fired, pending, ai_transfers }
+        if (result && result.pending) {
+          // MP: waiting on peers — refresh ready snapshot so the UI shows
+          // "3/4 joueurs prêts" etc.
+          loadMpSession();
+        } else if (result && result.fired && result.ai_transfers) {
+          setAiTransfers(result.ai_transfers);
+        }
+      }
     } catch (e) {
       console.error("Error starting season:", e);
     } finally {
       setStartingSeasonLoading(false);
     }
   };
+
+  const handleCancelReady = async () => {
+    if (!mpActive) return;
+    try {
+      await axios.delete(`${API}/mp2/${mp.sid}/ready`, {
+        params: { token: mp.token, action: "season/start" },
+      });
+      loadMpSession();
+    } catch (e) {
+      console.error("Unready failed:", e);
+    }
+  };
+
+  // Ready state derived from the session info (MP only).
+  const seasonStartReady = mpSessionInfo?.ready?.["season/start"] || [];
+  const totalPlayers = mpSessionInfo?.players?.length || 0;
+  const meUsername = mp?.username;
+  const iAmReady = meUsername ? seasonStartReady.includes(meUsername) : false;
+  const waitingForPeers = mpActive && iAmReady && seasonStartReady.length < totalPlayers;
 
   const getTeamName = (teamId) => {
     const team = teams.find(t => t.id === teamId);
