@@ -22,6 +22,14 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
   const [pendingTab, setPendingTab] = useState("incoming");
   const [pending, setPending] = useState({ incoming: [], outgoing: [] });
   const [counterDrafts, setCounterDrafts] = useState({});
+  const [mpSessionInfo, setMpSessionInfo] = useState(null); // { players, ready, ... }
+
+  const loadMpSession = React.useCallback(() => {
+    if (!mpActive) return;
+    axios.get(`${API}/mp2/${mp.sid}?token=${mp.token}`)
+      .then(res => setMpSessionInfo(res.data))
+      .catch(() => {});
+  }, [mpActive, mp?.sid, mp?.token]);
 
   const loadPending = React.useCallback(() => {
     API_CLIENT.get("/negotiations/pending")
