@@ -1015,23 +1015,19 @@ export default function MiniMap({
 
       {/* Coins HUD esports */}
       {[
-        { top: 0, left: 0, rotate: 0 },
-        { top: 0, right: 0, rotate: 90 },
-        { bottom: 0, right: 0, rotate: 180 },
-        { bottom: 0, left: 0, rotate: 270 },
+        { style: { top: 4, left: 4, borderTop: "2px solid #22C55E", borderLeft: "2px solid #22C55E" } },
+        { style: { top: 4, right: 4, borderTop: "2px solid #22C55E", borderRight: "2px solid #22C55E" } },
+        { style: { bottom: 4, right: 4, borderBottom: "2px solid #22C55E", borderRight: "2px solid #22C55E" } },
+        { style: { bottom: 4, left: 4, borderBottom: "2px solid #22C55E", borderLeft: "2px solid #22C55E" } },
       ].map((c, i) => (
         <div key={i} style={{
           position: "absolute",
-          top: c.top, left: c.left, right: c.right, bottom: c.bottom,
-          width: 18, height: 18,
-          borderTop: "2px solid #22C55E",
-          borderLeft: "2px solid #22C55E",
-          transform: `rotate(${c.rotate}deg)`,
-          transformOrigin: "top left",
+          width: 16, height: 16,
           pointerEvents: "none",
           zIndex: 30,
-          opacity: 0.85,
+          opacity: 0.9,
           filter: "drop-shadow(0 0 3px #22C55Eaa)",
+          ...c.style,
         }} />
       ))}
 
