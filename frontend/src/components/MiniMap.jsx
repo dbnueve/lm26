@@ -666,6 +666,243 @@ function ChampionWithFade(props) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   CONSTANTES OBJECTIFS (timings LoL)
+═══════════════════════════════════════════════════════════════ */
+const HERALD_SPAWN_SEC   = 8 * 60;   // 8:00
+const HERALD_DESPAWN_SEC = 19 * 60 + 45; // ~19:45
+const DRAKE_FIRST_SEC    = 5 * 60;   // 5:00
+const DRAKE_RESPAWN_SEC  = 5 * 60;   // 5 min
+const BARON_SPAWN_SEC    = 25 * 60;  // 25:00
+const BARON_RESPAWN_SEC  = 6 * 60;   // 6 min
+const ELDER_SPAWN_SEC    = 35 * 60;  // 35:00 (après 4 drakes)
+
+function nextRespawn(lastTakenSec, respawnDur, firstSpawn, matchSec) {
+  if (lastTakenSec == null) {
+    // Pas encore pris
+    return matchSec < firstSpawn ? firstSpawn : null; // null = disponible maintenant
+  }
+  const next = lastTakenSec + respawnDur;
+  return matchSec < next ? next : null;
+}
+
+function fmtCountdown(sec) {
+  if (sec == null) return "UP";
+  const remain = Math.max(0, Math.round(sec));
+  const m = Math.floor(remain / 60);
+  const s = remain % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OBJECTIVE TRACKER — carte des prochains spawns
+═══════════════════════════════════════════════════════════════ */
+export function ObjectiveTracker({ events = [], matchSec = 0 }) {
+  const state = useMemo(() => {
+    const sorted = [...events].sort((a, b) => parseSec(a.time) - parseSec(b.time));
+    const last = { drake: null, elder: null, baron: null, herald: null };
+    const count = { drake: 0, elder: 0, baron: 0, herald: 0 };
+    sorted.forEach(ev => {
+      if (parseSec(ev.time) > matchSec) return;
+      if (ev.type in last) {
+        last[ev.type] = parseSec(ev.time);
+        count[ev.type] += 1;
+      }
+    });
+    return { last, count };
+  }, [events, matchSec]);
+
+  const totalDrakes = state.count.drake + state.count.elder;
+  const elderUnlocked = totalDrakes >= 4 && matchSec >= ELDER_SPAWN_SEC;
+  const drakeTarget = elderUnlocked ? "elder" : "drake";
+  const drakeNext = drakeTarget === "elder"
+    ? nextRespawn(state.last.elder, DRAKE_RESPAWN_SEC, ELDER_SPAWN_SEC, matchSec)
+    : nextRespawn(state.last.drake, DRAKE_RESPAWN_SEC, DRAKE_FIRST_SEC, matchSec);
+
+  const heraldActive = matchSec < HERALD_DESPAWN_SEC;
+  const heraldNext = heraldActive
+    ? nextRespawn(state.last.herald, DRAKE_RESPAWN_SEC, HERALD_SPAWN_SEC, matchSec)
+    : "GONE";
+
+  const baronAvail = matchSec >= BARON_SPAWN_SEC && !heraldActive;
+  const baronNext = baronAvail
+    ? nextRespawn(state.last.baron, BARON_RESPAWN_SEC, BARON_SPAWN_SEC, matchSec)
+    : (matchSec < BARON_SPAWN_SEC ? BARON_SPAWN_SEC - matchSec + matchSec : null);
+
+  const Pill = ({ icon, label, value, color, dim }) => (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 5,
+      padding: "4px 8px", borderRadius: 4,
+      background: "rgba(2,6,23,0.82)",
+      border: `1px solid ${dim ? "rgba(255,255,255,0.06)" : color + "55"}`,
+      boxShadow: dim ? "none" : `0 0 10px ${color}22, inset 0 0 0 1px ${color}18`,
+      opacity: dim ? 0.45 : 1,
+      minWidth: 62,
+    }}>
+      <span style={{ fontSize: 13, lineHeight: 1, filter: dim ? "grayscale(1)" : "none" }}>{icon}</span>
+      <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
+        <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 0.8, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>{label}</span>
+        <span style={{
+          fontSize: 11, fontWeight: 800, fontFamily: "'Chakra Petch', 'Courier New', monospace",
+          color: value === "UP" ? color : "var(--text-1, #f8fafc)",
+          fontVariantNumeric: "tabular-nums",
+          textShadow: value === "UP" ? `0 0 6px ${color}` : "none",
+        }}>
+          {value === "UP" ? "UP" : value === "GONE" ? "—" : fmtCountdown(value - matchSec)}
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{
+      display: "flex", gap: 6, alignItems: "center", justifyContent: "center",
+      padding: "4px 0",
+    }}>
+      <Pill
+        icon="🔮"
+        label="Herald"
+        value={heraldActive ? heraldNext : "GONE"}
+        color="#6366f1"
+        dim={!heraldActive}
+      />
+      <Pill
+        icon={drakeTarget === "elder" ? "🟣" : "🐉"}
+        label={drakeTarget === "elder" ? "Elder" : "Drake"}
+        value={drakeNext}
+        color={drakeTarget === "elder" ? "#a855f7" : "#f97316"}
+      />
+      <Pill
+        icon="👑"
+        label="Baron"
+        value={matchSec < BARON_SPAWN_SEC ? BARON_SPAWN_SEC : baronNext}
+        color="#eab308"
+        dim={!baronAvail && matchSec < BARON_SPAWN_SEC - 30}
+      />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OBJECTIVE SCOREBOARD — pile d'icônes (tours, drakes, inhibs)
+═══════════════════════════════════════════════════════════════ */
+export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" }) {
+  const data = useMemo(() => {
+    const towers = [], drakes = [], inhibs = [];
+    let baron = 0, herald = 0, elder = 0;
+    events.forEach(ev => {
+      if (ev.team !== teamNum) return;
+      if (ev.type === "tower" || ev.type === "first_tower") towers.push(ev);
+      else if (ev.type === "drake") drakes.push(ev);
+      else if (ev.type === "elder") elder += 1;
+      else if (ev.type === "inhibitor") inhibs.push(ev);
+      else if (ev.type === "baron") baron += 1;
+      else if (ev.type === "herald") herald += 1;
+    });
+    return { towers, drakes, inhibs, baron, herald, elder };
+  }, [events, teamNum]);
+
+  const color = teamNum === 1 ? "#3b82f6" : "#ef4444";
+  const align = side === "left" ? "flex-end" : "flex-start";
+
+  const Row = ({ icon, count, max, filledColor, title, showItems }) => (
+    <div
+      title={title}
+      style={{
+        display: "flex", alignItems: "center", gap: 4,
+        justifyContent: align, flexDirection: side === "left" ? "row-reverse" : "row",
+      }}
+    >
+      <span style={{ fontSize: 11, lineHeight: 1 }}>{icon}</span>
+      <div style={{ display: "flex", gap: 2 }}>
+        {Array.from({ length: max }).map((_, i) => (
+          <div key={i} style={{
+            width: 7, height: 7, borderRadius: 1,
+            background: i < count ? filledColor : "rgba(255,255,255,0.08)",
+            border: `1px solid ${i < count ? filledColor : "rgba(255,255,255,0.12)"}`,
+            boxShadow: i < count ? `0 0 4px ${filledColor}88` : "none",
+          }} />
+        ))}
+      </div>
+    </div>
+  );
+
+  const DrakeIcons = () => {
+    const items = [...data.drakes];
+    if (data.elder > 0) items.push({ type: "elder" });
+    if (!items.length) return null;
+    return (
+      <div style={{
+        display: "flex", alignItems: "center", gap: 3,
+        justifyContent: align, flexDirection: side === "left" ? "row-reverse" : "row",
+        flexWrap: "wrap", maxWidth: 70,
+      }}>
+        {items.map((d, i) => {
+          const desc = (d.description || "").toLowerCase();
+          let icon = "🐉";
+          if (d.type === "elder" || desc.includes("elder")) icon = "🟣";
+          else if (desc.includes("infernal")) icon = "🔥";
+          else if (desc.includes("mountain")) icon = "🪨";
+          else if (desc.includes("ocean"))    icon = "🌊";
+          else if (desc.includes("cloud"))    icon = "💨";
+          else if (desc.includes("hextech"))  icon = "⚡";
+          else if (desc.includes("chemtech")) icon = "☣️";
+          return (
+            <span key={i} style={{
+              fontSize: 13, lineHeight: 1,
+              filter: `drop-shadow(0 0 3px ${color}aa)`,
+            }}>
+              {icon}
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 6,
+      padding: "8px 10px",
+      minWidth: 100,
+      background: "linear-gradient(180deg, rgba(2,6,23,0.88), rgba(2,6,23,0.72))",
+      border: `1px solid ${color}33`,
+      borderRadius: 6,
+      boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.03), 0 4px 18px rgba(0,0,0,0.6)`,
+      alignItems: align,
+    }}>
+      <Row
+        icon="🏯"
+        count={data.towers.length}
+        max={11}
+        filledColor={color}
+        title={`${data.towers.length} / 11 tours`}
+      />
+      <Row
+        icon="💠"
+        count={data.inhibs.length}
+        max={3}
+        filledColor="#22d3ee"
+        title={`${data.inhibs.length} / 3 inhibiteurs`}
+      />
+      <DrakeIcons />
+      {(data.baron > 0 || data.herald > 0) && (
+        <div style={{
+          display: "flex", gap: 4, justifyContent: align,
+          flexDirection: side === "left" ? "row-reverse" : "row",
+        }}>
+          {Array.from({ length: data.herald }).map((_, i) => (
+            <span key={`h${i}`} style={{ fontSize: 12, filter: "drop-shadow(0 0 3px #6366f1aa)" }}>🔮</span>
+          ))}
+          {Array.from({ length: data.baron }).map((_, i) => (
+            <span key={`b${i}`} style={{ fontSize: 12, filter: "drop-shadow(0 0 3px #eab308aa)" }}>👑</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    MINIMAP — COMPOSANT PRINCIPAL
 ═══════════════════════════════════════════════════════════════ */
 export default function MiniMap({
