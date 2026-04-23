@@ -26,7 +26,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
 
   const loadMpSession = React.useCallback(() => {
     if (!mpActive) return;
-    axios.get(`${API}/mp2/${mp.sid}?token=${mp.token}`)
+    axios.get(`${API}/mp2/${mp.sid}/info`, { params: { token: mp.token } })
       .then(res => setMpSessionInfo(res.data))
       .catch(() => {});
   }, [mpActive, mp?.sid, mp?.token]);
