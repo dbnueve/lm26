@@ -8168,7 +8168,14 @@ async def _mp2_session_swap_middleware(request, call_next):
 
     sid = request.query_params.get("session_id")
     if not sid:
-        return await call_next(request)
+        # Solo request. Serialise against any in-flight MP swap so a solo
+        # GET cannot read GAME_STATE mid-swap (which would return the
+        # swapped-in session's data). Holding _swap_lock for the duration
+        # of the call also serialises against the threadpool path via
+        # _state_thread_lock acquired below.
+        async with _swap_lock:
+            with _state_thread_lock:
+                return await call_next(request)
 
     sess = _sessions.get_session(sid)
     if sess is None:
