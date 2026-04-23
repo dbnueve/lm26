@@ -482,18 +482,22 @@ function App() {
   };
 
   const handleSeasonStart = async () => {
+    let aiTransfers = null;
     if (mp2.sid) {
       const voted = await mpReady("season/start");
       if (!voted.fired) {
         showToast("En attente des autres joueurs…", "info");
-        return;
+        return { fired: false, pending: true, ai_transfers: null };
       }
+      aiTransfers = voted.result?.ai_transfers || [];
     } else {
-      await API_CLIENT.post("/season/start");
+      const res = await API_CLIENT.post("/season/start");
+      aiTransfers = res.data?.ai_transfers || [];
     }
     setGameState(prev => ({ ...prev, phase: "regular" }));
     await loadGameData();
     if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
+    return { fired: true, pending: false, ai_transfers: aiTransfers };
   };
 
   const handleDraftComplete = (completedDraft) => {
