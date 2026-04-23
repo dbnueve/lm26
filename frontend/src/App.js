@@ -680,10 +680,8 @@ function App() {
             teams={teams}
             phase={gameState.phase}
             onMakeOffer={handleMakeOffer}
-            onSeasonStart={async () => {
-              await loadGameData();
-              if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
-            }}
+            onSeasonStart={handleSeasonStart}
+            mpReady={mpReady}
             onPendingResolved={async () => {
               if (gameState.userTeam) await loadUserTeam(gameState.userTeam);
               await loadGameData();
