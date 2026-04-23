@@ -7870,6 +7870,16 @@ async def mp2_draft_start(sid: str, body: _Mp2DraftStartBody):
     if body.token not in sess.players:
         raise HTTPException(403, "Token invalide")
 
+    # Idempotency: when both peers receive the ready-gate broadcast, both
+    # call /draft/start concurrently. The second call must NOT wipe the first
+    # call's progress — return the existing draft instead.
+    if (
+        sess.mp_draft is not None
+        and sess.mp_draft.get("match_id") == body.match_id
+        and not sess.mp_draft.get("completed")
+    ):
+        return _mp_draft_public(sess, body.token)
+
     match = _mp_draft_find_match(sess.state, body.match_id)
     if match is None:
         raise HTTPException(404, f"Match {body.match_id} introuvable dans la session")
