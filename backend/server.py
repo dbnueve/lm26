@@ -1401,6 +1401,7 @@ def generate_schedule():
             schedule.append({
                 "id": str(uuid.uuid4()),
                 "week": week,
+                "day": 1,
                 "team1": t1,
                 "team2": t2,
                 "played": False,
@@ -1414,6 +1415,7 @@ def generate_schedule():
             schedule.append({
                 "id": str(uuid.uuid4()),
                 "week": week,
+                "day": 2,
                 "team1": t1,
                 "team2": t2,
                 "played": False,
