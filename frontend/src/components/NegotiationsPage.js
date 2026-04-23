@@ -49,7 +49,19 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
       .catch(() => {})
       .finally(() => setLoadingPlayers(false));
     loadPending();
-  }, [phase, loadPending]);
+    loadMpSession();
+  }, [phase, loadPending, loadMpSession]);
+
+  // Poll MP session info + pending offers during preseason so players see
+  // each other's ready votes and incoming offers without a manual refresh.
+  useEffect(() => {
+    if (phase !== "preseason" || !mpActive) return undefined;
+    const id = setInterval(() => {
+      loadMpSession();
+      loadPending();
+    }, 4000);
+    return () => clearInterval(id);
+  }, [phase, mpActive, loadMpSession, loadPending]);
 
   const refreshAfterMutation = async () => {
     loadPending();
