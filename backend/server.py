@@ -2805,6 +2805,11 @@ async def select_team(team_id: str, request: Request):
 
     sid = request.query_params.get("session_id")
     token = request.query_params.get("mp_token")
+    # Reject the ambiguous case where session_id is set but mp_token is not:
+    # otherwise we'd fall through to the solo branch and write user_team /
+    # current_week=0 / phase=preseason directly into the shared session state.
+    if sid and not token:
+        raise HTTPException(401, "mp_token required when session_id is provided")
     if sid and token:
         sess = _sessions.get_session(sid)
         if sess is None:
