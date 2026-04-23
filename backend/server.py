@@ -1294,8 +1294,14 @@ def build_initial_state(league: str = "LEC") -> dict:
 # interleave mutations on the same global dict.
 import contextlib as _contextlib
 import asyncio as _asyncio
+import threading as _threading
 
+# Async lock — serialises async coroutines that swap GAME_STATE.
 _swap_lock = _asyncio.Lock()
+# Threading lock — serialises sync paths (FastAPI runs `def` endpoints in a
+# threadpool, where _swap_lock is invisible). All `GAME_STATE` mutations from
+# both worlds must hold this lock; async paths take it after _swap_lock.
+_state_thread_lock = _threading.RLock()
 
 
 @_contextlib.asynccontextmanager
