@@ -6,7 +6,9 @@ import axios from "axios";
 import PlayerDetailModal from "./PlayerDetailModal";
 
 // Negotiations Page Component
-const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSeasonStart, onPendingResolved }) => {
+const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSeasonStart, onPendingResolved, mpReady }) => {
+  const mp = useSession();
+  const mpActive = Boolean(mp?.sid && mp?.token);
   const playerImages = React.useContext(PlayerImagesContext);
   const [availablePlayers, setAvailablePlayers] = useState([]);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
