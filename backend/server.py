@@ -8012,7 +8012,10 @@ async def mp2_draft_action(sid: str, body: _Mp2DraftActionBody):
     d["step"] = step + 1
     if d["step"] >= len(seq):
         d["completed"] = True
-        _reconcile_mp_draft_into_state(sess)
+        # Reconcile mutates sess.state["draft_state"]; serialise against the
+        # session-swap middleware so its write-back can't wipe our update.
+        async with _swap_lock, _ThreadLockAsyncBridge(_state_thread_lock):
+            _reconcile_mp_draft_into_state(sess)
 
     sess._dirty = True
     try:
