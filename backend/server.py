@@ -8193,26 +8193,28 @@ async def _mp2_session_swap_middleware(request, call_next):
             GAME_STATE["user_team"] = per_player_team
         try:
             response = await call_next(request)
-            # Persist mutations back into the session. `user_team` is special:
-            # when the caller supplies `mp_token`, it is a per-player view that
-            # must NOT leak into the shared session state (would cause joueur 2
-            # to see joueur 1's team on reconnect). When there is no mp_token
-            # (solo-style call into a session), the write is the session's own
-            # mutation and must be persisted.
-            sess.state.clear()
-            sess.state.update(GAME_STATE)
-            if token:
-                # Per-player request: restore the stored shared view so the
-                # per-player override doesn't leak. The per-player team is
-                # already tracked in session.players[token] via assign_team.
-                if session_user_team_snapshot is not None:
-                    sess.state["user_team"] = session_user_team_snapshot
-                else:
-                    sess.state.pop("user_team", None)
-            _sessions.mark_dirty(sid)
-            # Notify all subscribers so they refetch. Only on successful
-            # mutating requests — GETs don't touch state, failures don't either.
+            # Persist mutations back into the session ONLY when the request
+            # actually succeeded. The inner ExceptionMiddleware converts
+            # HTTPException into a 4xx Response, so a partial mutation that
+            # raised mid-flow would otherwise be committed to disk on the
+            # next autosave. Skip GETs too — they shouldn't mutate, and if
+            # one does that's a separate bug, not a reason to persist.
             if mutating and 200 <= response.status_code < 300:
+                # `user_team` is special: when the caller supplies `mp_token`,
+                # it is a per-player view that must NOT leak into the shared
+                # session state (would cause joueur 2 to see joueur 1's team
+                # on reconnect). When there is no mp_token (solo-style call
+                # into a session), the write is the session's own mutation
+                # and must be persisted.
+                sess.state.clear()
+                sess.state.update(GAME_STATE)
+                if token:
+                    if session_user_team_snapshot is not None:
+                        sess.state["user_team"] = session_user_team_snapshot
+                    else:
+                        sess.state.pop("user_team", None)
+                _sessions.mark_dirty(sid)
+                # Notify all subscribers so they refetch.
                 try:
                     await _sessions.broadcast(sid, "state_changed", {
                         "path": request.url.path,
