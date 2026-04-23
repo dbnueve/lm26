@@ -1340,7 +1340,7 @@ async def use_session_state(session_id: str | None):
     if sess is None:
         raise HTTPException(404, f"MP session {session_id} introuvable")
 
-    async with _swap_lock:
+    async with _swap_lock, _ThreadLockAsyncBridge(_state_thread_lock):
         # Snapshot solo state
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
