@@ -7,7 +7,7 @@ import { _ddVersion, toDDragonKey } from "./ddHelpers";
 import TeamLogo from "./TeamLogo";
 import TimelineEventRow from "./TimelineEventRow";
 import TimelineKillCounter from "./TimelineKillCounter";
-import MiniMap from "./MiniMap";
+import MiniMap, { ObjectiveTracker, ObjectiveScoreboard } from "./MiniMap";
 /* ─── Constantes ──────────────────────────────────────────────── */
 
 const DRAKE_ICONS = {
