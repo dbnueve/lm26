@@ -983,16 +983,57 @@ export default function MiniMap({
     [enrichedEvents, matchSec]
   );
 
+  // Flash global déclenché par objectif majeur récent
+  const majorFlash = useMemo(() => {
+    const recent = enrichedEvents.find(ev => {
+      const age = matchSec - parseSec(ev.time);
+      return age >= 0 && age < 2 && MAJOR_OBJECTIVES.has(ev.type);
+    });
+    if (!recent) return null;
+    return {
+      baron:  "#eab308",
+      elder:  "#a855f7",
+      drake:  "#f97316",
+      herald: "#6366f1",
+    }[recent.type] || null;
+  }, [enrichedEvents, matchSec]);
+
   return (
     <div style={{
       position: "relative",
       width: size, height: size,
       flexShrink: 0,
-      borderRadius: 6,
+      borderRadius: 4,
       overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.18)",
-      boxShadow: "0 0 0 1px rgba(0,0,0,0.9), 0 4px 28px rgba(0,0,0,0.85)",
+      border: "1px solid rgba(34,197,94,0.35)",
+      boxShadow: majorFlash
+        ? `0 0 0 1px ${majorFlash}, 0 0 24px ${majorFlash}88, 0 0 60px ${majorFlash}44, inset 0 0 30px ${majorFlash}22`
+        : "0 0 0 1px rgba(0,0,0,0.9), 0 0 18px rgba(34,197,94,0.18), 0 4px 28px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(255,255,255,0.04)",
+      transition: "box-shadow 0.4s ease",
+      clipPath: "polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px))",
     }}>
+
+      {/* Coins HUD esports */}
+      {[
+        { top: 0, left: 0, rotate: 0 },
+        { top: 0, right: 0, rotate: 90 },
+        { bottom: 0, right: 0, rotate: 180 },
+        { bottom: 0, left: 0, rotate: 270 },
+      ].map((c, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          top: c.top, left: c.left, right: c.right, bottom: c.bottom,
+          width: 18, height: 18,
+          borderTop: "2px solid #22C55E",
+          borderLeft: "2px solid #22C55E",
+          transform: `rotate(${c.rotate}deg)`,
+          transformOrigin: "top left",
+          pointerEvents: "none",
+          zIndex: 30,
+          opacity: 0.85,
+          filter: "drop-shadow(0 0 3px #22C55Eaa)",
+        }} />
+      ))}
 
       {/* Fond de carte */}
       <img src={mapBg} alt="map" style={{
