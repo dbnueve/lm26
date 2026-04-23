@@ -1304,6 +1304,26 @@ _swap_lock = _asyncio.Lock()
 _state_thread_lock = _threading.RLock()
 
 
+class _ThreadLockAsyncBridge:
+    """Async context manager that acquires a `threading.Lock` (or RLock) from
+    an async path. Uses a thread executor to avoid blocking the event loop.
+
+    Lets async code that already holds `_swap_lock` ALSO serialise against
+    sync threadpool workers that touch GAME_STATE.
+    """
+
+    def __init__(self, lock: "_threading.RLock | _threading.Lock") -> None:
+        self._lock = lock
+
+    async def __aenter__(self) -> None:
+        # threading.Lock.acquire() blocks; offload to thread to keep the
+        # event loop responsive. Acquisition typically returns immediately.
+        await _asyncio.to_thread(self._lock.acquire)
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        self._lock.release()
+
+
 @_contextlib.asynccontextmanager
 async def use_session_state(session_id: str | None):
     """Swap GAME_STATE to the session's state for the duration of the block.
