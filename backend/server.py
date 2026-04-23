@@ -8195,7 +8195,7 @@ async def _mp2_session_swap_middleware(request, call_next):
     token = request.query_params.get("mp_token")
     per_player_team = sess.players.get(token) if token else None
 
-    async with _swap_lock:
+    async with _swap_lock, _ThreadLockAsyncBridge(_state_thread_lock):
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
         GAME_STATE.update(sess.state)
