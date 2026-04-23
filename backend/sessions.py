@@ -202,15 +202,54 @@ def mark_dirty(sid: str) -> None:
 
 
 # ── Ready/vote gates ──────────────────────────────────────────────────────────
+def _find_match_in_state(state: dict, match_id: str) -> dict | None:
+    """Look up a match by id in schedule or playoffs bracket. Local helper
+    duplicated here to avoid importing server.py (circular)."""
+    for m in state.get("schedule", []) or []:
+        if m.get("id") == match_id:
+            return m
+    bracket = state.get("playoffs_bracket") or {}
+    for m in bracket.get("matches", []) or []:
+        if m.get("id") == match_id:
+            return m
+    return None
+
+
+def required_tokens_for_action(session: Session, action: str) -> set[str]:
+    """Return the set of tokens whose vote counts for `action`.
+
+    - `match:<id>`: only the 2 players whose teams are team1/team2 of that
+      match. Spectators (3rd+ humans not in this match) are not required.
+    - Anything else (season/start, season/simulate, split/next, …): every
+      human in the session must vote.
+    """
+    if action.startswith("match:"):
+        match_id = action[len("match:"):]
+        match = _find_match_in_state(session.state, match_id)
+        if match is not None:
+            t1 = match.get("team1")
+            t2 = match.get("team2")
+            scoped = {tok for tok, tid in session.players.items() if tid in (t1, t2)}
+            if scoped:
+                return scoped
+        # Fallback: unknown match id → require everyone (safe default).
+    return set(session.players.keys())
+
+
 def mark_ready(session: Session, action: str, token: str) -> bool:
-    """Record that `token` is ready to run `action`. Returns True if everyone
-    is now ready (caller should run the action + call `clear_ready`)."""
+    """Record that `token` is ready to run `action`. Returns True once every
+    *required* voter (per `required_tokens_for_action`) has voted. Votes from
+    tokens outside the required set are silently ignored to avoid blocking the
+    quorum from spectators."""
     if token not in session.players:
         raise ValueError("Token invalide")
+    required = required_tokens_for_action(session, action)
+    if token not in required:
+        # Spectator vote — drop silently. Don't insert into ready set.
+        return False
     ready_set = session.ready.setdefault(action, set())
     ready_set.add(token)
-    # "Everyone" = every human token currently in the session.
-    return set(session.players.keys()) <= ready_set
+    return required <= ready_set
 
 
 def unmark_ready(session: Session, action: str, token: str) -> None:
