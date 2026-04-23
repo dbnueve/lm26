@@ -7679,7 +7679,7 @@ async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
     normal HTTP call — we enter swap mode manually because /mp2/* paths are
     excluded from the middleware (they own their own session routing).
     """
-    async with _swap_lock:
+    async with _swap_lock, _ThreadLockAsyncBridge(_state_thread_lock):
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
         GAME_STATE.update(sess.state)
