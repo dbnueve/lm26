@@ -1257,24 +1257,29 @@ def build_initial_state(league: str = "LEC") -> dict:
     snapshot the result, then restore the previous contents. This reuses
     100% of the solo initialisation logic (roster generation, ERL pool,
     schedule) without duplicating it.
+
+    Concurrency: holds `_state_thread_lock` to serialise against any other
+    threadpool worker (e.g. concurrent `mp2_create` calls) and against async
+    paths that bridge through `_swap_lock` -> the same thread lock.
     """
-    # Snapshot current global state
-    snapshot = dict(GAME_STATE)
-    GAME_STATE.clear()
-    try:
-        initialize_game(league)
-        isolated = dict(GAME_STATE)
-        return isolated
-    finally:
-        # Restore previous contents exactly
+    with _state_thread_lock:
+        # Snapshot current global state
+        snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
-        GAME_STATE.update(snapshot)
-        # Re-align META_LOOKUP with the restored league (solo may have been mid-game)
-        if snapshot.get("league"):
-            try:
-                _rebuild_meta_lookup()
-            except Exception:
-                logger.exception("Failed to restore META_LOOKUP after build_initial_state")
+        try:
+            initialize_game(league)
+            isolated = dict(GAME_STATE)
+            return isolated
+        finally:
+            # Restore previous contents exactly
+            GAME_STATE.clear()
+            GAME_STATE.update(snapshot)
+            # Re-align META_LOOKUP with the restored league (solo may have been mid-game)
+            if snapshot.get("league"):
+                try:
+                    _rebuild_meta_lookup()
+                except Exception:
+                    logger.exception("Failed to restore META_LOOKUP after build_initial_state")
 
 
 # ── MP session swap helper ────────────────────────────────────────────────────
