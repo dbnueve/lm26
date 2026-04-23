@@ -379,44 +379,93 @@ const MatchTimeline = ({
     />
   </div>
 
-  {/* === CENTRE : Carte minimap === */}
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-    <MiniMap
-      leftStats={leftStats}
-      rightStats={rightStats}
-      leftNum={leftNum}
-      rightNum={rightNum}
-      visibleEvents={visibleEvents}
-      matchSec={matchSec}
-      size={350}
-    />
-    {/* Timer + barre gold sous la carte */}
-    <div style={{ width: 150, textAlign: "center" }}>
+  {/* === CENTRE : Carte minimap + HUD === */}
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
+
+    {/* Tracker d'objectifs au-dessus */}
+    <ObjectiveTracker events={visibleEvents} matchSec={matchSec} />
+
+    {/* Ligne : scoreboard gauche | minimap | scoreboard droit */}
+    <div style={{ display: "flex", alignItems: "stretch", gap: 8 }}>
+      <ObjectiveScoreboard events={visibleEvents} teamNum={leftNum} side="left" />
+      <MiniMap
+        leftStats={leftStats}
+        rightStats={rightStats}
+        leftNum={leftNum}
+        rightNum={rightNum}
+        visibleEvents={visibleEvents}
+        matchSec={matchSec}
+        size={350}
+      />
+      <ObjectiveScoreboard events={visibleEvents} teamNum={rightNum} side="right" />
+    </div>
+
+    {/* Timer + barre gold sous la carte — style esports */}
+    <div style={{ width: 280, textAlign: "center" }}>
       <div style={{
-        fontFamily: "monospace", fontSize: 20, fontWeight: 900,
+        fontFamily: "'Chakra Petch', 'Courier New', monospace",
+        fontSize: 26, fontWeight: 900,
         color: done ? "var(--amber)" : "var(--text-1)",
-        letterSpacing: 2, marginBottom: 4, fontVariantNumeric: "tabular-nums",
+        letterSpacing: 3, marginBottom: 5, fontVariantNumeric: "tabular-nums",
+        textShadow: "0 0 14px rgba(34,197,94,0.22)",
       }}>
         {fmtTime(matchSec)}
         {!done && playing && (
           <span style={{
-            display: "inline-block", width: 6, height: 6, borderRadius: "50%",
-            background: "var(--danger)", marginLeft: 5, verticalAlign: "middle",
+            display: "inline-block", width: 7, height: 7, borderRadius: "50%",
+            background: "#22C55E", marginLeft: 8, verticalAlign: "middle",
             animation: "pulse 1.1s ease-in-out infinite",
+            boxShadow: "0 0 8px #22C55E",
           }} />
         )}
       </div>
-      <div style={{ height: 5, borderRadius: 3, overflow: "hidden", background: "var(--danger)" }}>
-        <motion.div
-          animate={{ width: `${leftWidth}%` }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          style={{ height: "100%", background: "var(--accent)", borderRadius: "3px 0 0 3px" }}
-        />
+
+      {/* Barre gold avec compteurs alignés */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        fontFamily: "'Chakra Petch', monospace", fontSize: 11, fontWeight: 700,
+        fontVariantNumeric: "tabular-nums",
+      }}>
+        <span style={{
+          minWidth: 40, textAlign: "right",
+          color: goldLeader === "left" ? "var(--accent)" : "var(--text-2)",
+          textShadow: goldLeader === "left" ? "0 0 6px rgba(34,197,94,0.6)" : "none",
+        }}>
+          {leftWidth}%
+        </span>
+        <div style={{
+          flex: 1, height: 8, borderRadius: 2, overflow: "hidden",
+          background: "var(--danger)",
+          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(0,0,0,0.6)",
+        }}>
+          <motion.div
+            animate={{ width: `${leftWidth}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            style={{
+              height: "100%", background: "var(--accent)", borderRadius: "2px 0 0 2px",
+              boxShadow: "0 0 10px rgba(34,197,94,0.7)",
+            }}
+          />
+        </div>
+        <span style={{
+          minWidth: 40, textAlign: "left",
+          color: goldLeader === "right" ? "var(--danger)" : "var(--text-2)",
+          textShadow: goldLeader === "right" ? "0 0 6px rgba(239,68,68,0.6)" : "none",
+        }}>
+          {100 - leftWidth}%
+        </span>
       </div>
-      <div style={{ fontSize: 10, color: "var(--text-2)", marginTop: 3, minHeight: 13 }}>
+
+      <div style={{
+        fontSize: 10, color: "var(--text-2)", marginTop: 4, minHeight: 13,
+        fontFamily: "'Chakra Petch', monospace", letterSpacing: 0.5, textTransform: "uppercase",
+      }}>
         {goldDiff > 200 ? (
           <span>
-            <span style={{ fontWeight: 700, color: goldLeader === "left" ? "var(--accent)" : "var(--danger)" }}>
+            <span style={{
+              fontWeight: 800,
+              color: goldLeader === "left" ? "var(--accent)" : "var(--danger)",
+            }}>
               {goldLeader === "left" ? leftAbbr : rightAbbr}
             </span>
             {" "}+{(goldDiff / 1000).toFixed(1)}k gold
