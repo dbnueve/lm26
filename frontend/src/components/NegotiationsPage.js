@@ -273,15 +273,40 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
             ● Période d'offseason — Mercato ouvert
           </div>
         </div>
-        <button
-          className="btn-primary"
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px" }}
-          onClick={handleStartSeason}
-          disabled={startingSeasonLoading}
-        >
-          <RocketLaunch size={18} />
-          {startingSeasonLoading ? "Lancement..." : "Lancer la saison"}
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+          {waitingForPeers ? (
+            <button
+              className="btn-secondary"
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px" }}
+              onClick={handleCancelReady}
+              data-testid="cancel-ready-btn"
+            >
+              <Hourglass size={18} />
+              Annuler mon vote
+            </button>
+          ) : (
+            <button
+              className="btn-primary"
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px" }}
+              onClick={handleStartSeason}
+              disabled={startingSeasonLoading}
+              data-testid="start-season-btn"
+            >
+              <RocketLaunch size={18} />
+              {startingSeasonLoading ? "Lancement..." : mpActive ? "Prêt à lancer" : "Lancer la saison"}
+            </button>
+          )}
+          {mpActive && totalPlayers > 0 && (
+            <div style={{ fontSize: 12, color: "var(--text-2)" }}>
+              {seasonStartReady.length} / {totalPlayers} joueur{totalPlayers > 1 ? "s" : ""} prêt{seasonStartReady.length > 1 ? "s" : ""}
+              {seasonStartReady.length > 0 && (
+                <span style={{ marginLeft: 6, color: "var(--text-2)" }}>
+                  · {seasonStartReady.join(", ")}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {(pending.incoming.length > 0 || pending.outgoing.length > 0) && (
