@@ -3708,12 +3708,21 @@ async def simulate_match(request: SimulateMatchRequest, http_request: Request):
     apply_match_result_updates(winner_id, loser_id, result, w_stats, l_stats, week=match.get("week"))
     _generate_match_inbox_messages(winner_id, loser_id, result, w_stats=w_stats, l_stats=l_stats, week=match.get("week"))
 
-    # Simulate other matches of the same week.
+    # Simulate other matches of the same week AND same day only.
+    # On ne simule plus les 2 jours d'un coup : le joueur fait son match du jour 1,
+    # les autres équipes jouent leur jour 1, puis le joueur enchaîne sur le jour 2.
     # En mode MP, on exclut TOUS les matchs qui impliquent n'importe quelle
     # équipe choisie par un joueur de la session — sinon le joueur A qui simule
     # son match auto-simulerait aussi le match de B (et B se retrouverait avec
     # un résultat imposé sans avoir joué sa draft).
     current_week = match["week"]
+    current_day = match.get("day")
+    # Fallback sauvegardes pré-"day" : déduire le jour depuis les matchs joués de la semaine.
+    if current_day is None:
+        week_played = sum(1 for m in GAME_STATE["schedule"]
+                          if m["week"] == current_week and m["played"]
+                          and GAME_STATE["user_team"] in (m["team1"], m["team2"]))
+        current_day = 1 if week_played == 0 else 2
     other_results = []
     mp_player_teams: set = set()
     _sid = http_request.query_params.get("session_id")
@@ -3726,6 +3735,9 @@ async def simulate_match(request: SimulateMatchRequest, http_request: Request):
 
     for other_match in GAME_STATE["schedule"]:
         if other_match["week"] != current_week or other_match["played"]:
+            continue
+        # Ne simule que les matchs du même game day
+        if other_match.get("day", current_day) != current_day:
             continue
         if mp_player_teams & {other_match["team1"], other_match["team2"]}:
             continue
