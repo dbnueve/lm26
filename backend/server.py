@@ -8258,9 +8258,16 @@ async def _mp2_session_swap_middleware(request, call_next):
     per_player_team = sess.players.get(token) if token else None
 
     async with _swap_lock, _ThreadLockAsyncBridge(_state_thread_lock):
+        global _mp_swap_depth
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
         GAME_STATE.update(sess.state)
+        # Advertise every human team so MP-aware solo endpoints (transfers,
+        # offseason, start_season) can distinguish humans from AI. Preserve
+        # what was on sess.state so we can restore exact bytes on swap-out.
+        mp_teams_snapshot = sess.state.get("_mp_user_team_ids")
+        human_team_ids = [tid for tid in sess.players.values() if tid]
+        GAME_STATE["_mp_user_team_ids"] = human_team_ids
         try:
             _rebuild_meta_lookup()
         except Exception:
@@ -8271,6 +8278,7 @@ async def _mp2_session_swap_middleware(request, call_next):
         session_user_team_snapshot = sess.state.get("user_team")
         if per_player_team:
             GAME_STATE["user_team"] = per_player_team
+        _mp_swap_depth += 1
         try:
             response = await call_next(request)
             # Persist mutations back into the session ONLY when the request
