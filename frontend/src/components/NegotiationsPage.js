@@ -336,7 +336,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
             )}
             {(pendingTab === "incoming" ? pending.incoming : pending.outgoing).map(n => (
               <div key={n.id} style={{
-                padding: "12px 14px", background: "var(--bg)", borderRadius: 3,
+                padding: "12px 14px", background: "var(--surface-2)", borderRadius: "var(--radius-xs)",
                 border: "1px solid var(--border)",
                 display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center"
               }}>
