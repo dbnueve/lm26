@@ -134,9 +134,9 @@ const TrainingPage = ({ userTeam, onSetTeamTrainingPlan }) => {
         <motion.div
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
           style={{
-            padding: "11px 16px", marginBottom: 18, borderRadius: 2,
-            background: notification.ok ? "rgba(0,230,118,0.08)" : "rgba(255,51,102,0.1)",
-            border: `1px solid ${notification.ok ? "var(--success)" : "var(--danger)"}`,
+            padding: "11px 16px", marginBottom: 18, borderRadius: "var(--radius-sm)",
+            background: notification.ok ? "var(--success-dim)" : "var(--danger-dim)",
+            border: `1px solid ${notification.ok ? "var(--success-border)" : "var(--danger-border)"}`,
             display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13,
           }}
         >
