@@ -3663,19 +3663,52 @@ async def simulate_match(request: SimulateMatchRequest, http_request: Request):
     if match["played"]:
         raise HTTPException(status_code=400, detail="Match already played")
     
-    # Calculate draft advantage if a draft was submitted
-    user_adv = 0.0
-    if request.user_draft and GAME_STATE["user_team"] in [match["team1"], match["team2"]]:
-        opponent_id = match["team2"] if match["team1"] == GAME_STATE["user_team"] else match["team1"]
-        user_adv = calculate_draft_advantage(request.user_draft, GAME_STATE["user_team"], opponent_id)
-
+    # Calculate draft advantage for BOTH sides — in MP PvP both teams are
+    # human-controlled, so side 2 must also benefit from its own picks/bans.
+    # In solo, only user_team ever has a draft; the opponent gets 0 as before.
     user_team = GAME_STATE["user_team"]
+    mp_humans = set(GAME_STATE.get("_mp_user_team_ids") or [])
+    draft_state = GAME_STATE.get("draft_state") or {}
+    body_draft = request.user_draft or None
+
+    def _draft_adv_for(team_id: str) -> float:
+        """Pick the draft payload relevant to `team_id` and compute its advantage."""
+        opponent_id = match["team2"] if match["team1"] == team_id else match["team1"]
+        # Prefer the request body when the caller IS this team's user.
+        if body_draft and team_id == user_team:
+            return calculate_draft_advantage(body_draft, team_id, opponent_id)
+        # MP PvP: reconciled draft_state stores side-1 as user_*, side-2 as enemy_*.
+        side1 = draft_state.get("_mp_side1_team")
+        side2 = draft_state.get("_mp_side2_team")
+        if team_id in mp_humans and side1 and side2:
+            if team_id == side1:
+                payload = {
+                    "picks": draft_state.get("user_picks", []),
+                    "bans":  draft_state.get("user_bans",  []),
+                    "enemy_picks": draft_state.get("enemy_picks", []),
+                    "enemy_bans":  draft_state.get("enemy_bans",  []),
+                }
+            elif team_id == side2:
+                payload = {
+                    "picks": draft_state.get("enemy_picks", []),
+                    "bans":  draft_state.get("enemy_bans",  []),
+                    "enemy_picks": draft_state.get("user_picks", []),
+                    "enemy_bans":  draft_state.get("user_bans",  []),
+                }
+            else:
+                return 0.0
+            return calculate_draft_advantage(payload, team_id, opponent_id)
+        return 0.0
+
+    team1_adv = _draft_adv_for(match["team1"]) if match["team1"] in (mp_humans | {user_team}) else 0.0
+    team2_adv = _draft_adv_for(match["team2"]) if match["team2"] in (mp_humans | {user_team}) else 0.0
+
     team1_power = calculate_team_power(match["team1"],
-                                       user_adv if match["team1"] == user_team else 0,
-                                       apply_tactics=match["team1"] == user_team)
+                                       team1_adv,
+                                       apply_tactics=match["team1"] == user_team or match["team1"] in mp_humans)
     team2_power = calculate_team_power(match["team2"],
-                                       user_adv if match["team2"] == user_team else 0,
-                                       apply_tactics=match["team2"] == user_team)
+                                       team2_adv,
+                                       apply_tactics=match["team2"] == user_team or match["team2"] in mp_humans)
 
     result = simulate_match_phases(team1_power, team2_power)
 
