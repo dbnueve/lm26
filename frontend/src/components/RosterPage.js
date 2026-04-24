@@ -4,13 +4,13 @@ import { X, ArrowsClockwise } from "@phosphor-icons/react";
 import PlayerCard from "./PlayerCard";
 import PlayerDetailModal from "./PlayerDetailModal";
 
-// Roster Page Component
-const RosterPage = ({ userTeam, onSwapPlayers }) => {
-  const [swapMode, setSwapMode] = useState(false);
-  const [selectedForSwap, setSelectedForSwap] = useState(null);
-  const [detailPlayer, setDetailPlayer] = useState(null);
+const POSITIONS = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
 
-  const positions = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
+const RosterPage = ({ userTeam, onSwapPlayers }) => {
+  const [swapMode, setSwapMode]             = useState(false);
+  const [selectedForSwap, setSelectedForSwap] = useState(null);
+  const [detailPlayer, setDetailPlayer]     = useState(null);
+
   const players = userTeam.players || [];
 
   const handleSwap = (player) => {
@@ -26,45 +26,57 @@ const RosterPage = ({ userTeam, onSwapPlayers }) => {
     }
   };
 
+  const cancelSwap = () => { setSwapMode(false); setSelectedForSwap(null); };
+
   return (
-    <div className="animate-slide-up">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 className="font-heading" style={{ fontSize: 32 }}>
-          Effectif
-        </h2>
+    <div className="animate-slide-up" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h2 className="font-heading" style={{ fontSize: 22, letterSpacing: "-0.02em" }}>Effectif</h2>
+          <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 2 }}>
+            {players.length} joueurs · {players.filter(p => p.is_starter).length} titulaires
+          </div>
+        </div>
         {swapMode && (
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ color: "var(--amber)" }}>
-              Sélectionnez un joueur {selectedForSwap?.position} pour le swap
+            <span style={{ fontSize: 13, color: "var(--amber)" }}>
+              Sélectionnez un joueur {selectedForSwap?.position} à swapper
             </span>
-            <button
-              className="btn-secondary"
-              onClick={() => { setSwapMode(false); setSelectedForSwap(null); }}
-            >
-              <X size={16} /> Annuler
+            <button className="btn-secondary" onClick={cancelSwap}
+              style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <X size={14} /> Annuler
             </button>
           </div>
         )}
       </div>
 
-      {positions.map(pos => (
-        <div key={pos} style={{ marginBottom: 32 }}>
-          <h3 className="font-heading" style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-            <span className={"pos-badge pos-" + pos}>{pos}</span>
-          </h3>
-          <div className="grid-2">
-            {players.filter(p => p.position === pos).map(player => (
-              <PlayerCard
-                key={player.id}
-                player={player}
-                showActions={true}
-                onSwap={handleSwap}
-                onSelect={setDetailPlayer}
-              />
-            ))}
+      {/* Position sections */}
+      {POSITIONS.map(pos => {
+        const posPlayers = players.filter(p => p.position === pos);
+        if (!posPlayers.length) return null;
+        return (
+          <div key={pos}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span className={"pos-badge pos-" + pos}>{pos}</span>
+              <div style={{ height: 1, flex: 1, background: "var(--border)" }} />
+              <span style={{ fontSize: 12, color: "var(--text-2)" }}>{posPlayers.length} joueur{posPlayers.length > 1 ? "s" : ""}</span>
+            </div>
+            <div className="grid-2">
+              {posPlayers.map(player => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  showActions={true}
+                  onSwap={handleSwap}
+                  onSelect={setDetailPlayer}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <AnimatePresence>
         {detailPlayer && (
@@ -72,9 +84,9 @@ const RosterPage = ({ userTeam, onSwapPlayers }) => {
             player={detailPlayer}
             onClose={() => setDetailPlayer(null)}
             actions={
-              <button className="btn-secondary" style={{ width: "100%" }}
+              <button className="btn-secondary" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                 onClick={() => { handleSwap(detailPlayer); setDetailPlayer(null); }}>
-                <ArrowsClockwise size={16} style={{ marginRight: 8 }} />
+                <ArrowsClockwise size={15} />
                 Proposer un swap
               </button>
             }
