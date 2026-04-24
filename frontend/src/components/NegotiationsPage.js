@@ -222,7 +222,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
           </div>
         )}
 
-        <div style={{ marginTop: 24, padding: "14px 20px", background: "rgba(0,230,118,0.08)", border: "1px solid var(--success)", borderRadius: 4, color: "var(--success)", fontSize: 13 }}>
+        <div style={{ marginTop: 24, padding: "14px 20px", background: "var(--success-dim)", border: "1px solid var(--success-border)", borderRadius: "var(--radius-sm)", color: "var(--success)", fontSize: 13 }}>
           <strong>La saison régulière a commencé.</strong> Rendez-vous dans l'onglet Calendrier pour jouer votre premier match.
         </div>
       </div>
