@@ -194,7 +194,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
               <div key={i} style={{
                 display: "grid", gridTemplateColumns: "80px 1fr 32px 1fr 60px",
                 alignItems: "center", gap: 12, padding: "12px 16px",
-                background: "var(--surface-1)", borderRadius: 4,
+                background: "var(--surface-1)", borderRadius: "var(--radius-sm)",
                 border: "1px solid var(--border)"
               }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-2)", textTransform: "uppercase" }}>
