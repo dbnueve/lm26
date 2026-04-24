@@ -39,7 +39,7 @@ const TierBadge = ({ tier }) => {
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", justifyContent: "center",
-      width: 26, height: 26, borderRadius: 4,
+      width: 26, height: 26, borderRadius: "var(--radius-xs)",
       background: s.bg, border: `1px solid ${s.border}`,
       color: s.color, fontWeight: 900, fontSize: 13, letterSpacing: 0.5,
     }}>
