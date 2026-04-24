@@ -5990,9 +5990,16 @@ def simulate_offseason_transfers():
     better options from the ERL pool (upgrade or high-potential pick).
     """
     user_team_id = GAME_STATE.get("user_team")
+    # In MP every player-controlled team must be preserved — not just the
+    # primary user_team. `_mp_user_team_ids` is populated by the session
+    # middleware / ready-run bridge; falls back to the solo single-team set.
+    mp_human_team_ids = GAME_STATE.get("_mp_user_team_ids") or []
+    protected_team_ids = set(mp_human_team_ids)
+    if user_team_id:
+        protected_team_ids.add(user_team_id)
     transfers_done = []
 
-    ai_teams = [t for t in GAME_STATE["teams"].values() if t["id"] != user_team_id]
+    ai_teams = [t for t in GAME_STATE["teams"].values() if t["id"] not in protected_team_ids]
     random.shuffle(ai_teams)
 
     # Work with a local copy of available ERL pool to avoid double-spending
