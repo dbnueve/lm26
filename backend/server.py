@@ -1316,9 +1316,15 @@ class _ThreadLockAsyncBridge:
         self._lock = lock
 
     async def __aenter__(self) -> None:
-        # threading.Lock.acquire() blocks; offload to thread to keep the
-        # event loop responsive. Acquisition typically returns immediately.
-        await _asyncio.to_thread(self._lock.acquire)
+        # RLock ownership is thread-bound: whichever thread acquires must
+        # also release. `_swap_lock` already serialises async callers, so
+        # acquisition is normally uncontended and non-blocking on the loop
+        # thread. Fall back to a short spin that yields control if another
+        # thread-pool worker transiently holds it, rather than offloading to
+        # `to_thread` (which would acquire in a worker and leave __aexit__
+        # releasing from the loop thread — RuntimeError).
+        while not self._lock.acquire(blocking=False):
+            await _asyncio.sleep(0)
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
         self._lock.release()
