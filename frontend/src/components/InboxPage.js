@@ -372,7 +372,7 @@ const InboxPage = () => {
               padding: "14px 0", background: "none", border: "none", cursor: "pointer",
               borderBottom: tab === t.id ? "2px solid var(--accent)" : "2px solid transparent",
               color: tab === t.id ? "var(--accent)" : "var(--text-2)",
-              fontSize: 13, fontWeight: 600, transition: "all 0.15s",
+              fontSize: 12, fontWeight: 600, transition: "all var(--t-base)",
             }}>
               <t.icon size={16} weight={tab === t.id ? "fill" : "regular"} />
               {t.label}
