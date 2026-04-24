@@ -185,7 +185,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
         </div>
 
         {aiTransfers.length === 0 ? (
-          <div style={{ padding: "24px 20px", background: "var(--surface-1)", borderRadius: 4, color: "var(--text-2)", textAlign: "center" }}>
+          <div style={{ padding: "24px 20px", background: "var(--surface-1)", borderRadius: "var(--radius-sm)", color: "var(--text-2)", textAlign: "center" }}>
             Aucun transfert IA cette période d'offseason.
           </div>
         ) : (
