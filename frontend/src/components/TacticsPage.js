@@ -373,7 +373,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
             : (p.champion_pool || []).slice(0, 3).map(champ => ({ champ, games: null, wr: null }));
 
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 6, marginBottom: 6 }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", marginBottom: 6 }}>
               <PlayerAvatar name={p.name} size={40} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
