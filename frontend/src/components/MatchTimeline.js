@@ -355,9 +355,9 @@ const MatchTimeline = ({
       padding: "10px 14px", maxHeight: "80vh",
     }}>
 
-      {/* ── ZONE 0 : Header kills + gold bar ─────────────────── */}
+      {/* ── ZONE 0 : Header kills + scoreboards + gold bar ────── */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 8,
+        display: "flex", alignItems: "center", gap: 10,
         background: "rgba(0,0,0,0.25)", borderRadius: 6,
         padding: "8px 12px",
       }}>
@@ -371,6 +371,9 @@ const MatchTimeline = ({
 
         {/* Kills gauche */}
         <TimelineKillCounter value={leftKills} color="var(--accent)" />
+
+        {/* Scoreboard objectifs gauche (tours/drake) */}
+        <ObjectiveScoreboard events={visibleEvents} teamNum={leftNum} side="left" />
 
         {/* Gold bar + timer au centre */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
@@ -393,7 +396,7 @@ const MatchTimeline = ({
               }} />
             )}
           </div>
-          {/* Barre gold */}
+          {/* Barre gold — vert à gauche, rouge à droite, proportions exactes */}
           <div style={{
             display: "flex", alignItems: "center", gap: 6, width: "100%", maxWidth: 340,
             fontFamily: "'Chakra Petch', monospace", fontSize: 11, fontWeight: 700,
@@ -408,15 +411,24 @@ const MatchTimeline = ({
             </span>
             <div style={{
               flex: 1, height: 7, borderRadius: 2, overflow: "hidden",
-              background: "var(--danger)",
+              display: "flex",
+              background: "rgba(0,0,0,0.4)",
               boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(0,0,0,0.6)",
             }}>
               <motion.div
                 animate={{ width: `${leftWidth}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 style={{
-                  height: "100%", background: "var(--accent)", borderRadius: "2px 0 0 2px",
+                  height: "100%", background: "var(--accent)",
                   boxShadow: "0 0 10px rgba(34,197,94,0.7)",
+                }}
+              />
+              <motion.div
+                animate={{ width: `${100 - leftWidth}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                style={{
+                  height: "100%", background: "var(--danger)",
+                  boxShadow: "0 0 10px rgba(239,68,68,0.7)",
                 }}
               />
             </div>
@@ -444,6 +456,9 @@ const MatchTimeline = ({
           </div>
         </div>
 
+        {/* Scoreboard objectifs droite (tours/drake) */}
+        <ObjectiveScoreboard events={visibleEvents} teamNum={rightNum} side="right" />
+
         {/* Kills droite */}
         <TimelineKillCounter value={rightKills} color="var(--danger)" />
 
@@ -456,55 +471,25 @@ const MatchTimeline = ({
         </div>
       </div>
 
-      {/* ── ZONE 1 : Minimap + champions | Feed événements ───── */}
+      {/* ── ZONE 1 : Minimap | Feed événements ───────────────── */}
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minHeight: 0 }}>
 
-        {/* Colonne gauche : champions + minimap + scoreboard + controls */}
+        {/* Colonne gauche : tracker + minimap + controls */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
 
           {/* Tracker objectifs */}
           <ObjectiveTracker events={visibleEvents} matchSec={matchSec} />
 
-          {/* Champions + map + champions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {/* Champions gauche */}
-            <ChampionColumn
-              stats={leftStats} visibleEvents={visibleEvents}
-              matchSec={matchSec} teamNum={leftNum} side="left" tc={tc}
-            />
-
-            {/* Map + scoreboards */}
-            <div style={{ display: "flex", alignItems: "stretch", gap: 6 }}>
-              <ObjectiveScoreboard events={visibleEvents} teamNum={leftNum} side="left" />
-              <MiniMap
-                leftStats={leftStats}
-                rightStats={rightStats}
-                leftNum={leftNum}
-                rightNum={rightNum}
-                visibleEvents={visibleEvents}
-                matchSec={matchSec}
-                size={280}
-              />
-              <ObjectiveScoreboard events={visibleEvents} teamNum={rightNum} side="right" />
-            </div>
-
-            {/* Champions droite */}
-            <ChampionColumn
-              stats={rightStats} visibleEvents={visibleEvents}
-              matchSec={matchSec} teamNum={rightNum} side="right" tc={tc}
-            />
-          </div>
-
-          {/* Objectifs pips */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-              <ObjectivePips events={visibleEvents} teamNum={leftNum} />
-            </div>
-            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
-            <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-              <ObjectivePips events={visibleEvents} teamNum={rightNum} />
-            </div>
-          </div>
+          {/* Map seule */}
+          <MiniMap
+            leftStats={leftStats}
+            rightStats={rightStats}
+            leftNum={leftNum}
+            rightNum={rightNum}
+            visibleEvents={visibleEvents}
+            matchSec={matchSec}
+            size={320}
+          />
 
           {/* Contrôles playback */}
           <div style={{ display: "flex", gap: 5, justifyContent: "center" }}>
