@@ -304,7 +304,7 @@ const StatsPage = () => {
                         <img
                           src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${toDDKey(champ.name)}.png`}
                           alt={champ.name}
-                          style={{ width: 32, height: 32, borderRadius: 4, border: "1px solid var(--border)" }}
+                          style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", border: "1px solid var(--border)" }}
                           onError={e => { e.currentTarget.style.opacity = "0"; }}
                         />
                         <div>
