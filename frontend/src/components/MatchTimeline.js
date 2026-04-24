@@ -355,235 +355,237 @@ const MatchTimeline = ({
       padding: "10px 14px", maxHeight: "80vh",
     }}>
 
-      {/* Ligne principale : logo+kills | champions | CARTE | champions | kills+logo */}
-<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-
-  {/* === GAUCHE : Logo + kills + champions === */}
-  <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, justifyContent: "flex-end" }}>
-
-    {/* Logo + abbr */}
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-      <TeamLogo teamId={leftId} abbr={leftAbbr} size={36} />
-      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", letterSpacing: 1 }}>
-        {leftAbbr}
-      </span>
-    </div>
-
-    {/* Kills gauche */}
-    <TimelineKillCounter value={leftKills} color="var(--accent)" />
-
-    {/* Champions gauche — colonne verticale */}
-    <ChampionColumn
-      stats={leftStats} visibleEvents={visibleEvents}
-      matchSec={matchSec} teamNum={leftNum} side="left" tc={tc}
-    />
-  </div>
-
-  {/* === CENTRE : Carte minimap + HUD === */}
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
-
-    {/* Tracker d'objectifs au-dessus */}
-    <ObjectiveTracker events={visibleEvents} matchSec={matchSec} />
-
-    {/* Ligne : scoreboard gauche | minimap | scoreboard droit */}
-    <div style={{ display: "flex", alignItems: "stretch", gap: 8 }}>
-      <ObjectiveScoreboard events={visibleEvents} teamNum={leftNum} side="left" />
-      <MiniMap
-        leftStats={leftStats}
-        rightStats={rightStats}
-        leftNum={leftNum}
-        rightNum={rightNum}
-        visibleEvents={visibleEvents}
-        matchSec={matchSec}
-        size={350}
-      />
-      <ObjectiveScoreboard events={visibleEvents} teamNum={rightNum} side="right" />
-    </div>
-
-    {/* Timer + barre gold sous la carte — style esports */}
-    <div style={{ width: 280, textAlign: "center" }}>
-      <div style={{
-        fontFamily: "'Chakra Petch', 'Courier New', monospace",
-        fontSize: 26, fontWeight: 900,
-        color: done ? "var(--amber)" : "var(--text-1)",
-        letterSpacing: 3, marginBottom: 5, fontVariantNumeric: "tabular-nums",
-        textShadow: "0 0 14px rgba(34,197,94,0.22)",
-      }}>
-        {fmtTime(matchSec)}
-        {!done && playing && (
-          <span style={{
-            display: "inline-block", width: 7, height: 7, borderRadius: "50%",
-            background: "#22C55E", marginLeft: 8, verticalAlign: "middle",
-            animation: "pulse 1.1s ease-in-out infinite",
-            boxShadow: "0 0 8px #22C55E",
-          }} />
-        )}
-      </div>
-
-      {/* Barre gold avec compteurs alignés */}
+      {/* ── ZONE 0 : Header kills + gold bar ─────────────────── */}
       <div style={{
         display: "flex", alignItems: "center", gap: 8,
-        fontFamily: "'Chakra Petch', monospace", fontSize: 11, fontWeight: 700,
-        fontVariantNumeric: "tabular-nums",
+        background: "rgba(0,0,0,0.25)", borderRadius: 6,
+        padding: "8px 12px",
       }}>
-        <span style={{
-          minWidth: 40, textAlign: "right",
-          color: goldLeader === "left" ? "var(--accent)" : "var(--text-2)",
-          textShadow: goldLeader === "left" ? "0 0 6px rgba(34,197,94,0.6)" : "none",
-        }}>
-          {leftWidth}%
-        </span>
-        <div style={{
-          flex: 1, height: 8, borderRadius: 2, overflow: "hidden",
-          background: "var(--danger)",
-          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(0,0,0,0.6)",
-        }}>
-          <motion.div
-            animate={{ width: `${leftWidth}%` }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            style={{
-              height: "100%", background: "var(--accent)", borderRadius: "2px 0 0 2px",
-              boxShadow: "0 0 10px rgba(34,197,94,0.7)",
-            }}
-          />
-        </div>
-        <span style={{
-          minWidth: 40, textAlign: "left",
-          color: goldLeader === "right" ? "var(--danger)" : "var(--text-2)",
-          textShadow: goldLeader === "right" ? "0 0 6px rgba(239,68,68,0.6)" : "none",
-        }}>
-          {100 - leftWidth}%
-        </span>
-      </div>
-
-      <div style={{
-        fontSize: 10, color: "var(--text-2)", marginTop: 4, minHeight: 13,
-        fontFamily: "'Chakra Petch', monospace", letterSpacing: 0.5, textTransform: "uppercase",
-      }}>
-        {goldDiff > 200 ? (
-          <span>
-            <span style={{
-              fontWeight: 800,
-              color: goldLeader === "left" ? "var(--accent)" : "var(--danger)",
-            }}>
-              {goldLeader === "left" ? leftAbbr : rightAbbr}
-            </span>
-            {" "}+{(goldDiff / 1000).toFixed(1)}k gold
+        {/* Logo + abbr gauche */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <TeamLogo teamId={leftId} abbr={leftAbbr} size={32} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", letterSpacing: 1 }}>
+            {leftAbbr}
           </span>
-        ) : <span>Égalité</span>}
-      </div>
-    </div>
-  </div>
+        </div>
 
-  {/* === DROITE : Champions + kills + Logo === */}
-  <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, justifyContent: "flex-start" }}>
+        {/* Kills gauche */}
+        <TimelineKillCounter value={leftKills} color="var(--accent)" />
 
-    {/* Champions droite */}
-    <ChampionColumn
-      stats={rightStats} visibleEvents={visibleEvents}
-      matchSec={matchSec} teamNum={rightNum} side="right" tc={tc}
-    />
-
-    {/* Kills droite */}
-    <TimelineKillCounter value={rightKills} color="var(--danger)" />
-
-    {/* Logo + abbr */}
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-      <TeamLogo teamId={rightId} abbr={rightAbbr} size={36} />
-      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--danger)", letterSpacing: 1 }}>
-        {rightAbbr}
-      </span>
-    </div>
-  </div>
-
-</div>
-        {/* Objectifs : gauche | séparateur | droite */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-            <ObjectivePips events={visibleEvents} teamNum={leftNum} />
+        {/* Gold bar + timer au centre */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+          {/* Timer */}
+          <div style={{
+            fontFamily: "'Chakra Petch', 'Courier New', monospace",
+            fontSize: 20, fontWeight: 900,
+            color: done ? "var(--amber)" : "var(--text-1)",
+            letterSpacing: 3, fontVariantNumeric: "tabular-nums",
+            textShadow: "0 0 14px rgba(34,197,94,0.22)",
+            lineHeight: 1,
+          }}>
+            {fmtTime(matchSec)}
+            {!done && playing && (
+              <span style={{
+                display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                background: "#22C55E", marginLeft: 7, verticalAlign: "middle",
+                animation: "pulse 1.1s ease-in-out infinite",
+                boxShadow: "0 0 8px #22C55E",
+              }} />
+            )}
           </div>
-          <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
-          <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-            <ObjectivePips events={visibleEvents} teamNum={rightNum} />
+          {/* Barre gold */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6, width: "100%", maxWidth: 340,
+            fontFamily: "'Chakra Petch', monospace", fontSize: 11, fontWeight: 700,
+            fontVariantNumeric: "tabular-nums",
+          }}>
+            <span style={{
+              minWidth: 36, textAlign: "right",
+              color: goldLeader === "left" ? "var(--accent)" : "var(--text-2)",
+              textShadow: goldLeader === "left" ? "0 0 6px rgba(34,197,94,0.6)" : "none",
+            }}>
+              {leftWidth}%
+            </span>
+            <div style={{
+              flex: 1, height: 7, borderRadius: 2, overflow: "hidden",
+              background: "var(--danger)",
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(0,0,0,0.6)",
+            }}>
+              <motion.div
+                animate={{ width: `${leftWidth}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                style={{
+                  height: "100%", background: "var(--accent)", borderRadius: "2px 0 0 2px",
+                  boxShadow: "0 0 10px rgba(34,197,94,0.7)",
+                }}
+              />
+            </div>
+            <span style={{
+              minWidth: 36, textAlign: "left",
+              color: goldLeader === "right" ? "var(--danger)" : "var(--text-2)",
+              textShadow: goldLeader === "right" ? "0 0 6px rgba(239,68,68,0.6)" : "none",
+            }}>
+              {100 - leftWidth}%
+            </span>
+          </div>
+          {/* Label gold diff */}
+          <div style={{
+            fontSize: 9, color: "var(--text-2)", minHeight: 11,
+            fontFamily: "'Chakra Petch', monospace", letterSpacing: 0.5, textTransform: "uppercase",
+          }}>
+            {goldDiff > 200 ? (
+              <span>
+                <span style={{ fontWeight: 800, color: goldLeader === "left" ? "var(--accent)" : "var(--danger)" }}>
+                  {goldLeader === "left" ? leftAbbr : rightAbbr}
+                </span>
+                {" "}+{(goldDiff / 1000).toFixed(1)}k gold
+              </span>
+            ) : <span>Égalité</span>}
           </div>
         </div>
 
-        {/* Contrôles playback */}
-        <div style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-          {SPEEDS.map((s, i) => (
-            <button key={s.label}
-              onClick={() => { setSpeedIdx(i); if (!done) setPlaying(true); }}
+        {/* Kills droite */}
+        <TimelineKillCounter value={rightKills} color="var(--danger)" />
+
+        {/* Logo + abbr droite */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--danger)", letterSpacing: 1 }}>
+            {rightAbbr}
+          </span>
+          <TeamLogo teamId={rightId} abbr={rightAbbr} size={32} />
+        </div>
+      </div>
+
+      {/* ── ZONE 1 : Minimap + champions | Feed événements ───── */}
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minHeight: 0 }}>
+
+        {/* Colonne gauche : champions + minimap + scoreboard + controls */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+
+          {/* Tracker objectifs */}
+          <ObjectiveTracker events={visibleEvents} matchSec={matchSec} />
+
+          {/* Champions + map + champions */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {/* Champions gauche */}
+            <ChampionColumn
+              stats={leftStats} visibleEvents={visibleEvents}
+              matchSec={matchSec} teamNum={leftNum} side="left" tc={tc}
+            />
+
+            {/* Map + scoreboards */}
+            <div style={{ display: "flex", alignItems: "stretch", gap: 6 }}>
+              <ObjectiveScoreboard events={visibleEvents} teamNum={leftNum} side="left" />
+              <MiniMap
+                leftStats={leftStats}
+                rightStats={rightStats}
+                leftNum={leftNum}
+                rightNum={rightNum}
+                visibleEvents={visibleEvents}
+                matchSec={matchSec}
+                size={280}
+              />
+              <ObjectiveScoreboard events={visibleEvents} teamNum={rightNum} side="right" />
+            </div>
+
+            {/* Champions droite */}
+            <ChampionColumn
+              stats={rightStats} visibleEvents={visibleEvents}
+              matchSec={matchSec} teamNum={rightNum} side="right" tc={tc}
+            />
+          </div>
+
+          {/* Objectifs pips */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+              <ObjectivePips events={visibleEvents} teamNum={leftNum} />
+            </div>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
+            <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+              <ObjectivePips events={visibleEvents} teamNum={rightNum} />
+            </div>
+          </div>
+
+          {/* Contrôles playback */}
+          <div style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+            {SPEEDS.map((s, i) => (
+              <button key={s.label}
+                onClick={() => { setSpeedIdx(i); if (!done) setPlaying(true); }}
+                style={{
+                  padding: "3px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  border: `1px solid ${speedIdx === i ? "var(--amber)" : "rgba(255,255,255,0.14)"}`,
+                  background: speedIdx === i ? "rgba(255,184,0,0.12)" : "transparent",
+                  color: speedIdx === i ? "var(--amber)" : "var(--text-2)",
+                  transition: "all 0.15s",
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+            {!done && (
+              <button onClick={() => setPlaying(p => !p)}
+                style={{
+                  padding: "3px 9px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                  border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "var(--text-2)",
+                }}
+              >
+                {playing ? "⏸" : "▶"}
+              </button>
+            )}
+            <button onClick={handleSkip} disabled={done}
               style={{
-                padding: "3px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer",
-                border: `1px solid ${speedIdx === i ? "var(--amber)" : "rgba(255,255,255,0.14)"}`,
-                background: speedIdx === i ? "rgba(255,184,0,0.12)" : "transparent",
-                color: speedIdx === i ? "var(--amber)" : "var(--text-2)",
-                transition: "all 0.15s",
+                padding: "3px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                cursor: done ? "default" : "pointer",
+                border: "1px solid rgba(255,255,255,0.14)", background: "transparent",
+                color: done ? "rgba(255,255,255,0.2)" : "var(--text-2)",
               }}
             >
-              {s.label}
+              ⏭ Skip
             </button>
-          ))}
-          {!done && (
-            <button onClick={() => setPlaying(p => !p)}
-              style={{
-                padding: "3px 9px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer",
-                border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "var(--text-2)",
-              }}
-            >
-              {playing ? "⏸" : "▶"}
-            </button>
-          )}
-          <button onClick={handleSkip} disabled={done}
+          </div>
+        </div>
+
+        {/* Colonne droite : feed événements + scoreboard live */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0, minHeight: 0 }}>
+          {/* Feed événements */}
+          <div
+            ref={feedRef}
             style={{
-              padding: "3px 11px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-              cursor: done ? "default" : "pointer",
-              border: "1px solid rgba(255,255,255,0.14)", background: "transparent",
-              color: done ? "rgba(255,255,255,0.2)" : "var(--text-2)",
+              flex: 1, overflowY: "auto",
+              display: "flex", flexDirection: "column", gap: 3,
+              minHeight: 200, maxHeight: 320, paddingRight: 4,
             }}
           >
-            ⏭ Skip
-          </button>
-        </div>
-      
+            <AnimatePresence initial={false}>
+              {visibleEvents.map((item, i) => (
+                <TimelineEventRow
+                  key={`${item.type}-${item.time}-${i}`}
+                  item={item} tc={tc} tn={tn}
+                />
+              ))}
+            </AnimatePresence>
 
-      {/* ── ZONE 2 : Feed événements ──────────────────────────── */}
-      <div
-        ref={feedRef}
-        style={{
-          flex: 1, overflowY: "auto",
-          display: "flex", flexDirection: "column", gap: 3,
-          minHeight: 120, maxHeight: 260, paddingRight: 4,
-        }}
-      >
-        <AnimatePresence initial={false}>
-          {visibleEvents.map((item, i) => (
-            <TimelineEventRow
-              key={`${item.type}-${item.time}-${i}`}
-              item={item} tc={tc} tn={tn}
-            />
-          ))}
-        </AnimatePresence>
-
-        {!done && playing && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", color: "var(--text-2)", fontSize: 11 }}>
-            <motion.span animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.1, repeat: Infinity }}>●</motion.span>
-            Simulation en cours…
+            {!done && playing && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", color: "var(--text-2)", fontSize: 11 }}>
+                <motion.span animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.1, repeat: Infinity }}>●</motion.span>
+                Simulation en cours…
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* ── ZONE 3 : Scoreboard live (visible dès le début) ───── */}
-      <LiveScoreboard
-        leftStats={leftStats}
-        rightStats={rightStats}
-        leftAbbr={leftAbbr}
-        rightAbbr={rightAbbr}
-        visibleEvents={visibleEvents}
-        winnerTeam={winnerTeam}
-        leftNum={leftNum}
-        duration={duration}
-      />
+          {/* Scoreboard live */}
+          <LiveScoreboard
+            leftStats={leftStats}
+            rightStats={rightStats}
+            leftAbbr={leftAbbr}
+            rightAbbr={rightAbbr}
+            visibleEvents={visibleEvents}
+            winnerTeam={winnerTeam}
+            leftNum={leftNum}
+            duration={duration}
+          />
+        </div>
+      </div>
 
       {/* ── Bouton continuer ──────────────────────────────────── */}
       {done && (
