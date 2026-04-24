@@ -296,7 +296,7 @@ const eloChartData = useMemo(() => {
               <h4 style={{ fontSize: 14, marginBottom: 16 }}>Dernières confrontations</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {headToHead.matches.map(m => (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface-1)', borderRadius: 8, alignItems: 'center' }}>
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface-1)', borderRadius: "var(--radius-lg)", alignItems: 'center' }}>
                     <span style={{ fontSize: 12, color: 'var(--text-2)' }}>Semaine {m.week}</span>
                     <span style={{ fontWeight: 700 }}>{m.score1} - {m.score2}</span>
                     <span style={{ 
