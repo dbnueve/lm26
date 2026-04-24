@@ -360,7 +360,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
                       placeholder="Contre-offre"
                       value={counterDrafts[n.id] || ""}
                       onChange={e => setCounterDrafts(d => ({ ...d, [n.id]: e.target.value }))}
-                      style={{ width: 110, padding: "6px 8px", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 2, color: "var(--text)" }}
+                      style={{ width: 110, padding: "6px 8px", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: "var(--radius-xs)", color: "var(--text-1)" }}
                       data-testid={"counter-input-" + n.id}
                     />
                     <button className="btn-secondary" onClick={() => handleCounterPending(n.id)} data-testid={"counter-btn-" + n.id}>
