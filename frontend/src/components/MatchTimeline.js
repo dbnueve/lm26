@@ -169,7 +169,7 @@ function LiveScoreboard({ leftStats, rightStats, leftAbbr, rightAbbr,
     <div style={{ flex: 1, minWidth: 0 }}>
       <div style={{
         padding: "4px 8px", fontSize: 10, fontWeight: 700, textTransform: "uppercase",
-        letterSpacing: 1, background: isWinner ? "var(--accent)" : "var(--danger)",
+        letterSpacing: 1, background: isWinner ? "var(--success)" : "var(--danger)",
         color: isWinner ? "#000" : "#fff", borderRadius: "4px 4px 0 0",
       }}>
         {abbr}
@@ -269,7 +269,7 @@ const MatchTimeline = ({
   const leftStats  = userIsTeam1 ? team1Stats : team2Stats;
   const rightStats = userIsTeam1 ? team2Stats : team1Stats;
 
-  const tc = useCallback((n) => n === 1 ? "var(--accent)" : "var(--danger)", []);
+  const tc = useCallback((n) => n === 1 ? "var(--success)" : "var(--danger)", []);
   const tn = useCallback((n) => n === 1 ? team1Abbr : team2Abbr, [team1Abbr, team2Abbr]);
 
   const endSec = useMemo(() => {
@@ -364,13 +364,13 @@ const MatchTimeline = ({
         {/* Logo + abbr gauche */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           <TeamLogo teamId={leftId} abbr={leftAbbr} size={32} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", letterSpacing: 1 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--success)", letterSpacing: 1 }}>
             {leftAbbr}
           </span>
         </div>
 
         {/* Kills gauche */}
-        <TimelineKillCounter value={leftKills} color="var(--accent)" />
+        <TimelineKillCounter value={leftKills} color="var(--success)" />
 
         {/* Scoreboard objectifs gauche (tours/drake) */}
         <ObjectiveScoreboard events={visibleEvents} teamNum={leftNum} side="left" />
@@ -404,7 +404,7 @@ const MatchTimeline = ({
           }}>
             <span style={{
               minWidth: 36, textAlign: "right",
-              color: goldLeader === "left" ? "var(--accent)" : "var(--text-2)",
+              color: goldLeader === "left" ? "var(--success)" : "var(--text-2)",
               textShadow: goldLeader === "left" ? "0 0 6px rgba(34,197,94,0.6)" : "none",
             }}>
               {leftWidth}%
@@ -419,7 +419,7 @@ const MatchTimeline = ({
                 animate={{ width: `${leftWidth}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 style={{
-                  height: "100%", background: "var(--accent)",
+                  height: "100%", background: "var(--success)",
                   boxShadow: "0 0 10px rgba(34,197,94,0.7)",
                 }}
               />
@@ -447,7 +447,7 @@ const MatchTimeline = ({
           }}>
             {goldDiff > 200 ? (
               <span>
-                <span style={{ fontWeight: 800, color: goldLeader === "left" ? "var(--accent)" : "var(--danger)" }}>
+                <span style={{ fontWeight: 800, color: goldLeader === "left" ? "var(--success)" : "var(--danger)" }}>
                   {goldLeader === "left" ? leftAbbr : rightAbbr}
                 </span>
                 {" "}+{(goldDiff / 1000).toFixed(1)}k gold
