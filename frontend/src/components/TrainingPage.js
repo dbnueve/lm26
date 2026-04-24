@@ -278,7 +278,7 @@ const TrainingPage = ({ userTeam, onSetTeamTrainingPlan }) => {
       </div>
 
       {/* Legend */}
-      <div style={{ marginTop: 24, padding: "12px 16px", background: "var(--surface-1)", borderRadius: 2, fontSize: 12, color: "var(--text-2)", lineHeight: 1.9 }}>
+      <div style={{ marginTop: 24, padding: "14px 16px", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", fontSize: 12, color: "var(--text-2)", lineHeight: 1.9 }}>
         <strong style={{ color: "var(--text-1)" }}>Fonctionnement :</strong>
         <br />
         · Le plan collectif s'applique immédiatement aux 5 titulaires, puis se relance automatiquement après chaque match
