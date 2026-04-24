@@ -343,7 +343,7 @@ const TacticsPage = ({ userTeam, players: allPlayers, teams, nextMatch }) => {
 
     return (
       <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, padding: 16, background: "var(--surface-1)", borderRadius: 8, border: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, padding: 16, background: "var(--surface-1)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
           <TeamLogo teamId={oppTeam.id} abbr={oppTeam.abbr} size={48} noClick />
           <div>
             <div style={{ fontWeight: 700, fontSize: 20 }}>{oppTeam.name}</div>
