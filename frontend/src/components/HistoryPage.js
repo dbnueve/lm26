@@ -252,7 +252,7 @@ const eloChartData = useMemo(() => {
             <select
               value={selectedOpponent || ""}
               onChange={(e) => handleOpponentSelect(e.target.value)}
-              style={{ width: "100%", padding: "12px", borderRadius: 8, background: "var(--surface-1)", border: "1px solid var(--border)", color: "var(--text-1)" }}
+              style={{ width: "100%", padding: "12px", borderRadius: "var(--radius-lg)", background: "var(--surface-1)", border: "1px solid var(--border)", color: "var(--text-1)" }}
             >
               <option value="">Sélectionner une équipe...</option>
               {teams.map(t => <option key={t.id} value={t.id}>{t.name} ({t.abbr})</option>)}
