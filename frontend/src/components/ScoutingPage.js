@@ -303,7 +303,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
               actions={
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {sp.international && (
-                    <div style={{ padding: "8px 12px", background: `${leagueColor}18`, border: `1px solid ${leagueColor}55`, borderRadius: 3, fontSize: 12, color: leagueColor }}>
+                    <div style={{ padding: "8px 12px", background: `${leagueColor}18`, border: `1px solid ${leagueColor}55`, borderRadius: "var(--radius-xs)", fontSize: 12, color: leagueColor }}>
                       <strong>Joueur international</strong> ({sp.scouting_for}) — coût ×2 : {formatMoney(displayCost)} EUR
                     </div>
                   )}
