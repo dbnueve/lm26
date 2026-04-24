@@ -172,7 +172,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
               }}
             >
               {LEAGUE_FLAGS[ml]} {ml}
-              {isActive && <span style={{ marginLeft: 6, fontSize: 9, background: color, color: "#000", borderRadius: 2, padding: "1px 4px" }}>HOME</span>}
+              {isActive && <span style={{ marginLeft: 6, fontSize: 9, background: color, color: "#000", borderRadius: "var(--radius-xs)", padding: "1px 4px" }}>HOME</span>}
             </button>
           );
         })}
