@@ -32,7 +32,7 @@ const OptionCard = ({ label, icon: Icon, selected, onClick, disabled }) => (
     style={{
       background: selected ? "var(--accent-dim)" : "var(--surface-1)",
       border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-      borderRadius: 6,
+      borderRadius: "var(--radius-sm)",
       padding: "14px 10px",
       textAlign: "center",
       cursor: disabled ? "default" : "pointer",
