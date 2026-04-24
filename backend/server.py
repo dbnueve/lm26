@@ -7719,6 +7719,7 @@ async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
     excluded from the middleware (they own their own session routing).
     """
     async with _swap_lock, _ThreadLockAsyncBridge(_state_thread_lock):
+        global _mp_swap_depth
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
         GAME_STATE.update(sess.state)
@@ -7735,6 +7736,7 @@ async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
             _rebuild_meta_lookup()
         except Exception:
             logger.exception("meta rebuild on ready-run failed")
+        _mp_swap_depth += 1
         try:
             if action == "season/simulate":
                 result = await simulate_full_season()  # existing solo endpoint body
