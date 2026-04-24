@@ -1321,12 +1321,6 @@ _swap_lock = _asyncio.Lock()
 # threadpool, where _swap_lock is invisible). All `GAME_STATE` mutations from
 # both worlds must hold this lock; async paths take it after _swap_lock.
 _state_thread_lock = _threading.RLock()
-# Flag set while a handler runs with GAME_STATE swapped to an MP session. Any
-# call to `save_state()` during this window would clobber the SOLO save slot
-# with session data — the middleware copies mutations back into `sess.state`
-# and the autosave loop flushes them to disk, so the inline save is redundant
-# AND harmful. Suppress it.
-_mp_swap_active = _threading.local()
 
 
 class _ThreadLockAsyncBridge:
