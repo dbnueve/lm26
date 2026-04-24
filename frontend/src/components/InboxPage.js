@@ -55,11 +55,11 @@ const MessageRow = ({ msg, selected, onClick }) => {
       onClick={onClick}
       style={{
         display: "flex", alignItems: "flex-start", gap: 12,
-        padding: "12px 16px", cursor: "pointer",
-        background: selected ? "rgba(10,132,255,0.08)" : "transparent",
+        padding: "12px 14px", cursor: "pointer",
+        background: selected ? "var(--accent-dim)" : "transparent",
         borderLeft: selected ? "2px solid var(--accent)" : "2px solid transparent",
         borderBottom: "1px solid var(--border)",
-        transition: "background 0.12s",
+        transition: "background var(--t-fast)",
       }}
     >
       {/* Avatar */}
