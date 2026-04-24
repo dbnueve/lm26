@@ -254,7 +254,7 @@ const TrainingPage = ({ userTeam, onSetTeamTrainingPlan }) => {
                   )}
                 </div>
                 <div style={{ marginTop: 5, height: 3, background: "var(--surface-3)", borderRadius: 99 }}>
-                  <div style={{ width: `${fatiguePct}%`, height: "100%", background: fatigueColor, borderRadius: 1, transition: "width .3s" }} />
+                  <div style={{ width: `${fatiguePct}%`, height: "100%", background: fatigueColor, borderRadius: 99, transition: "width var(--t-slow)" }} />
                 </div>
               </div>
 
