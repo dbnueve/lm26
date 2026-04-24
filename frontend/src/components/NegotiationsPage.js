@@ -310,7 +310,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
       </div>
 
       {(pending.incoming.length > 0 || pending.outgoing.length > 0) && (
-        <div style={{ marginBottom: 24, padding: 16, background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 4 }}>
+        <div style={{ marginBottom: 24, padding: 16, background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)" }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             <button
               className={pendingTab === "incoming" ? "btn-primary" : "btn-secondary"}
