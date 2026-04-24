@@ -108,6 +108,14 @@ from app_state import GAME_STATE, state  # noqa: E402
 # Persistence extraite dans persistence.py (refactor étape 3)
 from persistence import save_state as _persistence_save_state, load_state, _sync_state_if_stale, register_post_load_hook  # noqa: E402
 
+import threading as _threading_for_save
+# Per-thread depth counter bumped while a handler runs with GAME_STATE swapped
+# to an MP session. Any `save_state()` during this window would clobber the
+# SOLO save slot with session data. Declared here (before any use) so the
+# wrapper can reference it — the MP middleware and ready-run flow manage the
+# depth. See `_mp2_session_swap_middleware` / `_run_shared_action_for_session`.
+_mp_swap_active = _threading_for_save.local()
+
 
 def save_state():
     """Persist GAME_STATE to the active solo slot — NO-OP while an MP session
