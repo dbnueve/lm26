@@ -120,14 +120,14 @@ const eloChartData = useMemo(() => {
       {activeTab === "elo" && (
   <div className="card" style={{ padding: 24 }}>
     <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
-      <div style={{ flex: 1, padding: 20, background: "var(--surface-1)", borderRadius: 12 }}>
+      <div style={{ flex: 1, padding: 20, background: "var(--surface-1)", borderRadius: "var(--radius-lg)" }}>
         <div style={{ fontSize: 12, color: "var(--text-2)" }}>ELO Actuel</div>
         <div style={{ fontSize: 32, fontWeight: 800, color: getEloColor(eloHistory?.current_team?.elo) }}>
           {/* Correction : On affiche 0 si la donnée est manquante */}
           {eloHistory?.current_team?.elo ? eloHistory.current_team.elo.toFixed(0) : "1000"}
         </div>
       </div>
-      <div style={{ flex: 1, padding: 20, background: "var(--surface-1)", borderRadius: 12 }}>
+      <div style={{ flex: 1, padding: 20, background: "var(--surface-1)", borderRadius: "var(--radius-lg)" }}>
         <div style={{ fontSize: 12, color: "var(--text-2)" }}>Winrate Global</div>
         <div style={{ fontSize: 32, fontWeight: 800, color: "var(--success)" }}>
           {/* Correction du NaN% : On vérifie si le total des matchs est > 0 */}
@@ -228,12 +228,12 @@ const eloChartData = useMemo(() => {
             
             {splitStats && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                    <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: 12, textAlign: 'center' }}>
+                    <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: "var(--radius-lg)", textAlign: 'center' }}>
                         <Trophy size={32} color="var(--amber)" />
                         <div style={{ fontSize: 24, fontWeight: 700, marginTop: 8 }}>Rank #{splitStats.user_team?.final_rank || '?'}</div>
                         <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Classement Final</div>
                     </div>
-                    <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: 12, textAlign: 'center' }}>
+                    <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: "var(--radius-lg)", textAlign: 'center' }}>
                         <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--success)' }}>
                             {splitStats.user_team?.wins}V - {splitStats.user_team?.losses}D
                         </div>
