@@ -359,7 +359,7 @@ const InboxPage = () => {
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 0, height: "calc(100vh - 120px)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 0, height: "calc(100vh - 120px)", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", overflow: "hidden" }}>
 
       {/* Left panel — list */}
       <div style={{ display: "flex", flexDirection: "column", borderRight: "1px solid var(--border)" }}>
