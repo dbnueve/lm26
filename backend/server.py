@@ -8301,6 +8301,13 @@ async def _mp2_session_swap_middleware(request, call_next):
                         sess.state["user_team"] = session_user_team_snapshot
                     else:
                         sess.state.pop("user_team", None)
+                # `_mp_user_team_ids` is a per-request hint; restore whatever
+                # the session previously held (normally nothing) so it does
+                # not leak into on-disk session state.
+                if mp_teams_snapshot is None:
+                    sess.state.pop("_mp_user_team_ids", None)
+                else:
+                    sess.state["_mp_user_team_ids"] = mp_teams_snapshot
                 _sessions.mark_dirty(sid)
                 # Notify all subscribers so they refetch.
                 try:
@@ -8312,6 +8319,7 @@ async def _mp2_session_swap_middleware(request, call_next):
                     logger.exception("broadcast state_changed failed (sid=%s)", sid[:8])
             return response
         finally:
+            _mp_swap_depth -= 1
             GAME_STATE.clear()
             GAME_STATE.update(solo_snapshot)
             if solo_snapshot.get("league"):
