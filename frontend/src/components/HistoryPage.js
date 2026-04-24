@@ -286,7 +286,7 @@ const eloChartData = useMemo(() => {
                     <span>Chances de victoire</span>
                     <span>{headToHead.record.win_probability.team1.toFixed(0)}% vs {headToHead.record.win_probability.team2.toFixed(0)}%</span>
                 </div>
-                <div style={{ height: 8, background: 'var(--border)', borderRadius: 4, display: 'flex', overflow: 'hidden' }}>
+                <div style={{ height: 8, background: "var(--surface-3)", borderRadius: 99, display: 'flex', overflow: 'hidden' }}>
                     <div style={{ width: `${headToHead.record.win_probability.team1}%`, background: 'var(--accent)' }} />
                     <div style={{ width: `${headToHead.record.win_probability.team2}%`, background: 'var(--danger)' }} />
                 </div>
