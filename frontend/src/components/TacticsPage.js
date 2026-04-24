@@ -51,7 +51,7 @@ const OptionCard = ({ label, icon: Icon, selected, onClick, disabled }) => (
 
 // ── Section card ─────────────────────────────────────────────────────────────
 const Section = ({ icon: Icon, title, tag, children }) => (
-  <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+  <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20, marginBottom: 16 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
       {Icon && <Icon size={18} style={{ color: "var(--text-2)" }} />}
       <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)" }}>{title}</span>
