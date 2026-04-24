@@ -225,7 +225,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
 
       {/* Table */}
       <div className="card" style={{ overflow: "hidden" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 50px 70px 90px 100px 100px", padding: "10px 16px", background: "var(--bg)", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, textTransform: "uppercase", color: "var(--text-2)", fontSize: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 50px 70px 90px 100px 100px", padding: "10px 16px", background: "var(--surface-2)", fontFamily: "var(--font-mono)", fontWeight: 600, textTransform: "uppercase", color: "var(--text-2)", fontSize: 12 }}>
           {cols.map(col => (
             <span key={col.label}
               onClick={col.sortable ? () => handleSort(col.key) : undefined}
