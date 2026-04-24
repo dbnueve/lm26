@@ -56,7 +56,7 @@ const Section = ({ icon: Icon, title, tag, children }) => (
       {Icon && <Icon size={18} style={{ color: "var(--text-2)" }} />}
       <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-2)" }}>{title}</span>
       {tag && (
-        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 3, background: tag === "STRONG" ? "rgba(0,230,118,0.15)" : "rgba(255,51,102,0.15)", color: tag === "STRONG" ? "var(--success)" : "var(--danger)", letterSpacing: 1 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--radius-xs)", background: tag === "STRONG" ? "var(--success-dim)" : "var(--danger-dim)", color: tag === "STRONG" ? "var(--success)" : "var(--danger)", letterSpacing: 1 }}>
           {tag}
         </span>
       )}
