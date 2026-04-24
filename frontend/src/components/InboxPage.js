@@ -250,7 +250,7 @@ const ScoutingReportBody = ({ body }) => {
       {footer && (
         <div style={{
           marginTop: 16, padding: "10px 14px",
-          background: "rgba(6,214,160,0.06)", border: "1px solid rgba(6,214,160,0.2)",
+          background: "var(--success-dim)", border: "1px solid var(--success-border)",
           borderRadius: 6, fontSize: 12, color: "var(--text-2)", fontStyle: "italic",
         }}>
           {footer}
