@@ -106,7 +106,18 @@ from save_paths import get_save_path, _read_active_slot_file, _write_active_slot
 # État global extrait dans app_state.py (refactor étape 2)
 from app_state import GAME_STATE, state  # noqa: E402
 # Persistence extraite dans persistence.py (refactor étape 3)
-from persistence import save_state, load_state, _sync_state_if_stale, register_post_load_hook  # noqa: E402
+from persistence import save_state as _persistence_save_state, load_state, _sync_state_if_stale, register_post_load_hook  # noqa: E402
+
+
+def save_state():
+    """Persist GAME_STATE to the active solo slot — NO-OP while an MP session
+    is swapped in. Session mutations are copied back into `sess.state` by the
+    middleware and flushed by the autosave loop; writing the solo file here
+    would overwrite the offline user's save with another player's data.
+    """
+    if getattr(_mp_swap_active, "depth", 0) > 0:
+        return
+    _persistence_save_state()
 # Registre MP en mémoire (refactor étape 4: mp-as-shared-solo)
 import sessions as _sessions  # noqa: E402
 
