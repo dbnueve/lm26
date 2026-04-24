@@ -73,7 +73,7 @@ const CoherencePanel = ({ coherence, players }) => {
   const checks = (coherence.checks || []).filter(c => c.passed);
 
   return (
-    <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, padding: 20 }}>
+    <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20 }}>
       {/* Players impact */}
       {players && players.length > 0 && (
         <>
