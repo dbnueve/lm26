@@ -214,6 +214,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
                 border: `1px solid ${subLeagueFilter === sl ? LEAGUE_COLORS[majorLeague] : "var(--border)"}`,
                 background: subLeagueFilter === sl ? `${LEAGUE_COLORS[majorLeague]}22` : "var(--surface-1)",
                 color: subLeagueFilter === sl ? LEAGUE_COLORS[majorLeague] : "var(--text-2)",
+                borderRadius: "var(--radius-xs)",
               }}
             >
               {sl === "ALL" ? "Toutes sous-ligues" : sl}
