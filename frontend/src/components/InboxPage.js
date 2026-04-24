@@ -170,7 +170,7 @@ const IntlStandingsBody = ({ body }) => {
             {highlight && (
               <div style={{
                 marginTop: 10, padding: "6px 10px",
-                background: "rgba(255,184,0,0.07)", borderRadius: 4,
+                background: "var(--amber-dim)", borderRadius: "var(--radius-xs)",
                 fontSize: 11, color: "var(--text-2)", fontStyle: "italic",
               }}>
                 {highlight.trim()}
