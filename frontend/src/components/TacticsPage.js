@@ -30,7 +30,7 @@ const OptionCard = ({ label, icon: Icon, selected, onClick, disabled }) => (
   <div
     onClick={() => !disabled && onClick()}
     style={{
-      background: selected ? "rgba(10,132,255,0.18)" : "var(--surface-1)",
+      background: selected ? "var(--accent-dim)" : "var(--surface-1)",
       border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
       borderRadius: 6,
       padding: "14px 10px",
