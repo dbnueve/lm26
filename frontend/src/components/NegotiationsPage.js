@@ -238,7 +238,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
         </h2>
         <div style={{
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          padding: "60px 40px", background: "var(--surface-1)", borderRadius: 4,
+          padding: "60px 40px", background: "var(--surface-1)", borderRadius: "var(--radius-lg)",
           border: "1px solid var(--border)", textAlign: "center", gap: 16
         }}>
           <Lock size={48} style={{ color: "var(--text-2)", opacity: 0.5 }} />
