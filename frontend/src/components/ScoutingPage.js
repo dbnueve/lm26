@@ -138,7 +138,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
             {allPlayers.length} joueurs disponibles · Les joueurs internationaux coûtent 2× plus cher
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "var(--surface-1)", borderRadius: 4, fontSize: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "var(--surface-1)", borderRadius: "var(--radius-sm)", fontSize: 12 }}>
           <Globe size={14} style={{ color: "var(--text-2)" }} />
           <span style={{ color: "var(--text-2)" }}>Ligue active :</span>
           <span style={{ fontWeight: 700, color: LEAGUE_COLORS[activeLeague] || "var(--accent)" }}>{activeLeague}</span>
