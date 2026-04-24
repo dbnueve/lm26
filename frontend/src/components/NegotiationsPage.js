@@ -463,7 +463,7 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
             actions={
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {/* Offer slider */}
-                <div style={{ background: "var(--surface-1)", borderRadius: 2, padding: "14px 16px" }}>
+                <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-sm)", padding: "14px 16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                     <span style={{ fontSize: 13, color: "var(--text-2)" }}>Montant de l'offre</span>
                     <span className="font-stats" style={{ fontSize: 20, fontWeight: 700, color: "var(--amber)" }}>
