@@ -270,7 +270,7 @@ const eloChartData = useMemo(() => {
                 </div>
 
                 <div style={{ textAlign: "center", padding: "0 20px" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-2)", background: "var(--surface-1)", padding: "4px 12px", borderRadius: 20 }}>VS</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-2)", background: "var(--surface-1)", padding: "4px 12px", borderRadius: 99 }}>VS</div>
                 </div>
 
                 <div style={{ textAlign: "center", flex: 1 }}>
