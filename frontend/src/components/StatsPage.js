@@ -291,7 +291,7 @@ const StatsPage = () => {
                 return (
                   <tr key={champ.name} style={{
                     borderBottom: "1px solid var(--border)",
-                    background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)",
+                    background: i % 2 === 0 ? "transparent" : "var(--surface-1)",
                   }}>
                     {/* Tier */}
                     <td style={{ padding: "8px 12px", textAlign: "center" }}>
