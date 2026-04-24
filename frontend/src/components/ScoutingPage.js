@@ -167,7 +167,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
                 border: `1px solid ${isSelected ? color : "var(--border)"}`,
                 background: isSelected ? `${color}22` : "var(--surface-1)",
                 color: isSelected ? color : "var(--text-2)",
-                borderRadius: 2, cursor: "pointer",
+                borderRadius: "var(--radius-xs)", cursor: "pointer",
                 transition: "all 0.15s ease"
               }}
             >
