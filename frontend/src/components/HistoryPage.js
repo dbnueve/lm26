@@ -86,7 +86,7 @@ const eloChartData = useMemo(() => {
   const getEloColor = (elo) => {
     if (elo >= 1170) return "var(--success)";
     if (elo >= 1070) return "var(--accent)";
-    if (elo >= 1020) return "var(--warning)";
+    if (elo >= 1020) return "var(--amber)";
     return "var(--danger)";
   };
 
