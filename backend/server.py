@@ -7765,6 +7765,7 @@ async def _mp2_run_ready_action(sess: "_sessions.Session", action: str) -> dict:
             _sessions.mark_dirty(sess.sid)
             return result if isinstance(result, dict) else {"ok": True}
         finally:
+            _mp_swap_depth -= 1
             GAME_STATE.clear()
             GAME_STATE.update(solo_snapshot)
             if solo_snapshot.get("league"):
