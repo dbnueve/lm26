@@ -186,7 +186,7 @@ const TrainingPage = ({ userTeam, onSetTeamTrainingPlan }) => {
                   padding: "16px 10px",
                   background: isCurrentPlan ? opt.color + "22" : "var(--surface-2)",
                   border: `1px solid ${isCurrentPlan ? opt.color : "var(--border)"}`,
-                  borderRadius: 4, cursor: tooExpensive || saving ? "not-allowed" : "pointer",
+                  borderRadius: "var(--radius-sm)", cursor: tooExpensive || saving ? "not-allowed" : "pointer",
                   opacity: tooExpensive ? 0.45 : 1,
                   textAlign: "center",
                 }}
