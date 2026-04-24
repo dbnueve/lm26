@@ -4776,36 +4776,161 @@ SYNERGY_PAIRS: list = [
     (frozenset({"Galio",     "Camille"}),    2.5),  # The "Golden Combo": Hextech Ultimatum + Hero's Entrance
     (frozenset({"Taliyah",   "Pantheon"}),   2.0),  # Point-and-click stun into Taliyah combo
     (frozenset({"K'Sante",   "Orianna"}),    1.5),  # All-out repositioning delivers the Ball
+# ── Nouvelles synergies issues du MegaPack (val >= 3) ───────────────────────
+    # value=5 (mécaniques passives uniques)
+    (frozenset({"Alistar",      "Kai'Sa"}),     3.0),  # Lock + dive carry
+    (frozenset({"Bard",         "Ezreal"}),      3.0),  # Cosmic Binding + Arcane Shift plays
+    (frozenset({"Ezreal",       "Rakan"}),       3.0),  # Peel + dash mobility
+    (frozenset({"Jinx",         "Thresh"}),      3.0),  # Lantern + Get Excited reset
+    (frozenset({"Kai'Sa",       "Nautilus"}),    3.0),  # Hook + evolved Q burst
+
+    # value=4
+    (frozenset({"Ambessa",      "Vi"}),          2.5),  # Double point-and-click dive
+    (frozenset({"Aphelios",     "Thresh"}),      2.5),  # Lantern safety for positioning ADC
+    (frozenset({"Ashe",         "Seraphine"}),   2.5),  # Permaslow + AoE shield/CC
+    (frozenset({"Bard",         "Jhin"}),        2.5),  # Tempered Fate + Curtain Call lock
+    (frozenset({"Braum",        "Sejuani"}),     2.5),  # Double tank CC wall
+    (frozenset({"Braum",        "Yunara"}),      2.5),  # Passive proc + new hypercarry
+    (frozenset({"Dr. Mundo",    "Orianna"}),     2.5),  # Unkillable frontline delivers Ball
+    (frozenset({"Ezreal",       "Neeko"}),       2.5),  # Disguise setup + Arcane Shift escape
+    (frozenset({"Galio",        "Nocturne"}),    2.5),  # Hero's Entrance into Paranoia dive
+    (frozenset({"Jinx",         "Leona"}),       2.5),  # Hard engage + reset hypercarry
+    (frozenset({"Kai'Sa",       "Neeko"}),       2.5),  # Pop Blossom setup + evolved W
+    (frozenset({"Karma",        "Yunara"}),      2.5),  # Mantra shield + scaling ADC
+    (frozenset({"Nocturne",     "Orianna"}),     2.5),  # Paranoia blackout + Ball delivery
+    (frozenset({"Taliyah",      "Vi"}),          2.5),  # Weaver's Wall traps Vi's targets
+
+    # value=3
+    (frozenset({"Akali",        "Elise"}),       2.0),  # Rappel setup + burst combo
+    (frozenset({"Akali",        "Shen"}),        2.0),  # Global Stand United into Akali dive
+    (frozenset({"Alistar",      "Aphelios"}),    2.0),  # Peel/setup for positioning ADC
+    (frozenset({"Alistar",      "Ashe"}),        2.0),  # Headbutt into Ashe ult chain
+    (frozenset({"Alistar",      "Jhin"}),        2.0),  # Combo lockdown for Jhin root
+    (frozenset({"Alistar",      "Jinx"}),        2.0),  # Engage peel for scaling hyper
+    (frozenset({"Alistar",      "Sivir"}),       2.0),  # On the Hunt delivery
+    (frozenset({"Alistar",      "Yasuo"}),       2.0),  # Headbutt airborne + Last Breath
+    (frozenset({"Ambessa",      "Galio"}),       2.0),  # Hero's Entrance into Ambessa follow-up
+    (frozenset({"Ambessa",      "Malphite"}),    2.0),  # Double hard engage combo
+    (frozenset({"Aphelios",     "Braum"}),       2.0),  # Braum passive procs on Aphelios autos
+    (frozenset({"Aphelios",     "Leona"}),       2.0),  # Hard CC setup for positioning ADC
+    (frozenset({"Aphelios",     "Nautilus"}),    2.0),  # Hook setup + massive DPS
+    (frozenset({"Aphelios",     "Neeko"}),       2.0),  # Disguise peel + scaling turret
+    (frozenset({"Aphelios",     "Poppy"}),       2.0),  # Anti-dash peel for Aphelios
+    (frozenset({"Aphelios",     "Pyke"}),        2.0),  # Execute gold + ADC scaling
+    (frozenset({"Ashe",         "Bard"}),        2.0),  # Poke + Cosmic Binding setup
+    (frozenset({"Ashe",         "Braum"}),       2.0),  # Slows into Braum passive stacks
+    (frozenset({"Ashe",         "Leona"}),       2.0),  # CC chain: Zenith Blade + Enchanted Arrow
+    (frozenset({"Ashe",         "Poppy"}),       2.0),  # Anti-dash + permaslow
+    (frozenset({"Ashe",         "Pyke"}),        2.0),  # Slows into Pyke hook/execute
+    (frozenset({"Ashe",         "Thresh"}),      2.0),  # Death Sentence + Arrow lockdown
+    (frozenset({"Aurelion Sol", "Pantheon"}),    2.0),  # Planetfall + Grand Starfall global
+    (frozenset({"Aurora",       "Nocturne"}),    2.0),  # Double global pressure / zone
+    (frozenset({"Aurora",       "Vi"}),          2.0),  # Vi point-and-click into Aurora burst
+    (frozenset({"Azir",         "Braum"}),       2.0),  # Braum peel for Azir backline
+    (frozenset({"Azir",         "Kennen"}),      2.0),  # Double AoE teamfight devastation
+    (frozenset({"Azir",         "Shen"}),        2.0),  # Stand United global + Emperor's Divide
+    (frozenset({"Bard",         "Jinx"}),        2.0),  # Tempered Fate stasis + Jinx reset
+    (frozenset({"Bard",         "Varus"}),       2.0),  # Cosmic Binding + Chain of Corruption
+    (frozenset({"Braum",        "Jhin"}),        2.0),  # Passive procs on Jhin autos
+    (frozenset({"Braum",        "Jinx"}),        2.0),  # Unbreakable wall protects scaling hyper
+    (frozenset({"Braum",        "Sivir"}),       2.0),  # Shield wall + On the Hunt speed
+    (frozenset({"Corki",        "Nami"}),        2.0),  # Tidal Wave + Package siege combo
+    (frozenset({"Dr. Mundo",    "Jhin"}),        2.0),  # Unkillable frontline + Curtain Call
+    (frozenset({"Dr. Mundo",    "Neeko"}),       2.0),  # Tank frontline + Pop Blossom
+    (frozenset({"Elise",        "Naafiri"}),     2.0),  # Early dive double assassination
+    (frozenset({"Elise",        "Pyke"}),        2.0),  # Rappel setup + execute gold
+    (frozenset({"Elise",        "Renekton"}),    2.0),  # Early dive + lane bully combo
+    (frozenset({"Elise",        "Yone"}),        2.0),  # CC chain setup for Yone all-in
+    (frozenset({"Galio",        "Wukong"}),      2.0),  # Hero's Entrance into Cyclone AoE
+    (frozenset({"Gnar",         "Qiyana"}),      2.0),  # GNAR! knockup + Qiyana follow-up
+    (frozenset({"Gragas",       "Xin Zhao"}),    2.0),  # Explosive Cask displacement + Xin dive
+    (frozenset({"Jarvan IV",    "Qiyana"}),      2.0),  # Cataclysm sets up Qiyana terrain ult
+    (frozenset({"Jax",          "Qiyana"}),      2.0),  # Leap Strike + Qiyana terrain burst
+    (frozenset({"Jax",          "Sion"}),        2.0),  # Double frontline scaling
+    (frozenset({"Jayce",        "Neeko"}),       2.0),  # Long-range disguise poke combo
+    (frozenset({"Jhin",         "Leona"}),       2.0),  # Zenith Blade + Curtain Call root
+    (frozenset({"Jhin",         "Poppy"}),       2.0),  # Anti-dive peel + Jhin 4th shot
+    (frozenset({"Jhin",         "Pyke"}),        2.0),  # Execute gold + Jhin 4th shot
+    (frozenset({"Jhin",         "Thresh"}),      2.0),  # Death Sentence + Curtain Call
+    (frozenset({"Jinx",         "Nautilus"}),    2.0),  # Hook setup + Jinx hyper scaling
+    (frozenset({"Jinx",         "Poppy"}),       2.0),  # Anti-dash peel + Jinx reset
+    (frozenset({"Jinx",         "Pyke"}),        2.0),  # Execute gold + Jinx reset
+    (frozenset({"K'Sante",      "Neeko"}),       2.0),  # All-Out into Pop Blossom chain
+    (frozenset({"K'Sante",      "Pantheon"}),    2.0),  # Double bruiser dive combo
+    (frozenset({"Kai'Sa",       "Zac"}),         2.0),  # Zac elastic engage + Kai'Sa void dive
+    (frozenset({"Karma",        "Varus"}),       2.0),  # Shield + Blight stack poke
+    (frozenset({"Kennen",       "Vi"}),          2.0),  # Assault and Battery into Lightning Rush
+    (frozenset({"Leona",        "Sivir"}),       2.0),  # On the Hunt delivery + lockdown
+    (frozenset({"Nautilus",     "Sivir"}),       2.0),  # Depth Charge + On the Hunt combo
+    (frozenset({"Neeko",        "Qiyana"}),      2.0),  # Pop Blossom setup + Qiyana burst
+    (frozenset({"Neeko",        "Vi"}),          2.0),  # Vi dive + Pop Blossom follow-up
+    (frozenset({"Neeko",        "Xayah"}),       2.0),  # Disguise + feather protection
+    (frozenset({"Orianna",      "Wukong"}),      2.0),  # Cyclone AoE + Ball convergence
+    (frozenset({"Pantheon",     "Varus"}),       2.0),  # Grand Starfall + Blight chain
+    (frozenset({"Pantheon",     "Zac"}),         2.0),  # Double engage global combo
+    (frozenset({"Poppy",        "Sivir"}),       2.0),  # Anti-dash + On the Hunt
+    (frozenset({"Pyke",         "Smolder"}),     2.0),  # Execute gold + Smolder stacks
+    (frozenset({"Pyke",         "Varus"}),       2.0),  # Death from Below execute + Blight
+    (frozenset({"Qiyana",       "Rakan"}),       2.0),  # Grand Entrance into terrain ult
+    (frozenset({"Rell",         "Yasuo"}),       2.0),  # Ferromancy knockup + Last Breath
+    (frozenset({"Renekton",     "Ryze"}),        2.0),  # Early lane pressure + Ryze portal
+    (frozenset({"Sejuani",      "Taliyah"}),     2.0),  # Glacial Prison + Weaver's Wall trap
+    (frozenset({"Shen",         "Yasuo"}),       2.0),  # Stand United peel + Last Breath
+    (frozenset({"Shen",         "Yone"}),        2.0),  # Stand United global + Fate Sealed
+    (frozenset({"Smolder",      "Thresh"}),      2.0),  # Lantern safety + Smolder scaling
+    (frozenset({"Syndra",       "Yasuo"}),       2.0),  # Scatter the Weak CC + Last Breath
+    (frozenset({"Thresh",       "Varus"}),       2.0),  # Death Sentence + Chain of Corruption
+    (frozenset({"Yasuo",        "Yone"}),        2.0),  # Brothers combo: double airborne
+    (frozenset({"Yasuo",        "Zac"}),         2.0),  # Zac elastic + Yasuo Last Breath
 ]
 
 # Counter map: champ → set of champions it counters (opponent has X → I pick Y)
 # Expanded from 25 → 80+ entries covering top/jng/mid/bot/sup matchups.
 COUNTER_MAP: dict = {
     # ── TOP LANE ────────────────────────────────────────────────────────────
-    "Malphite":     {"Yasuo", "Yone", "Corki", "Lucian", "Jinx", "Aphelios", "Kalista"},
-    "Poppy":        {"Vi", "Jarvan IV", "Xin Zhao", "Nocturne", "Gragas", "Wukong", "Skarner", "Lee Sin"}, # Anti-dash queen
-    "Ornn":         {"Gnar", "Kennen", "Rumble", "Renekton"},  # Out-scales bully tops
-    "Renekton":     {"Sion", "Aatrox", "Gwen", "Mordekaiser"}, # Early lane domination
-    "Jax":          {"Renekton", "Gwen", "Dr. Mundo", "Darius", "Camille"}, # Wins extended fights
-    "Gnar":         {"Ornn", "Malphite", "Sion", "K'Sante"},   # Kite tank tops
+    "Aatrox":       {"Dr. Mundo", "Elise", "Gragas", "Gwen", "Jarvan IV", "Pantheon",
+                     "Poppy", "Sejuani", "Shen", "Sion", "Skarner", "Vi", "Volibear",
+                     "Xin Zhao", "Zac"},
+    "Malphite":     {"Yasuo", "Yone", "Corki", "Lucian", "Jinx", "Aphelios", "Kalista","Ashe", "Caitlyn", "Gnar", "Jayce", "Jhin", "Naafiri",
+                     "Pantheon", "Qiyana"},
+    "Poppy":        {"Vi", "Jarvan IV", "Xin Zhao", "Nocturne", "Gragas", "Wukong", "Skarner", "Lee Sin", "Ahri", "Akali", "Ashe", "Caitlyn", "Jhin", "LeBlanc",
+                     "Naafiri", "Pantheon", "Qiyana", "Yasuo", "Zac"}, # Anti-dash queen
+    "Ornn":         {"Gnar", "Kennen", "Rumble", "Renekton","Akali", "Ashe", "Caitlyn", "Jayce", "Jhin",
+                     "Malphite", "Naafiri", "Pantheon", "Qiyana"},  # Out-scales bully tops
+    "Renekton":     {"Sion", "Aatrox", "Gwen", "Mordekaiser","Ambessa", "K'Sante", "Yasuo", "Yone"}, # Early lane domination
+    "Jax":          {"Renekton", "Gwen", "Dr. Mundo", "Darius", "Camille", "Volibear", "Yasuo", "Yone"}, # Wins extended fights
+    "Gnar":         {"Ornn", "Malphite", "Sion", "K'Sante",
+                     "Jax", "Renekton", "Volibear"},   # Kite tank tops
     "Pantheon":     {"Sion", "Ornn", "Garen", "Nasus"},        # Early lane bully
-    "Shen":         {"Nocturne", "Pantheon", "Tryndamere"},    # Global ult negates splits
-    "Kennen":       {"Malphite", "Sion", "Ornn"},              # AoE poke vs armor stacks
-    "Rumble":       {"Ornn", "Maokai", "Cho'Gath", "Garen"},   # AP poke vs HP tanks
-    "Gragas":       {"Renekton", "Darius", "Aatrox"},          # Disengage + sustain
+    "Shen":         {"Nocturne", "Pantheon", "Tryndamere","Akali", "Caitlyn", "Jax", "Malphite", "Ornn",
+                     "Qiyana", "Sion", "Volibear"},    # Global ult negates splits
+    "Kennen":       {"Malphite", "Sion", "Ornn",
+                     "Ambessa", "Gragas", "Gwen", "Jax", "Rumble",
+                     "Volibear", "Yasuo", "Yone"},              # AoE poke vs armor stacks
+    "Rumble":       {"Ornn", "Maokai", "Cho'Gath", "Garen","Gnar", "Jax", "Malphite", "Renekton"},   # AP poke vs HP tanks
+    "Gragas":       {"Renekton", "Akali", "Jax", "Jayce", "Volibear"},          # Disengage + sustain
     "Kled":         {"Gnar", "Sion", "Yasuo"},                 # Aggressive dueling
     "Volibear":     {"Gnar", "Kennen", "Jax"},                 # Hard-engages pokers
     "Ambessa":      {"Gnar", "Renekton", "Aatrox", "Jax"},     # Mobile executioner
-    "K'Sante":      {"Fiora", "Jax", "Gwen"},                  # Tank that can 1v1 carries
+    "K'Sante":      {"Fiora", "Jax", "Gwen","Ashe", "Caitlyn", "Dr. Mundo", "Jhin",
+                     "Malphite", "Naafiri", "Ornn", "Pantheon", "Qiyana",
+                     "Sion", "Volibear"},                  # Tank that can 1v1 carries
     "Darius":       {"Garen", "Nasus", "Sion", "Cho'Gath"},    # Juge, juré, bourreau des tanks
     "Fiora":        {"K'Sante", "Aatrox", "Mordekaiser", "Jax"}, # True damage scaling & Riposte
     "Camille":      {"Gnar", "Jayce", "Kennen"},               # The "long range" engage specialist
     "Mordekaiser":  {"Illaoi", "Yorick", "Malphite"},          # Death Realm cancels pets/summons
     "Olaf":         {"Morgana", "Leona", "Nautilus", "Lux"},   # Ragnarok ignores all CC chains
-
+    "Gwen":         {"Alistar", "Braum", "Dr. Mundo", "Elise", "Jarvan IV", "K'Sante",
+                     "Leona", "Malphite", "Nautilus", "Ornn", "Pantheon", "Poppy",
+                     "Rell", "Sejuani", "Shen", "Sion", "Skarner", "Vi",
+                     "Xin Zhao", "Zac"},
+    "Jayce":        {"Aatrox", "Akali", "Gnar", "Gwen", "Jax", "Kennen",
+                     "Renekton", "Volibear", "Yone"},
+    "Sion":         {"Akali", "Ashe", "Caitlyn", "Jayce", "Jhin", "Kennen",
+                     "Malphite", "Naafiri", "Pantheon", "Qiyana", "Rumble"},
+    
     # ── JUNGLE ──────────────────────────────────────────────────────────────
-    "Poppy":        {"Vi", "Jarvan IV", "Xin Zhao", "Nocturne", "Wukong", "Skarner"},
-    "Trundle":      {"Malphite", "Cho'Gath", "Dr. Mundo", "Sion", "Sejuani"}, # Subjugate steals stats
+     "Trundle":      {"Malphite", "Cho'Gath", "Dr. Mundo", "Sion", "Sejuani"}, # Subjugate steals stats
     "Wukong":       {"Amumu", "Sejuani", "Zac"},               # Clears fast, outduels tanks
     "Nocturne":     {"Twisted Fate", "Shen", "Pantheon", "Karthus"}, # Paranoia denies global info
     "Hecarim":      {"Nunu", "Amumu", "Lillia"},               # Speed-clears & dive
@@ -4823,7 +4948,12 @@ COUNTER_MAP: dict = {
     "Kindred":      {"Zac", "Sejuani", "Vi"},                  # Scaling + R to deny execution
     "Bel'Veth":     {"Lillia", "Karthus", "Evelynn"},          # High pressure vs power farmers
     "Nidalee":      {"Graves", "Kindred"},                     # Invade and out-tempo
-
+    "Dr. Mundo":    {"Ashe", "Caitlyn", "Gragas", "Jax", "Jayce", "Jhin", "Kennen",
+                     "Malphite", "Nocturne", "Pantheon", "Qiyana", "Renekton",
+                     "Sion", "Wukong"},
+   "Wukong":       {"Gragas", "Jarvan IV", "Naafiri", "Pantheon", "Poppy",
+                     "Skarner", "Vi", "Volibear", "Xin Zhao"},
+                  
     # ── MID LANE ────────────────────────────────────────────────────────────
     "Galio":        {"Akali", "Ahri", "LeBlanc", "Syndra", "Zoe", "Qiyana", "Naafiri", "Talon"},
     "Ahri":         {"Akali", "Naafiri", "LeBlanc", "Qiyana"}, # Charm + mobility outplay
@@ -4845,11 +4975,13 @@ COUNTER_MAP: dict = {
     "Lissandra":    {"LeBlanc", "Zed", "Akali", "Ahri"},       # Anti-assassin lockdown
     "Kassadin":     {"Syndra", "Viktor", "LeBlanc", "Ahri"},   # Magic shield + scaling
     "Sylas":        {"Malphite", "Alistar", "Ornn", "Ashe"},   # "I'll take that ult, thanks"
+    "Aurelion Sol": {"Anivia", "Orianna"},
 
     # ── BOT LANE (ADC) ──────────────────────────────────────────────────────
     "Sivir":        {"Zac", "Alistar", "Nautilus", "Malphite", "Leona", "Blitzcrank"},
     "Ezreal":       {"Draven", "Samira", "Nautilus"},          # Arcane Shift away from all-in
-    "Xayah":        {"Alistar", "Nautilus", "Rell", "Leona", "Jarvan IV"}, # Feather safety
+    "Xayah":        {"Alistar", "Nautilus", "Rell", "Leona", "Jarvan IV","Galio", "Gnar", "Gragas", "Kai'Sa", "Malphite", "Neeko",
+                     "Ornn", "Poppy", "Sejuani", "Zac"}, # Feather safety
     "Caitlyn":      {"Alistar", "Thresh", "Vayne", "Short-range ADCs"}, # Lane bully range
     "Aphelios":     {"Sivir", "Morgana", "Nami"},              # Massive DPS vs sustain lanes
     "Ashe":         {"Nocturne", "Naafiri", "Talon", "Briar"}, # Hawkshot reveals + Permaslow
@@ -4862,8 +4994,8 @@ COUNTER_MAP: dict = {
     "Smolder":      {"Caitlyn", "Jhin", "Senna"},              # Infinite scaling sustain
     "Kai'Sa":       {"Ezreal", "Miss Fortune", "Zeri"},        # Assassination potential
     "Samira":       {"Ashe", "Miss Fortune", "Caitlyn", "Jinx"}, # Blade Whirl blocks ults
-    "Nilah":        {"Lucian", "Draven", "Yasuo"},             # Melee ADC anti-AA shield
-
+    "Nilah":        {"Lucian", "Draven", "Yasuo"},             # Melee ADC anti-AA shield                 "Ornn", "Poppy", "Sejuani", "Zac"},
+    "Yunara":       {"Sivir",},
     # ── SUPPORT ──────────────────────────────────────────────────────────────
     "Lulu":         {"Nocturne", "Malphite", "Zac", "Vi", "Jarvan IV", "Katarina"},
     "Braum":        {"Ezreal", "Aphelios", "Kalista", "Caitlyn", "Ashe", "Ornn"}, # Unbreakable wall
@@ -4884,6 +5016,167 @@ COUNTER_MAP: dict = {
     "Zyra":         {"Rell", "Leona", "Alistar"},              # Plant zone vs melee engage
     "Senna":        {"Tahm Kench", "Sion", "Braum"},           # Scaling with heavy frontlines
     "Maokai":       {"Pyke", "Thresh", "Blitzcrank"},          # Saplings check bushes safely
+ "Ahri":         {"Akali", "Naafiri", "LeBlanc", "Qiyana",
+                     "Aurelion Sol", "Galio", "Yone"},                  # +Aurelion Sol, Galio, Yone
+    # Akali
+    "Akali":        {"Gnar", "Gwen", "Jax", "Naafiri", "Taliyah",
+                     "Viktor", "Volibear", "Yone"},
+    # Alistar
+    "Alistar":      {"Caitlyn", "Jinx", "Aphelios", "Leona",
+                     "Akali", "Ashe", "Jhin", "Kennen", "Naafiri",
+                     "Nami", "Nautilus", "Qiyana"},
+    # Anivia
+    "Anivia":       {"Corki", "Azir", "Yone", "Ryze", "Zoe"},
+    # Aphelios
+    "Aphelios":     {"Sivir", "Kai'Sa"},
+    # Ashe
+    "Ashe":         {"Nocturne", "Naafiri", "Braum", "Kalista", "Lulu"},
+    # Azir
+    "Azir":         {"LeBlanc", "Qiyana", "Alistar", "Anivia", "Braum",
+                     "Dr. Mundo", "K'Sante", "Leona", "Malphite", "Naafiri",
+                     "Nautilus", "Ornn", "Poppy", "Rell", "Sejuani",
+                     "Shen", "Sion", "Yasuo", "Zac"},
+    # Bard
+    "Bard":         {"Jarvan IV", "Skarner", "Zac",
+                     "Braum", "Rakan", "Seraphine"},
+    # Braum
+    "Braum":        {"Ezreal", "Aphelios", "Kalista", "Caitlyn", "Ashe",
+                     "Akali", "Alistar", "Galio", "Jhin", "Leona", "Naafiri",
+                     "Nautilus", "Ornn", "Pantheon", "Pyke", "Qiyana",
+                     "Thresh", "Yasuo", "Zac"},
+    # Cassiopeia
+    "Cassiopeia":   {"Yasuo", "Yone", "Alistar", "Braum", "Dr. Mundo",
+                     "K'Sante", "Leona", "Malphite", "Nautilus", "Ornn",
+                     "Poppy", "Rell", "Ryze", "Sejuani", "Shen", "Sion", "Zac"},
+    # Corki
+    "Corki":        {"Azir", "Taliyah", "Varus"},
+    # Ezreal
+    "Ezreal":       {"Nautilus", "Pyke", "Thresh"},
+    # Galio
+    "Galio":        {"Akali", "Ahri", "LeBlanc", "Syndra", "Zoe", "Qiyana", "Naafiri",
+                     "Karma", "Nami", "Ryze", "Seraphine"},
+    # Gnar
+    "Gnar":         {"Ornn", "Malphite", "Sion", "K'Sante",
+                     "Jax", "Renekton", "Volibear"},
+    # Gragas
+    "Gragas":       {"Renekton", "Akali", "Jax", "Jayce", "Volibear"},
+    # Jarvan IV
+    "Jarvan IV":    {"Lee Sin", "Nidalee", "Ezreal",
+                     "Ashe", "Jhin", "Orianna", "Sivir", "Viktor", "Zac"},
+    # Jax
+    "Jax":          {"Renekton", "Gwen", "Dr. Mundo",
+                     "Volibear", "Yasuo", "Yone"},
+    # K'Sante
+    "K'Sante":      {"Jax", "Gwen", "Ashe", "Caitlyn", "Dr. Mundo", "Jhin",
+                     "Malphite", "Naafiri", "Ornn", "Pantheon", "Qiyana",
+                     "Sion", "Volibear"},
+    # Kai'Sa
+    "Kai'Sa":       {"Ezreal", "Jhin"},
+    # Karma
+    "Karma":        {"Ashe"},
+    # Kennen
+    "Kennen":       {"Malphite", "Sion", "Ornn",
+                     "Ambessa", "Gragas", "Gwen", "Jax", "Rumble",
+                     "Volibear", "Yasuo", "Yone"},
+    # LeBlanc
+    "LeBlanc":      {"Syndra", "Viktor", "Orianna",
+                     "Azir", "Taliyah", "Yone"},
+    # Leona
+    "Leona":        {"Jinx", "Akali", "Ashe", "Caitlyn", "Jhin", "Naafiri",
+                     "Nami", "Nautilus", "Qiyana"},
+    # Lulu
+    "Lulu":         {"Nocturne", "Malphite", "Zac", "Vi", "Jarvan IV",
+                     "Akali", "Alistar", "Galio", "Pantheon", "Pyke", "Rakan", "Rell"},
+    # Malphite
+    "Malphite":     {"Yasuo", "Yone", "Corki", "Lucian", "Jinx", "Aphelios", "Kalista",
+                     "Ashe", "Caitlyn", "Gnar", "Jayce", "Jhin", "Naafiri",
+                     "Pantheon", "Qiyana"},
+    # Naafiri
+    "Naafiri":      {"Aurelion Sol", "Dr. Mundo", "LeBlanc", "Shen", "Syndra", "Zoe"},
+    # Nami
+    "Nami":         {"Alistar", "Leona",
+                     "Ashe", "Pantheon", "Rakan", "Rell"},
+    # Nautilus
+    "Nautilus":     {"Lucian", "Ezreal", "Akali", "Ashe", "Caitlyn", "Jhin", "Karma",
+                     "Naafiri", "Nami", "Pantheon", "Qiyana", "Seraphine"},
+    # Neeko
+    "Neeko":        {"Alistar", "Braum", "Rakan", "Rell"},
+    # Nocturne
+    "Nocturne":     {"Twisted Fate", "Shen", "Pantheon",
+                     "Elise", "Gragas", "Jhin", "Naafiri", "Poppy",
+                     "Sejuani", "Skarner", "Vi", "Volibear"},
+    # Ornn
+    "Ornn":         {"Gnar", "Kennen", "Rumble", "Renekton",
+                     "Akali", "Ashe", "Caitlyn", "Jayce", "Jhin",
+                     "Malphite", "Naafiri", "Pantheon", "Qiyana"},
+    # Pantheon
+    "Pantheon":     {"Sion", "Ornn", "Neeko"},
+    # Poppy
+    "Poppy":        {"Vi", "Jarvan IV", "Xin Zhao", "Nocturne", "Gragas", "Wukong", "Skarner",
+                     "Ahri", "Akali", "Ashe", "Caitlyn", "Jhin", "LeBlanc",
+                     "Naafiri", "Pantheon", "Qiyana", "Yasuo", "Zac"},
+    # Pyke
+    "Pyke":         {"Thresh", "Nautilus",
+                     "Karma", "Nami", "Seraphine"},
+    # Qiyana
+    "Qiyana":       {"Azir", "Orianna", "Corki", "Taliyah",
+                     "Anivia", "Aurelion Sol", "Galio", "Naafiri", "Syndra"},
+    # Rakan
+    "Rakan":        {"Braum", "Karma", "Nautilus", "Pantheon", "Pyke"},
+    # Rell
+    "Rell":         {"Ezreal", "Corki", "Xayah", "Seraphine",
+                     "Akali", "Ashe", "Braum", "Caitlyn", "Jhin", "Naafiri",
+                     "Nautilus", "Qiyana", "Rakan"},
+    # Renekton
+    "Renekton":     {"Sion", "Aatrox", "Gwen",
+                     "Ambessa", "K'Sante", "Yasuo", "Yone"},
+    # Rumble
+    "Rumble":       {"Ornn", "Gnar", "Jax", "Malphite", "Renekton"},
+    # Ryze
+    "Ryze":         {"Akali"},
+    # Sejuani
+    "Sejuani":      {"Jarvan IV", "Vi", "Xin Zhao",
+                     "Akali", "Ashe", "Caitlyn", "Jhin", "Naafiri",
+                     "Pantheon", "Qiyana"},
+    # Seraphine
+    "Seraphine":    {"Zac", "Vi", "Sion", "Ashe"},
+    # Shen
+    "Shen":         {"Nocturne", "Pantheon", "Tryndamere",
+                     "Akali", "Caitlyn", "Jax", "Malphite", "Ornn",
+                     "Qiyana", "Sion", "Volibear"},
+    # Sion
+    "Sion":         {"Akali", "Ashe", "Caitlyn", "Jayce", "Jhin", "Kennen",
+                     "Malphite", "Naafiri", "Pantheon", "Qiyana", "Rumble"},
+    # Sivir
+    "Sivir":        {"Zac", "Alistar", "Nautilus", "Malphite", "Leona",
+                     "Pyke", "Varus"},
+    # Syndra
+    "Syndra":       {"Cassiopeia", "Ryze", "Azir",
+                     "Galio", "Yone"},
+    # Taliyah
+    "Taliyah":      {"Azir", "Orianna", "LeBlanc",
+                     "Anivia", "Vi", "Viktor"},
+    # Thresh
+    "Thresh":       {"Jinx", "Caitlyn", "Aphelios", "LeBlanc",
+                     "Karma", "Nami"},
+    # Trundle
+    "Trundle":      {"Malphite", "Dr. Mundo", "Sion", "Sejuani",
+                     "K'Sante", "Ornn", "Shen", "Skarner", "Zac"},
+    # Viktor
+    "Viktor":       {"Azir", "Orianna", "Corki"},
+    # Volibear
+    "Volibear":     {"Gnar", "Kennen", "Jax", "Gwen", "Yasuo"},
+    # Xin Zhao
+    "Xin Zhao":     {"Kindred", "Nunu", "Naafiri"},
+    # Yasuo
+    "Yasuo":        {"Akali", "Gnar", "Gwen", "Jayce", "Naafiri", "Ornn", "Taliyah"},
+    # Yone
+    "Yone":         {"Aurelion Sol", "Dr. Mundo", "Gwen", "Naafiri", "Sion"},
+    # Zac
+    "Zac":          {"Nidalee", "Kindred", "Akali", "Ashe", "Caitlyn", "Dr. Mundo",
+                     "Jhin", "Karma", "Naafiri", "Nami", "Pantheon", "Qiyana", "Seraphine"},
+    # Zoe
+    "Zoe":          {"Ryze", "Orianna", "Azir", "Qiyana", "Viktor"},
 }
 
 
