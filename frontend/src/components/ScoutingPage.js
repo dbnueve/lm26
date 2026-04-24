@@ -187,7 +187,7 @@ const ScoutingPage = ({ userTeam, onSignPlayer }) => {
           onChange={e => setSearchTerm(e.target.value)}
           style={{
             background: "var(--surface-1)", border: "1px solid var(--border)",
-            padding: "10px 14px", color: "white", borderRadius: 2, width: 220
+            padding: "10px 14px", color: "var(--text-1)", borderRadius: "var(--radius-xs)", width: 220
           }}
         />
         <div style={{ display: "flex", gap: 6 }}>
