@@ -1366,10 +1366,12 @@ async def use_session_state(session_id: str | None):
         raise HTTPException(404, f"MP session {session_id} introuvable")
 
     async with _swap_lock, _ThreadLockAsyncBridge(_state_thread_lock):
+        global _mp_swap_depth
         # Snapshot solo state
         solo_snapshot = dict(GAME_STATE)
         GAME_STATE.clear()
         GAME_STATE.update(sess.state)
+        _mp_swap_depth += 1
         try:
             # Align META_LOOKUP with this session's league (best-effort)
             try:
@@ -1383,6 +1385,7 @@ async def use_session_state(session_id: str | None):
             sess.state.update(GAME_STATE)
             _sessions.mark_dirty(session_id)
         finally:
+            _mp_swap_depth -= 1
             # Restore solo state exactly
             GAME_STATE.clear()
             GAME_STATE.update(solo_snapshot)
