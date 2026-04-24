@@ -505,9 +505,9 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
                 {negotiationResult && (
                   <div style={{
                     padding: 14,
-                    background: negotiationResult.accepted ? "rgba(0,230,118,0.1)" : negotiationResult.pending ? "rgba(255,193,7,0.1)" : "rgba(255,51,102,0.1)",
-                    border: "1px solid " + (negotiationResult.accepted ? "var(--success)" : negotiationResult.pending ? "var(--amber)" : "var(--danger)"),
-                    borderRadius: 2
+                    background: negotiationResult.accepted ? "var(--success-dim)" : negotiationResult.pending ? "var(--amber-dim)" : "var(--danger-dim)",
+                    border: "1px solid " + (negotiationResult.accepted ? "var(--success-border)" : negotiationResult.pending ? "var(--amber-border)" : "var(--danger-border)"),
+                    borderRadius: "var(--radius-sm)"
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                       {negotiationResult.accepted
