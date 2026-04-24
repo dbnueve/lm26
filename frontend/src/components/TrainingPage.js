@@ -161,7 +161,7 @@ const TrainingPage = ({ userTeam, onSetTeamTrainingPlan }) => {
           </div>
           {teamPlan && (
             <button
-              style={{ background: "none", border: "1px solid var(--border)", cursor: "pointer", color: "var(--text-2)", padding: "6px 12px", fontSize: 12, borderRadius: 2, display: "inline-flex", alignItems: "center", gap: 6 }}
+              style={{ background: "none", border: "1px solid var(--border-strong)", cursor: "pointer", color: "var(--text-2)", padding: "5px 12px", fontSize: 12, borderRadius: "var(--radius-sm)", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}
               onClick={() => handleSetPlan("")}
               disabled={saving}
             >
