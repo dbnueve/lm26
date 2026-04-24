@@ -252,8 +252,8 @@ const NegotiationsPage = ({ userTeam, teams, phase: phaseProp, onMakeOffer, onSe
             </div>
           </div>
           <div style={{
-            marginTop: 8, padding: "8px 16px", background: "var(--bg)",
-            borderRadius: 2, fontSize: 12, color: "var(--text-2)", fontFamily: "monospace"
+            marginTop: 8, padding: "8px 16px", background: "var(--surface-2)",
+            borderRadius: "var(--radius-xs)", fontSize: 12, color: "var(--text-2)", fontFamily: "var(--font-mono)"
           }}>
             Phase actuelle : <strong style={{ color: "var(--accent)" }}>{phase}</strong>
           </div>
