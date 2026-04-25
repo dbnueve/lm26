@@ -386,12 +386,10 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
         <div style={{
           marginTop: 20, paddingTop: 16,
           borderTop: `1px solid ${heroAccent}33`,
-          display: "flex", justifyContent: "center", gap: 28, flexWrap: "wrap",
+          display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap",
         }}>
-          <MiniStat icon={Timer}     label="Durée"   value={`${dur}m`} />
-          <MiniStat icon={Crosshair} label="Kills"   value={userScore} color={userWon ? ACCENT_WIN : "var(--text-1)"} />
-          <MiniStat icon={Sword}     label="Dégâts"  value={`${(userTotalDmg / 1000).toFixed(0)}k`} color={ACCENT_MVP} />
-          <MiniStat icon={Coins}     label="CS Tot." value={userTotalCs} />
+          <MiniStat icon={Timer} label="Durée"      value={`${dur}m`} />
+          <MiniStat icon={Coins} label="Gold total" value={`${(userTotalGold / 1000).toFixed(1)}k`} color={ACCENT_MVP} />
         </div>
       </motion.section>
 
