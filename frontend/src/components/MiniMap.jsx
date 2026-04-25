@@ -97,6 +97,47 @@ const POS = {
   mid_river_red:  { x: 56, y: 44 }, // rivière côté red mid
 };
 
+// Tours par lane (outer → inner → inhib), ordre de chute LoL.
+// 3 par lane × 2 côtés = 18 (les 2 nexus turrets ne sont pas affichées séparément).
+const TOWERS = {
+  // Côté BLUE (bas-gauche)
+  blue: {
+    top: [
+      POS.blue_top_t1,           // outer
+      POS.blue_top_t2,           // inner
+      { x: 13, y: 78 },          // inhib (= blue_inhib_top)
+    ],
+    mid: [
+      POS.blue_mid_t1,           // outer
+      { x: 30, y: 70 },          // inner mid
+      { x: 22, y: 79 },          // inhib (= blue_inhib_mid)
+    ],
+    bot: [
+      POS.blue_bot_t1,           // outer
+      POS.blue_bot_t2,           // inner
+      { x: 23, y: 88 },          // inhib (= blue_inhib_bot)
+    ],
+  },
+  // Côté RED (haut-droit)
+  red: {
+    top: [
+      POS.red_top_t1,            // outer
+      POS.red_top_t2,            // inner
+      { x: 77, y: 13 },          // inhib (= red_inhib_top)
+    ],
+    mid: [
+      POS.red_mid_t1,            // outer
+      { x: 70, y: 30 },          // inner mid
+      { x: 78, y: 22 },          // inhib (= red_inhib_mid)
+    ],
+    bot: [
+      POS.red_bot_t1,            // outer
+      POS.red_bot_t2,            // inner
+      { x: 87, y: 23 },          // inhib (= red_inhib_bot)
+    ],
+  },
+};
+
 /* ═══════════════════════════════════════════════════════════════
    COORDONNÉES DES ÉVÉNEMENTS sur la carte
 ═══════════════════════════════════════════════════════════════ */
