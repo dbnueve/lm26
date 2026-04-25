@@ -1303,10 +1303,10 @@ export default function MiniMap({
         />
       ))}
 
-      {/* Tours encore debout — icône CommunityDragon, disparaît quand l'event tower tombe */}
+      {/* Tours encore debout — icône CommunityDragon teintée par mask, disparaît quand l'event tower tombe */}
       {standingTowers.map(t => {
         const tint = t.side === "blue" ? "#3b82f6" : "#ef4444";
-        const sz = Math.round(iconSize * 0.75);
+        const sz = Math.round(iconSize * 0.78);
         return (
           <div key={t.key} style={{
             position: "absolute",
@@ -1315,15 +1315,17 @@ export default function MiniMap({
             width: sz, height: sz,
             zIndex: 18,
             pointerEvents: "none",
-            filter: `drop-shadow(0 0 3px ${tint}dd) drop-shadow(0 0 1px rgba(0,0,0,0.95))`,
-          }}>
-            <img
-              src="https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/tower.png"
-              alt=""
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-              onError={(e) => { e.currentTarget.style.display = "none"; }}
-            />
-          </div>
+            background: tint,
+            WebkitMaskImage: "url(https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/tower.png)",
+            maskImage: "url(https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/tower.png)",
+            WebkitMaskSize: "contain",
+            maskSize: "contain",
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskPosition: "center",
+            maskPosition: "center",
+            filter: `drop-shadow(0 0 3px ${tint}cc) drop-shadow(0 0 1px rgba(0,0,0,0.9))`,
+          }} />
         );
       })}
 
