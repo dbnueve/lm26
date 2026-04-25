@@ -523,32 +523,13 @@ const HistoryPage = ({ userTeam, showToast }) => {
           className="card"
           style={{ padding: 20 }}
         >
-          <div style={{
-            display: "flex", alignItems: "baseline", justifyContent: "space-between",
-            marginBottom: 16, flexWrap: "wrap", gap: 8,
-          }}>
+          <div style={{ marginBottom: 16 }}>
             <h3 style={{
               margin: 0, fontFamily: FONT_HEADING, fontSize: 14, letterSpacing: 2,
               color: "var(--text-2)", textTransform: "uppercase",
             }}>
               Évolution par split
             </h3>
-            {/* Légende tiers */}
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              {ELO_TIERS.slice(0, 5).reverse().map(t => (
-                <span key={t.label} style={{
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                  fontSize: 9, fontWeight: 700, letterSpacing: 0.6,
-                  color: t.color, textTransform: "uppercase",
-                }}>
-                  <span style={{
-                    width: 8, height: 8, borderRadius: 2, background: t.color,
-                    boxShadow: `0 0 4px ${t.color}aa`,
-                  }} />
-                  {t.label}
-                </span>
-              ))}
-            </div>
           </div>
           <EloChart data={eloChartData} />
         </motion.section>
