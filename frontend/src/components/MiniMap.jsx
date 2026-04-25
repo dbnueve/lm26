@@ -30,10 +30,10 @@ const POS = {
   spawn_red:  { x: 92, y: 10 },
 
   // ── Objectifs majeurs ──
-  baron:      { x: 24, y: 32 },  // fosse Baron (haut-gauche rivière)
-  herald:     { x: 24, y: 32 },  // même fosse avant 20min
-  drake:      { x: 74, y: 68 },  // fosse Drake (bas-droite rivière)
-  elder:      { x: 74, y: 68 },
+  baron:      { x: 28, y: 27 },  // fosse Baron (haut-gauche rivière)
+  herald:     { x: 28, y: 27 },  // même fosse avant 20min
+  drake:      { x: 72, y: 73 },  // fosse Drake (bas-droite rivière)
+  elder:      { x: 72, y: 73 },
 
   // ── Scuttles (rivière) ──
   scuttle_top: { x: 38, y: 44 }, // crabe rivière top-mid
