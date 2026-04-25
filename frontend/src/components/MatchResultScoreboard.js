@@ -504,6 +504,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
           teamAbbr={userTeam.abbr}
           teamName={userTeam.name}
           duration={dur}
+          totalGold={userTotalGold}
         />
         <TeamStatsCard
           stats={oppStats}
@@ -512,6 +513,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
           teamAbbr={opponentTeam?.abbr || ""}
           teamName={opponentTeam?.name}
           duration={dur}
+          totalGold={oppTotalGold}
         />
       </div>
 
