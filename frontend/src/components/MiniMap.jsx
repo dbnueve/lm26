@@ -1203,6 +1203,48 @@ export default function MiniMap({
     return { heraldUp, drakeUp, baronUp, elderUp: drakeUp && elderUnlocked, drakeIsElder: elderUnlocked };
   }, [visibleEvents, matchSec]);
 
+  // ── Tours encore debout : on compte les chutes par côté+lane.
+  // Les events tower n'ont pas d'ID, on retire dans l'ordre standard (outer → inner → inhib).
+  // `team` dans l'event = équipe qui A DÉTRUIT, donc la tour appartient au camp adverse.
+  const standingTowers = useMemo(() => {
+    const fallen = {
+      blue: { top: 0, mid: 0, bot: 0 },
+      red:  { top: 0, mid: 0, bot: 0 },
+    };
+    visibleEvents.forEach(ev => {
+      if (parseSec(ev.time) > matchSec) return;
+      if (ev.type !== "tower" && ev.type !== "first_tower") return;
+      const desc = (ev.description || "").toLowerCase();
+      // Côté de la tour DÉTRUITE = adversaire de l'équipe qui l'a prise.
+      // En MP, leftNum = 1 ou 100, isLeftBlue est déjà calculé.
+      // Ici on raisonne en team 1/2 → on mappe sur blue/red via leftNum.
+      const evTeam = ev.team; // 1 ou 2 = équipe qui a détruit
+      // L'équipe 1 est blue par convention dans le code en aval.
+      const towerSide = evTeam === 1 ? "red" : "blue";
+      let lane = "mid";
+      if (desc.includes("top") || desc.includes("haut")) lane = "top";
+      else if (desc.includes("bot") || desc.includes("bas")) lane = "bot";
+      fallen[towerSide][lane] = Math.min(3, fallen[towerSide][lane] + 1);
+    });
+    // Construit la liste des tours debout
+    const standing = [];
+    ["blue", "red"].forEach(side => {
+      ["top", "mid", "bot"].forEach(lane => {
+        const fallenCount = fallen[side][lane];
+        const towers = TOWERS[side][lane];
+        for (let i = fallenCount; i < towers.length; i++) {
+          standing.push({
+            key: `${side}-${lane}-${i}`,
+            x: towers[i].x,
+            y: towers[i].y,
+            side,
+          });
+        }
+      });
+    });
+    return standing;
+  }, [visibleEvents, matchSec]);
+
   return (
     <div style={{
       position: "relative",
