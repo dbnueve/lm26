@@ -303,18 +303,34 @@ function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration }) {
           </span>
         )}
         <div style={{ display: "flex", gap: 14, marginLeft: 4 }}>
-          <StatChip
-            value={`${(totalGold / 1000).toFixed(1)}k`}
-            label="Gold"
-            valueColor={ACCENT_MVP}
-            tooltip={`${totalGold.toLocaleString("fr-FR")} g · Gold total équipe`}
-          />
-          <StatChip
-            value={teamKDA}
-            label="KDA"
-            valueColor={accent}
-            tooltip={`${totalKills} / ${totalDeaths} / ${totalAssists}  ·  K/D/A équipe`}
-          />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.05 }}>
+            <span style={{
+              fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
+              color: ACCENT_MVP, fontVariantNumeric: "tabular-nums",
+            }}>
+              {(totalGold / 1000).toFixed(1)}k
+            </span>
+            <span style={{
+              fontSize: 8, color: "var(--text-2)", letterSpacing: 0.8,
+              fontWeight: 700, textTransform: "uppercase",
+            }}>Gold</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.05 }}>
+            <span style={{
+              fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
+              fontVariantNumeric: "tabular-nums",
+            }}>
+              <span style={{ color: ACCENT_WIN }}>{totalKills}</span>
+              <span style={{ color: "var(--text-2)", margin: "0 1px" }}>/</span>
+              <span style={{ color: ACCENT_LOSS }}>{totalDeaths}</span>
+              <span style={{ color: "var(--text-2)", margin: "0 1px" }}>/</span>
+              <span style={{ color: "var(--accent)" }}>{totalAssists}</span>
+            </span>
+            <span style={{
+              fontSize: 8, color: "var(--text-2)", letterSpacing: 0.8,
+              fontWeight: 700, textTransform: "uppercase",
+            }}>K/D/A</span>
+          </div>
         </div>
       </header>
 
