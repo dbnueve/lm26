@@ -17,6 +17,35 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
+from models import (
+    NewGameRequest, SignERLPlayerRequest, PlayoffsGameRequest, SimulateMatchRequest,
+    NegotiationOffer, CounterOfferBody, DraftStartRequest, DraftAction,
+    TrainingRequest, TrainingPlanRequest, TeamTrainingPlanRequest, RosterSwapRequest,
+    IntlSimRequest, _Mp2CreateBody, _Mp2JoinBody, _Mp2TeamBody, _Mp2ReadyBody,
+    _Mp2DraftStartBody, _Mp2DraftActionBody,
+)
+from simulation import (
+    simulate_match_phases, generate_kill_totals, generate_detailed_events,
+    _player_performance_score,
+)
+from draft_ai import (
+    CHAMP_TRAITS, SYNERGY_PAIRS, COUNTER_MAP, DRAFT_SEQUENCE, META_LOOKUP,
+    comp_score, delta_analyzer, calculate_draft_advantage,
+    ai_select_ban as _ai_select_ban, ai_select_pick as _ai_select_pick,
+    _get_team_champ_pool, _get_team_champ_pool_by_pos, _get_current_opponent_id,
+    _needed_positions,
+)
+import draft_ai as _draft_ai_module
+from tactics import (
+    DEFAULT_TACTICS, COHERENCE_RULES,
+    get_user_tactics, evaluate_coherence, calculate_tactics_modifier,
+)
+from training import execute_training_apply, execute_training_plan as _execute_training_plan
+from inbox import (
+    add_inbox_message as _add_inbox_message,
+    generate_match_inbox_messages as _generate_match_inbox_messages,
+    generate_weekly_board_message as _generate_weekly_board_message,
+)
 import uuid
 import random
 from datetime import datetime, timezone
