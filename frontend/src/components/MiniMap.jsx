@@ -932,6 +932,86 @@ export default function MiniMap({
     [enrichedEvents]
   );
 
+  // ── Reconstruction des participants à chaque kill ─────────────────
+  // Backend ne fournit pas la liste des assistants. On la régénère
+  // ici de façon déterministe (PRNG seedé sur le temps du kill) pour
+  // que les avatars convergent vers le lieu du fight.
+  // Sortie : pour chaque champion, liste d'événements de fight avec
+  // {sec, x, y, role: 'killer' | 'victim' | 'assist'}.
+  const fightInvolvementByChamp = useMemo(() => {
+    const out = {};
+    const champTeam = {};
+    const champPos  = {};
+    leftStats.forEach(p => {
+      if (p.champion) { champTeam[p.champion] = isLeftBlue ? 1 : 2; champPos[p.champion] = p.position; }
+    });
+    rightStats.forEach(p => {
+      if (p.champion) { champTeam[p.champion] = isRightBlue ? 1 : 2; champPos[p.champion] = p.position; }
+    });
+    const ASSIST_W = { TOP: 0.16, JUNGLE: 0.22, MID: 0.18, ADC: 0.12, SUPPORT: 0.32 };
+
+    // Mulberry32
+    const rngFromSeed = (seed) => {
+      let s = seed | 0;
+      return () => {
+        s = (s + 0x6D2B79F5) | 0;
+        let t = s;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    };
+
+    const push = (champ, entry) => {
+      if (!champ) return;
+      (out[champ] || (out[champ] = [])).push(entry);
+    };
+
+    // Pour savoir si un coéquipier est mort (donc indispo pour l'assist)
+    const isAliveAt = (champ, sec) => {
+      const list = deathTimelineByChamp[champ];
+      if (!list) return true;
+      return !list.some(d => sec >= d.deathSec && sec < d.respawnSec);
+    };
+
+    enrichedEvents.forEach(ev => {
+      if (!KILL_TYPES.has(ev.type)) return;
+      if (ev.mapX == null) return;
+      const sec = parseSec(ev.time);
+      const fightPos = { x: ev.mapX, y: ev.mapY };
+
+      if (ev.killer_champion) push(ev.killer_champion, { sec, x: fightPos.x, y: fightPos.y, role: "killer" });
+      if (ev.victim_champion) push(ev.victim_champion, { sec, x: fightPos.x, y: fightPos.y, role: "victim" });
+
+      // Coéquipiers vivants du killer → assistants potentiels
+      const killerTeam = champTeam[ev.killer_champion];
+      if (!killerTeam) return;
+      const mates = Object.keys(champTeam)
+        .filter(c => champTeam[c] === killerTeam && c !== ev.killer_champion && isAliveAt(c, sec))
+        .map(c => ({ champ: c, w: ASSIST_W[champPos[c]] ?? 0.2 }));
+      if (mates.length === 0) return;
+
+      const rng = rngFromSeed(Math.floor(sec * 1000) + (ev.killer_champion?.length || 0));
+      const numAssists = 1 + Math.floor(rng() * Math.min(3, mates.length));
+      const pool = [...mates];
+      for (let i = 0; i < numAssists && pool.length > 0; i++) {
+        const totalW = pool.reduce((s, m) => s + m.w, 0);
+        let r = rng() * totalW;
+        let idx = 0;
+        for (let j = 0; j < pool.length; j++) {
+          r -= pool[j].w;
+          if (r <= 0) { idx = j; break; }
+        }
+        const picked = pool.splice(idx, 1)[0];
+        push(picked.champ, { sec, x: fightPos.x, y: fightPos.y, role: "assist" });
+      }
+    });
+
+    // Tri chronologique
+    Object.values(out).forEach(list => list.sort((a, b) => a.sec - b.sec));
+    return out;
+  }, [enrichedEvents, leftStats, rightStats, isLeftBlue, isRightBlue, deathTimelineByChamp]);
+
   // Timeline complète des morts par champion (pour la simulation)
   const deathTimelineByChamp = useMemo(() => {
     const map = {};
