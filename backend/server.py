@@ -7206,10 +7206,16 @@ def _intl_set_slot(match: dict, slot: int, team: dict):
         match["locked"] = False
 
 
-def _intl_sim(t1: dict, t2: dict, best_of: int, t1_boost: float = 0, t2_boost: float = 0) -> dict:
+def _intl_sim(t1: dict, t2: dict, best_of: int, t1_boost: float = 0, t2_boost: float = 0,
+              start_score: tuple[int, int] = (0, 0), prev_games: list = None) -> dict:
+    """Simulate a full BO (or finish a partial one) until one team reaches wins_needed.
+
+    `start_score` lets the caller resume an in-progress BO. `prev_games` is the
+    existing list of game results to extend.
+    """
     wn = (best_of + 1) // 2
-    w1 = w2 = 0
-    games = []
+    w1, w2 = start_score
+    games = list(prev_games or [])
     # Apply a per-series form variance to match the variability of calculate_team_power
     # (international teams lack real moral/fatigue data, so we simulate it with small noise)
     t1_form = random.gauss(0, 3.0)
@@ -7222,6 +7228,44 @@ def _intl_sim(t1: dict, t2: dict, best_of: int, t1_boost: float = 0, t2_boost: f
         else: w2 += 1
         games.append({"winner": t1["id"] if r["winner"] == 1 else t2["id"], "duration": r["duration"]})
     return {"winner_id": t1["id"] if w1 > w2 else t2["id"], "score1": w1, "score2": w2, "games": games}
+
+
+def _intl_sim_one_game(t1: dict, t2: dict, t1_boost: float = 0, t2_boost: float = 0) -> dict:
+    """Simulate exactly one game of an international BO. Returns the game result."""
+    t1_form = random.gauss(0, 3.0)
+    t2_form = random.gauss(0, 3.0)
+    t1_power = max(30, min(100, t1["rating"] + t1_boost + t1_form))
+    t2_power = max(30, min(100, t2["rating"] + t2_boost + t2_form))
+    r = simulate_match_phases(t1_power, t2_power)
+    return {
+        "winner": t1["id"] if r["winner"] == 1 else t2["id"],
+        "duration": r["duration"],
+    }
+
+
+def _intl_apply_one_game(m: dict, game: dict) -> dict:
+    """Append a game to a match, update score1/score2, and return a status dict.
+
+    Returns:
+        {"completed": bool, "winner_id": str | None, "score1": int, "score2": int, "games": list}
+    """
+    m.setdefault("games", []).append(game)
+    if game["winner"] == m["team1"]["id"]:
+        m["score1"] = m.get("score1", 0) + 1
+    else:
+        m["score2"] = m.get("score2", 0) + 1
+    wn = (m["best_of"] + 1) // 2
+    if m["score1"] >= wn:
+        m["winner_id"] = m["team1"]["id"]
+    elif m["score2"] >= wn:
+        m["winner_id"] = m["team2"]["id"]
+    return {
+        "completed": m.get("winner_id") is not None,
+        "winner_id": m.get("winner_id"),
+        "score1":    m["score1"],
+        "score2":    m["score2"],
+        "games":     m["games"],
+    }
 
 
 # ── MSI ──────────────────────────────────────────────────────────────────────
