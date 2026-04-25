@@ -672,13 +672,24 @@ const HistoryPage = ({ userTeam, showToast }) => {
           className="card"
           style={{ padding: 20 }}
         >
-          <div style={{ marginBottom: 16 }}>
+          <div style={{
+            display: "flex", alignItems: "baseline", justifyContent: "space-between",
+            marginBottom: 16, gap: 8, flexWrap: "wrap",
+          }}>
             <h3 style={{
               margin: 0, fontFamily: FONT_HEADING, fontSize: 14, letterSpacing: 2,
               color: "var(--text-2)", textTransform: "uppercase",
             }}>
-              Évolution par split
+              {eloChartMode === "match" ? "Évolution par match" : "Évolution par split"}
             </h3>
+            <span style={{
+              fontFamily: FONT_STATS, fontSize: 10, color: "var(--text-2)",
+              letterSpacing: 0.5, fontVariantNumeric: "tabular-nums",
+            }}>
+              {eloChartMode === "match"
+                ? `${eloMatchLog.length} match${eloMatchLog.length > 1 ? "s" : ""}`
+                : `${eloChartData.length} split${eloChartData.length > 1 ? "s" : ""}`}
+            </span>
           </div>
           <EloChart data={eloChartData} />
         </motion.section>
