@@ -1072,22 +1072,6 @@ export default function MiniMap({
     return out;
   }, [enrichedEvents, leftStats, rightStats, isLeftBlue, isRightBlue, deathTimelineByChamp]);
 
-  // Timeline complète des morts par champion (pour la simulation)
-  const deathTimelineByChamp = useMemo(() => {
-    const map = {};
-    [...visibleEvents]
-      .sort((a, b) => parseSec(a.time) - parseSec(b.time))
-      .forEach(ev => {
-        if (KILL_TYPES.has(ev.type) && ev.victim_champion) {
-          const deathSec    = parseSec(ev.time);
-          const respawnSec  = deathSec + calcDeathTimer(deathSec);
-          if (!map[ev.victim_champion]) map[ev.victim_champion] = [];
-          map[ev.victim_champion].push({ deathSec, respawnSec });
-        }
-      });
-    return map;
-  }, [visibleEvents]);
-
   // Mort active (pour l'affichage du timer)
   const currentDeaths = useMemo(() => {
     const map = {};
