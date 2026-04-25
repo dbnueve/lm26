@@ -325,20 +325,22 @@ const MatchTimeline = ({
     [visibleEvents, rightNum]
   );
 
-  const { leftWidth, goldDiff, goldLeader } = useMemo(() => {
-    if (!goldTimeline || goldTimeline.length === 0) return { leftWidth: 50, goldDiff: 0, goldLeader: null };
+  const { leftG, rightG, goldDiff, goldLeader } = useMemo(() => {
+    if (!goldTimeline || goldTimeline.length === 0) return { leftG: 0, rightG: 0, goldDiff: 0, goldLeader: null };
     const curMin = Math.min(Math.floor(matchSec / 60), goldTimeline.length - 1);
     const entry  = goldTimeline[curMin] || goldTimeline[goldTimeline.length - 1];
     const g1 = entry.g1 || 0, g2 = entry.g2 || 0;
-    const total = g1 + g2 || 1;
-    const leftG  = leftNum === 1 ? g1 : g2;
-    const rightG = leftNum === 1 ? g2 : g1;
+    const lG = leftNum === 1 ? g1 : g2;
+    const rG = leftNum === 1 ? g2 : g1;
     return {
-      leftWidth:  Math.round((leftG / total) * 100),
-      goldDiff:   Math.abs(leftG - rightG),
-      goldLeader: leftG >= rightG ? "left" : "right",
+      leftG:  lG,
+      rightG: rG,
+      goldDiff:   Math.abs(lG - rG),
+      goldLeader: lG >= rG ? "left" : "right",
     };
   }, [goldTimeline, matchSec, leftNum]);
+
+  const fmtGold = (g) => g >= 1000 ? `${(g / 1000).toFixed(1)}k` : `${g}`;
 
   // Auto-scroll feed
   const prevVisibleLen = useRef(0);
