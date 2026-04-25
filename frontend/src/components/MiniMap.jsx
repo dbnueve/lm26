@@ -842,6 +842,22 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
     const items = [...data.drakes];
     if (data.elder > 0) items.push({ type: "elder" });
     if (!items.length) return null;
+
+    // Community Dragon : icônes minimap officielles des drakes
+    const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2";
+    const drakeIconUrl = (kind) => {
+      switch (kind) {
+        case "elder":    return `${CDRAGON}/icon_ux_minimap_dragon_elder.png`;
+        case "infernal": return `${CDRAGON}/icon_ux_minimap_dragon_infernal.png`;
+        case "mountain": return `${CDRAGON}/icon_ux_minimap_dragon_mountain.png`;
+        case "ocean":    return `${CDRAGON}/icon_ux_minimap_dragon_ocean.png`;
+        case "cloud":    return `${CDRAGON}/icon_ux_minimap_dragon_cloud.png`;
+        case "hextech":  return `${CDRAGON}/icon_ux_minimap_dragon_hextech.png`;
+        case "chemtech": return `${CDRAGON}/icon_ux_minimap_dragon_chemtech.png`;
+        default:         return `${CDRAGON}/icon_ux_minimap_dragon.png`;
+      }
+    };
+
     return (
       <div style={{
         display: "flex", alignItems: "center", gap: 3,
@@ -850,21 +866,27 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
       }}>
         {items.map((d, i) => {
           const desc = (d.description || "").toLowerCase();
-          let icon = "🐉";
-          if (d.type === "elder" || desc.includes("elder")) icon = "🟣";
-          else if (desc.includes("infernal")) icon = "🔥";
-          else if (desc.includes("mountain")) icon = "🪨";
-          else if (desc.includes("ocean"))    icon = "🌊";
-          else if (desc.includes("cloud"))    icon = "💨";
-          else if (desc.includes("hextech"))  icon = "⚡";
-          else if (desc.includes("chemtech")) icon = "☣️";
+          let kind = "drake";
+          if (d.type === "elder" || desc.includes("elder")) kind = "elder";
+          else if (desc.includes("infernal")) kind = "infernal";
+          else if (desc.includes("mountain")) kind = "mountain";
+          else if (desc.includes("ocean"))    kind = "ocean";
+          else if (desc.includes("cloud"))    kind = "cloud";
+          else if (desc.includes("hextech"))  kind = "hextech";
+          else if (desc.includes("chemtech")) kind = "chemtech";
           return (
-            <span key={i} style={{
-              fontSize: 13, lineHeight: 1,
-              filter: `drop-shadow(0 0 3px ${color}aa)`,
-            }}>
-              {icon}
-            </span>
+            <img
+              key={i}
+              src={drakeIconUrl(kind)}
+              alt={kind}
+              title={kind}
+              style={{
+                width: 16, height: 16,
+                filter: `drop-shadow(0 0 3px ${color}aa)`,
+                objectFit: "contain",
+              }}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
           );
         })}
       </div>
