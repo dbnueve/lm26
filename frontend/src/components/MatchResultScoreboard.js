@@ -166,31 +166,102 @@ function StatRow({ p, duration, won, maxDamage }) {
   );
 }
 
-function TeamStatsCard({ stats, title, won, headerBg, headerColor, teamId, teamAbbr, duration }) {
+function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration }) {
+  const accent = won ? ACCENT_WIN : ACCENT_LOSS;
+  const maxDamage = useMemo(
+    () => Math.max(0, ...stats.map(p => p.damage || 0)),
+    [stats]
+  );
+  const totalKills = stats.reduce((a, p) => a + (p.kills || 0), 0);
+  const totalDmg   = stats.reduce((a, p) => a + (p.damage || 0), 0);
+
   return (
-    <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-      <div style={{
-        padding: "12px 16px", background: headerBg, color: headerColor,
-        fontWeight: 700, display: "flex", alignItems: "center", gap: 8,
+    <section
+      className="card"
+      style={{
+        padding: 0, overflow: "hidden",
+        border: `1px solid ${won ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.25)"}`,
+        boxShadow: won
+          ? "0 0 0 1px rgba(34,197,94,0.15), 0 8px 24px rgba(0,0,0,0.45)"
+          : "0 8px 24px rgba(0,0,0,0.45)",
+      }}
+      aria-label={`Statistiques équipe ${teamAbbr}`}
+    >
+      {/* Header — bande accent + logo + nom + badge winner */}
+      <header style={{
+        position: "relative",
+        padding: "10px 14px",
+        display: "flex", alignItems: "center", gap: 10,
+        background: `linear-gradient(90deg, ${won ? "rgba(34,197,94,0.18)" : "rgba(239,68,68,0.14)"}, transparent 70%)`,
+        borderBottom: `1px solid ${accent}55`,
       }}>
-        <Shield size={18} weight="fill" />
-        <TeamLogo teamId={teamId} abbr={teamAbbr} size={18} style={{ marginRight: 4 }} /> — {title}
-      </div>
-      <div style={{ padding: 8 }}>
         <div style={{
-          display: "grid", gridTemplateColumns: "36px 1fr 80px 50px 65px 70px",
-          padding: "8px 12px", fontSize: 11,
-          color: "var(--text-2)", fontWeight: 600, textTransform: "uppercase",
+          width: 4, alignSelf: "stretch", background: accent,
+          boxShadow: `0 0 8px ${accent}aa`,
+        }} aria-hidden="true" />
+        <TeamLogo teamId={teamId} abbr={teamAbbr} size={28} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: FONT_HEADING, fontSize: 16, fontWeight: 700,
+            letterSpacing: 1, lineHeight: 1.1,
+            color: "var(--text-1)",
+          }}>
+            {teamAbbr}
+          </div>
+          <div style={{
+            fontSize: 10, color: "var(--text-2)", letterSpacing: 0.5,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {teamName || ""}
+          </div>
+        </div>
+        {won && (
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "3px 8px", borderRadius: 3,
+            background: ACCENT_WIN, color: "#021b0c",
+            fontFamily: FONT_HEADING, fontSize: 10, fontWeight: 800,
+            letterSpacing: 1.5, textTransform: "uppercase",
+            boxShadow: `0 0 12px ${ACCENT_WIN}88`,
+          }}>
+            <Crown size={11} weight="fill" /> Victoire
+          </span>
+        )}
+        <div style={{ display: "flex", gap: 14, marginLeft: 4 }}>
+          <span style={{
+            fontFamily: FONT_STATS, fontSize: 13, fontWeight: 800,
+            color: accent, fontVariantNumeric: "tabular-nums",
+          }} title="Total kills">
+            {totalKills}<span style={{ fontSize: 9, color: "var(--text-2)", marginLeft: 2 }}>K</span>
+          </span>
+          <span style={{
+            fontFamily: FONT_STATS, fontSize: 13, fontWeight: 800,
+            color: "var(--amber)", fontVariantNumeric: "tabular-nums",
+          }} title="Total dégâts">
+            {(totalDmg / 1000).toFixed(0)}k
+          </span>
+        </div>
+      </header>
+
+      <div role="table" style={{ padding: 4 }}>
+        <div role="row" style={{
+          display: "grid", gridTemplateColumns: "32px 1fr 78px 44px 52px 96px",
+          padding: "8px 12px", fontSize: 9,
+          color: "var(--text-2)", fontWeight: 700, letterSpacing: 1.2,
+          textTransform: "uppercase", gap: 6,
         }}>
-          <span /><span>Joueur</span>
-          <span style={{ textAlign: "center" }}>K/D/A</span>
+          <span aria-hidden="true" />
+          <span>Joueur</span>
+          <span style={{ textAlign: "center" }}>K / D / A</span>
           <span style={{ textAlign: "center" }}>Note</span>
           <span style={{ textAlign: "center" }}>CS/M</span>
-          <span style={{ textAlign: "right" }}>DMG</span>
+          <span style={{ textAlign: "right" }}>Dégâts</span>
         </div>
-        {stats.map((p, i) => <StatRow key={i} p={p} duration={duration} won={won} />)}
+        {stats.map((p, i) => (
+          <StatRow key={i} p={p} duration={duration} won={won} maxDamage={maxDamage} />
+        ))}
       </div>
-    </div>
+    </section>
   );
 }
 
