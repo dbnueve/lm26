@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  ChartLine, Trophy, Calendar, ArrowRight, Swords, Target,
+  ChartLine, Trophy, Calendar, Swords, Target,
   CheckCircle, XCircle, ChartBar, TrendUp, TrendDown,
 } from "@phosphor-icons/react";
 import TeamLogo from "./TeamLogo";
