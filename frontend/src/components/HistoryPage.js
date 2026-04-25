@@ -480,12 +480,43 @@ const HistoryPage = ({ userTeam, showToast }) => {
     };
   }, [eloHistory]);
 
+  // Mode "match" si on a un log par-match, sinon fallback sur l'historique split
+  const eloChartMode = eloMatchLog.length > 0 ? "match" : "split";
+
   const eloChartData = useMemo(() => {
+    if (eloChartMode === "match") {
+      // Inject le ELO de départ comme premier point (pour montrer la 1re progression)
+      const sorted = [...eloMatchLog];
+      const points = [];
+      if (sorted.length > 0) {
+        const first = sorted[0];
+        points.push({
+          elo: first.elo_before,
+          split_label: first.split_label,
+          week: first.week,
+          isStart: true,
+        });
+        sorted.forEach((m, i) => {
+          points.push({
+            elo: m.elo_after,
+            split_label: m.split_label,
+            week: m.week,
+            opponent_abbr: m.opponent_abbr,
+            won: m.won,
+            delta: m.delta,
+            is_playoffs: m.is_playoffs,
+            matchIdx: i + 1,
+          });
+        });
+      }
+      return points;
+    }
+    // Fallback split
     if (!eloHistory?.history) return [];
     return [...eloHistory.history]
       .filter(d => d.elo != null)
       .sort((a, b) => a.season !== b.season ? a.season - b.season : a.split_number - b.split_number);
-  }, [eloHistory]);
+  }, [eloChartMode, eloMatchLog, eloHistory]);
 
   const currentElo = eloHistory?.current_team?.elo;
   const peakElo = eloChartData.length > 0 ? Math.max(...eloChartData.map(d => d.elo)) : null;
