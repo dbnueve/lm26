@@ -1183,7 +1183,6 @@ export default function MiniMap({
           enrichedEvents={enrichedEvents}
           objectiveTimeline={objectiveTimeline}
           fightInvolvement={fightInvolvementByChamp[p.champion] || []}
-          teamSide="left"
           size={size} iconSize={iconSize*0.85}
         />
       ))}
