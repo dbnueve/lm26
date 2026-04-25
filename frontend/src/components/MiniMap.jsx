@@ -1334,6 +1334,10 @@ export default function MiniMap({
           0%,100% { color: #fbbf24; transform: scale(1); }
           50%     { color: #f97316; transform: scale(1.18); }
         }
+        @keyframes objUpPulse {
+          0%,100% { transform: translate(-50%,-50%) scale(1);    opacity: 0.95; }
+          50%     { transform: translate(-50%,-50%) scale(1.18); opacity: 1; }
+        }
       `}</style>
     </div>
   );
