@@ -64,7 +64,16 @@ const TimelineEventRow = React.memo(function TimelineEventRow({ item, tc, tn, dr
         borderBottom: isBig ? `1px solid ${teamColor}25` : "none",
       }}
     >
-      <span style={{ fontSize: isBig ? 18 : 14, flexShrink: 0 }}>{icon}</span>
+      {hasUrlIcon ? (
+        <EventIcon
+          type={item.type}
+          drakeIndex={drakeIndex}
+          size={isBig ? 18 : 14}
+          style={{ flexShrink: 0 }}
+        />
+      ) : (
+        <span style={{ fontSize: isBig ? 18 : 14, flexShrink: 0 }}>{icon}</span>
+      )}
       <span style={{
         fontFamily: "monospace", fontSize: 10,
         color: "var(--text-2)",
