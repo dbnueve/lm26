@@ -391,15 +391,37 @@ function EloChart({ data }) {
           whiteSpace: "nowrap",
           zIndex: 5,
         }}>
+          {/* Ligne 1 : contexte (split + week ou match #) */}
           <div style={{
-            fontFamily: FONT_HEADING, fontSize: 11,
+            fontFamily: FONT_HEADING, fontSize: 10,
             color: "var(--text-2)", letterSpacing: 1, textTransform: "uppercase",
           }}>
-            {hoverPoint.split_label || `Split ${hoverPoint.split_number}`}
+            {hoverPoint.isStart ? "Départ" : (
+              <>
+                {hoverPoint.split_label}
+                {hoverPoint.week != null && (
+                  <span style={{ marginLeft: 6, color: "var(--text-2)" }}>
+                    · S{hoverPoint.week}
+                  </span>
+                )}
+                {hoverPoint.is_playoffs && (
+                  <span style={{
+                    marginLeft: 6, padding: "1px 5px", borderRadius: 2,
+                    background: "rgba(234,179,8,0.18)", color: ACCENT_MVP,
+                    fontSize: 8, fontWeight: 800, letterSpacing: 1,
+                  }}>
+                    PLAYOFFS
+                  </span>
+                )}
+              </>
+            )}
           </div>
+
+          {/* Ligne 2 : valeur ELO + delta */}
           <div style={{
             fontFamily: FONT_STATS, fontSize: 18, fontWeight: 800,
             color: "var(--text-1)", fontVariantNumeric: "tabular-nums", lineHeight: 1.1,
+            marginTop: 2,
           }}>
             {hoverPoint.elo.toFixed(0)}
             {hoverIdx > 0 && hoverDelta !== 0 && (
@@ -411,7 +433,28 @@ function EloChart({ data }) {
               </span>
             )}
           </div>
-          {(hoverPoint.wins != null || hoverPoint.losses != null) && (
+
+          {/* Ligne 3 : adversaire + résultat (mode match) */}
+          {hoverPoint.opponent_abbr && hoverPoint.won != null && (
+            <div style={{
+              fontSize: 10, color: "var(--text-2)", marginTop: 3,
+              fontFamily: FONT_STATS, fontVariantNumeric: "tabular-nums",
+              display: "flex", alignItems: "center", gap: 6,
+            }}>
+              <span style={{
+                padding: "1px 5px", borderRadius: 2,
+                background: hoverPoint.won ? "rgba(34,197,94,0.18)" : "rgba(239,68,68,0.18)",
+                color: hoverPoint.won ? ACCENT_WIN : ACCENT_LOSS,
+                fontFamily: FONT_HEADING, fontSize: 8, fontWeight: 800, letterSpacing: 1,
+              }}>
+                {hoverPoint.won ? "VICTOIRE" : "DÉFAITE"}
+              </span>
+              <span>vs {hoverPoint.opponent_abbr}</span>
+            </div>
+          )}
+
+          {/* Ligne 3 alt : V/D total (mode split) */}
+          {hoverPoint.opponent_abbr == null && (hoverPoint.wins != null || hoverPoint.losses != null) && (
             <div style={{
               fontSize: 10, color: "var(--text-2)", marginTop: 2,
               fontFamily: FONT_STATS, fontVariantNumeric: "tabular-nums",
