@@ -431,71 +431,39 @@ function getTargetPos(roleIndex, currentSec, isBlue, enrichedEvents, allDeaths, 
 
 /* ═══════════════════════════════════════════════════════════════
    SIMULATION PAS-À-PAS — moteur de position physique
-   - Vitesse de base : marche (lane), sprint (vers fight/objectif)
-   - Easing lissé pour éviter les changements de cap brusques
-   - Clustering autour des kills (killer/victim/assist convergent)
-   - Décalage organique par rôle pour ne pas se superposer
+   On simule second par second depuis t=0.
+   Chaque champion se déplace physiquement vers sa cible
+   à vitesse constante, exactement comme sur la minimap LoL.
 ═══════════════════════════════════════════════════════════════ */
-
-// Lissage du target pour éviter les zigzags : on garde l'ancienne cible
-// et on l'interpole vers la nouvelle (smooth steering).
-function simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement, teamSide) {
+function simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement) {
   const spawn = isBlue ? POS.spawn_blue : POS.spawn_red;
   let pos = { ...spawn };
-  let smoothedTarget = { ...spawn };
   const steps = Math.floor(matchSec);
 
-  // Petit décalage organique par rôle pour pas que les 5 champs soient pile poil sur la même cible
-  const roleOffset = (roleIndex - 2) * 1.6; // -3.2 .. +3.2
-
-  const stepSim = (t, dt) => {
-    const isDyingNow = allDeaths.some(d => t >= d.deathSec && t < d.deathSec + 0.5);
+  for (let t = 0; t <= steps; t++) {
+    // Mort instantanée → téléporte à la base
+    const isDyingNow = allDeaths.some(d => t >= d.deathSec && t < d.deathSec + 1);
     if (isDyingNow) {
       pos = { ...spawn };
-      smoothedTarget = { ...spawn };
-      return;
+      continue;
     }
 
-    const rawTarget = getTargetPos(roleIndex, t, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement);
-
-    // Lissage de cible (steering) — on glisse vers la nouvelle cible plutôt que pivoter sec
-    const blend = Math.min(1, 0.18 * dt * 4); // ~0.18/frame (pas instantané)
-    smoothedTarget = {
-      x: smoothedTarget.x + (rawTarget.x - smoothedTarget.x) * blend,
-      y: smoothedTarget.y + (rawTarget.y - smoothedTarget.y) * blend,
-    };
-
-    // Vitesse contextuelle :
-    //  - sprint (×1.7) si fight/kill imminent ou récent
-    //  - sprint (×1.4) si objectif majeur dans 60s
-    //  - marche (×1.0) sinon
-    let speed = SPEED;
-    const fightSoon = fightInvolvement?.some(f => Math.abs(f.sec - t) <= 6);
-    if (fightSoon) speed *= 1.7;
-    else {
-      const objSoon = objectiveTimeline.find(o => o.sec > t && o.sec - t < 60);
-      if (objSoon) speed *= 1.35;
-    }
-
-    // Easing : ralenti à l'approche pour éviter d'osciller autour de la cible
-    const distToTarget = dist(pos, smoothedTarget);
-    if (distToTarget < 4) speed *= Math.max(0.45, distToTarget / 4);
-
-    pos = moveTowards(pos, smoothedTarget, speed, dt);
-  };
-
-  for (let t = 0; t <= steps; t++) stepSim(t, 1);
+    const target = getTargetPos(roleIndex, t, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement);
+    pos = moveTowards(pos, target, SPEED, 1);
+  }
 
   // Interpolation sub-seconde pour la frame courante
   const subDt = matchSec - steps;
-  if (subDt > 0) stepSim(matchSec, subDt);
+  if (subDt > 0) {
+    const target = getTargetPos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement);
+    pos = moveTowards(pos, target, SPEED, subDt);
+  }
 
-  // Décalage organique par rôle (séparation visuelle) + micro-jitter
+  // Micro-jitter organique très discret
   const seed = (roleIndex + 1) * 137.5 + (isBlue ? 0 : 73);
-  const sideSign = teamSide === "right" ? -1 : 1;
   return {
-    x: Math.max(2, Math.min(98, pos.x + Math.sin(seed + matchSec * 0.09) * 0.6 + roleOffset * 0.35 * sideSign)),
-    y: Math.max(2, Math.min(98, pos.y + Math.cos(seed + matchSec * 0.07) * 0.6 + roleOffset * 0.25)),
+    x: Math.max(2, Math.min(98, pos.x + Math.sin(seed + matchSec * 0.09) * 0.8)),
+    y: Math.max(2, Math.min(98, pos.y + Math.cos(seed + matchSec * 0.07) * 0.8)),
   };
 }
 
