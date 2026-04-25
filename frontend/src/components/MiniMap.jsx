@@ -1170,6 +1170,8 @@ export default function MiniMap({
           allDeaths={deathTimelineByChamp[p.champion] || []}
           enrichedEvents={enrichedEvents}
           objectiveTimeline={objectiveTimeline}
+          fightInvolvement={fightInvolvementByChamp[p.champion] || []}
+          teamSide="left"
           size={size} iconSize={iconSize*0.85}
         />
       ))}
@@ -1185,6 +1187,8 @@ export default function MiniMap({
           allDeaths={deathTimelineByChamp[p.champion] || []}
           enrichedEvents={enrichedEvents}
           objectiveTimeline={objectiveTimeline}
+          fightInvolvement={fightInvolvementByChamp[p.champion] || []}
+          teamSide="right"
           size={size} iconSize={iconSize*0.85}
         />
       ))}
