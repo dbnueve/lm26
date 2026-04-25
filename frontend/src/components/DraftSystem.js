@@ -107,7 +107,7 @@ const DraftSystem = ({ champions, matchId, onComplete, onCancel, onMpAction, mpD
     if (onMpAction) {
       setSelectedChampion(null);
       setSelectedPosition(null);
-      await onMpAction(champion, action);
+      await onMpAction(champion, action, position);
       return;
     }
     try {
