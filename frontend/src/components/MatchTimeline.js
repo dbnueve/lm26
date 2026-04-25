@@ -109,20 +109,19 @@ function ObjectivePips({ events, teamNum }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "center" }}>
       {towers > 0 && (
-        <span style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 1 }}>
-          🏯<span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 10, color: "var(--text-2)" }}>{towers}</span>
+        <span style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 2 }}>
+          <img src={CDRAGON_URLS.tower} alt="" style={{ width: 12, height: 12, objectFit: "contain" }} />
+          <span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 10, color: "var(--text-2)" }}>{towers}</span>
         </span>
       )}
       {drakes.map((ev, i) => (
-        <span key={i} title={ev.description || "Drake"} style={{ fontSize: 13, lineHeight: 1 }}>
-          {getDrakeIcon(ev.description)}
-        </span>
+        <EventIcon key={i} type="drake" drakeIndex={i} size={14} />
       ))}
       {Array.from({ length: baron }).map((_, i) => (
-        <span key={i} title="Baron" style={{ fontSize: 13, lineHeight: 1 }}>👑</span>
+        <EventIcon key={`b${i}`} type="baron" size={14} />
       ))}
       {Array.from({ length: herald }).map((_, i) => (
-        <span key={i} title="Herald" style={{ fontSize: 13, lineHeight: 1 }}>🔮</span>
+        <EventIcon key={`h${i}`} type="herald" size={14} />
       ))}
     </div>
   );
