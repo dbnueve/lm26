@@ -1275,6 +1275,7 @@ export default function MiniMap({
   const objectiveUp = useMemo(() => {
     const last = { drake: null, elder: null, baron: null, herald: null };
     const count = { drake: 0, elder: 0, baron: 0, herald: 0 };
+    const drakesByTeam = { 1: 0, 2: 0 };
     [...visibleEvents]
       .sort((a, b) => parseSec(a.time) - parseSec(b.time))
       .forEach(ev => {
@@ -1282,6 +1283,9 @@ export default function MiniMap({
         if (ev.type in last) {
           last[ev.type] = parseSec(ev.time);
           count[ev.type] += 1;
+        }
+        if (ev.type === "drake" && (ev.team === 1 || ev.team === 2)) {
+          drakesByTeam[ev.team] += 1;
         }
       });
 
@@ -1291,8 +1295,8 @@ export default function MiniMap({
       : "GONE";
     const heraldUp = heraldActive && heraldNext === null;
 
-    const totalDrakes = count.drake + count.elder;
-    const elderUnlocked = totalDrakes >= 4 && matchSec >= ELDER_SPAWN_SEC;
+    const soulSecured = Math.max(drakesByTeam[1], drakesByTeam[2]) >= 4;
+    const elderUnlocked = soulSecured && matchSec >= ELDER_SPAWN_SEC;
     const drakeNext = elderUnlocked
       ? nextRespawn(last.elder, DRAKE_RESPAWN_SEC, ELDER_SPAWN_SEC, matchSec)
       : nextRespawn(last.drake, DRAKE_RESPAWN_SEC, DRAKE_FIRST_SEC, matchSec);
