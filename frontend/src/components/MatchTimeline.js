@@ -146,67 +146,89 @@ function ObjectivePips({ events, teamNum }) {
 
 function LiveScoreboard({ leftStats, rightStats, leftAbbr, rightAbbr,
                           visibleEvents, winnerTeam, leftNum, duration }) {
-  // Kills/deaths live par champion à partir des events visibles
-  const liveKd = useMemo(() => {
-    const kd = {};
-    visibleEvents.forEach(ev => {
-      if (!KILL_TYPES.has(ev.type)) return;
-      if (ev.killer_champion) {
-        if (!kd[ev.killer_champion]) kd[ev.killer_champion] = { k: 0, d: 0 };
-        kd[ev.killer_champion].k += 1;
-      }
-      if (ev.victim_champion) {
-        if (!kd[ev.victim_champion]) kd[ev.victim_champion] = { k: 0, d: 0 };
-        kd[ev.victim_champion].d += 1;
-      }
-    });
-    return kd;
-  }, [visibleEvents]);
-
-  // Assists live : on n'a pas d'assist_champions dans les events,
-  // donc on scale les assists finaux par la progression des kills.
-  // À la fin du match (tous les kills révélés) → assists complets.
-  const liveAssists = useMemo(() => {
-    const totalKillsByTeam = { 1: 0, 2: 0 };
-    [...leftStats, ...rightStats].forEach(() => {});
-    const finalKillsByTeam = { 1: 0, 2: 0 };
-    leftStats.forEach(p => { finalKillsByTeam[leftNum] += p.kills || 0; });
-    rightStats.forEach(p => { finalKillsByTeam[rightNum] += p.kills || 0; });
-    visibleEvents.forEach(ev => {
-      if (!KILL_TYPES.has(ev.type)) return;
-      if (ev.team === 1 || ev.team === 2) totalKillsByTeam[ev.team] += 1;
-    });
-    const assistsByChamp = {};
-    const assignTeamAssists = (stats, teamNum) => {
-      const live = totalKillsByTeam[teamNum] || 0;
-      const final = finalKillsByTeam[teamNum] || 0;
-      const ratio = final > 0 ? Math.min(1, live / final) : 0;
-      stats.forEach(p => {
-        if (p.champion) assistsByChamp[p.champion] = Math.floor((p.assists || 0) * ratio);
-      });
-    };
-    assignTeamAssists(leftStats, leftNum);
-    assignTeamAssists(rightStats, rightNum);
-    return assistsByChamp;
-  }, [visibleEvents, leftStats, rightStats, leftNum, rightNum]);
-
+  // Kills/deaths/assists live. Les events backend ne contiennent pas la liste
+  // des assistants : on les distribue côté front sur les coéquipiers vivants
+  // du killer, pondérés par rôle (SUPPORT/JUNGLE plus enclins, ADC moins).
+  // PRNG seedé sur le temps du kill → déterministe, stable au scrubbing.
   const liveKda = useMemo(() => {
     const kda = {};
-    const merge = (champ) => {
-      if (!champ) return;
+    const ensure = (champ) => {
+      if (!champ) return null;
       if (!kda[champ]) kda[champ] = { k: 0, d: 0, a: 0 };
+      return kda[champ];
     };
-    Object.entries(liveKd).forEach(([champ, v]) => {
-      merge(champ);
-      kda[champ].k = v.k;
-      kda[champ].d = v.d;
+
+    // Timeline des morts → savoir qui est vivant à T
+    const deaths = {};
+    visibleEvents.forEach(ev => {
+      if (!KILL_TYPES.has(ev.type) || !ev.victim_champion) return;
+      const dSec = parseSec(ev.time);
+      const list = deaths[ev.victim_champion] || (deaths[ev.victim_champion] = []);
+      list.push({ deathSec: dSec, respawnSec: dSec + calcDeathTimer(dSec) });
     });
-    Object.entries(liveAssists).forEach(([champ, a]) => {
-      merge(champ);
-      kda[champ].a = a;
+    const isAliveAt = (champ, sec) => {
+      const list = deaths[champ];
+      if (!list) return true;
+      return !list.some(d => sec >= d.deathSec && sec < d.respawnSec);
+    };
+
+    // Lookup champion → équipe + rôle pour pondération assist
+    const champMeta = {};
+    leftStats.forEach(p  => { if (p.champion) champMeta[p.champion] = { team: leftNum,  pos: p.position }; });
+    rightStats.forEach(p => { if (p.champion) champMeta[p.champion] = { team: rightNum, pos: p.position }; });
+    const assistWeight = { TOP: 0.16, JUNGLE: 0.22, MID: 0.18, ADC: 0.12, SUPPORT: 0.32 };
+
+    // Mulberry32 seedé : déterministe et stable
+    const rngFromSeed = (seed) => {
+      let s = seed | 0;
+      return () => {
+        s = (s + 0x6D2B79F5) | 0;
+        let t = s;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    };
+
+    visibleEvents.forEach(ev => {
+      if (!KILL_TYPES.has(ev.type)) return;
+      const k = ensure(ev.killer_champion);
+      if (k) k.k += 1;
+      const v = ensure(ev.victim_champion);
+      if (v) v.d += 1;
+
+      const killerMeta = champMeta[ev.killer_champion];
+      if (!killerMeta) return;
+      const teamMates = Object.entries(champMeta)
+        .filter(([c, m]) => m.team === killerMeta.team && c !== ev.killer_champion)
+        .map(([c, m]) => ({ champ: c, w: assistWeight[m.pos] ?? 0.2 }));
+      if (teamMates.length === 0) return;
+
+      const sec = parseSec(ev.time);
+      const aliveMates = teamMates.filter(m => isAliveAt(m.champ, sec));
+      if (aliveMates.length === 0) return;
+
+      const rng = rngFromSeed(Math.floor(sec * 1000) + (ev.killer_champion?.length || 0));
+      const maxAssists = Math.min(3, aliveMates.length);
+      const numAssists = 1 + Math.floor(rng() * maxAssists);
+
+      const pool = [...aliveMates];
+      for (let i = 0; i < numAssists && pool.length > 0; i++) {
+        const totalW = pool.reduce((s, m) => s + m.w, 0);
+        let r = rng() * totalW;
+        let idx = 0;
+        for (let j = 0; j < pool.length; j++) {
+          r -= pool[j].w;
+          if (r <= 0) { idx = j; break; }
+        }
+        const picked = pool.splice(idx, 1)[0];
+        const e = ensure(picked.champ);
+        if (e) e.a += 1;
+      }
     });
+
     return kda;
-  }, [liveKd, liveAssists]);
+  }, [visibleEvents, leftStats, rightStats, leftNum, rightNum]);
 
   const renderTeam = (stats, abbr, isWinner) => (
     <div style={{ flex: 1, minWidth: 0 }}>
