@@ -1062,10 +1062,22 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
           flexDirection: side === "left" ? "row-reverse" : "row",
         }}>
           {Array.from({ length: data.herald }).map((_, i) => (
-            <span key={`h${i}`} style={{ fontSize: 12, filter: "drop-shadow(0 0 3px #6366f1aa)" }}>🔮</span>
+            <img
+              key={`h${i}`}
+              src={CDRAGON_URLS.herald}
+              alt="herald"
+              style={{ width: 14, height: 14, objectFit: "contain", filter: "drop-shadow(0 0 3px #6366f1aa)" }}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
           ))}
           {Array.from({ length: data.baron }).map((_, i) => (
-            <span key={`b${i}`} style={{ fontSize: 12, filter: "drop-shadow(0 0 3px #eab308aa)" }}>👑</span>
+            <img
+              key={`b${i}`}
+              src={CDRAGON_URLS.baron}
+              alt="baron"
+              style={{ width: 14, height: 14, objectFit: "contain", filter: "drop-shadow(0 0 3px #eab308aa)" }}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
           ))}
         </div>
       )}
