@@ -356,9 +356,9 @@ function EloChart({ data }) {
           transform: "translateX(-50%)",
           padding: "8px 12px",
           background: "rgba(2,6,23,0.96)",
-          border: `1px solid ${hoverTier.color}66`,
+          border: `1px solid ${hoverColor}66`,
           borderRadius: 4,
-          boxShadow: `0 6px 20px rgba(0,0,0,0.6), 0 0 12px ${hoverTier.color}22`,
+          boxShadow: `0 6px 20px rgba(0,0,0,0.6), 0 0 12px ${hoverColor}22`,
           backdropFilter: "blur(8px)",
           pointerEvents: "none",
           whiteSpace: "nowrap",
@@ -366,7 +366,7 @@ function EloChart({ data }) {
         }}>
           <div style={{
             fontFamily: FONT_HEADING, fontSize: 11,
-            color: hoverTier.color, letterSpacing: 1, textTransform: "uppercase",
+            color: "var(--text-2)", letterSpacing: 1, textTransform: "uppercase",
           }}>
             {hoverPoint.split_label || `Split ${hoverPoint.split_number}`}
           </div>
@@ -375,9 +375,14 @@ function EloChart({ data }) {
             color: "var(--text-1)", fontVariantNumeric: "tabular-nums", lineHeight: 1.1,
           }}>
             {hoverPoint.elo.toFixed(0)}
-            <span style={{ fontSize: 10, color: hoverTier.color, marginLeft: 6 }}>
-              {hoverTier.label}
-            </span>
+            {hoverIdx > 0 && hoverDelta !== 0 && (
+              <span style={{
+                fontSize: 11, marginLeft: 6, color: hoverColor,
+                textShadow: `0 0 6px ${hoverColor}55`,
+              }}>
+                {hoverDelta > 0 ? "▲ +" : "▼ "}{hoverDelta.toFixed(0)}
+              </span>
+            )}
           </div>
           {(hoverPoint.wins != null || hoverPoint.losses != null) && (
             <div style={{
