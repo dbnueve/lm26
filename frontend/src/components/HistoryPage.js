@@ -233,20 +233,43 @@ function EloChart({ data }) {
           </g>
         ))}
 
-        {/* X ticks (labels splits) */}
-        {data.map((d, i) => (
-          <text
-            key={`x-${i}`}
-            x={xOf(i)} y={H - PAD_B + 18}
-            textAnchor="middle"
-            fill="var(--text-2)"
-            fontSize="10"
-            fontFamily={FONT_STATS}
-            style={{ letterSpacing: 0.4, textTransform: "uppercase" }}
-          >
-            {d.split_label || `S${d.season || ""}.${d.split_number || i + 1}`}
-          </text>
-        ))}
+        {/* X ticks (labels splits) — uniquement aux changements de split */}
+        {data.map((d, i) => {
+          const prev = i > 0 ? data[i - 1] : null;
+          const splitChanged = !prev || prev.split_label !== d.split_label;
+          if (!splitChanged) return null;
+          return (
+            <text
+              key={`x-${i}`}
+              x={xOf(i)} y={H - PAD_B + 18}
+              textAnchor={i === 0 ? "start" : "middle"}
+              fill="var(--text-2)"
+              fontSize="10"
+              fontFamily={FONT_STATS}
+              style={{ letterSpacing: 0.4, textTransform: "uppercase" }}
+            >
+              {d.split_label || `S${d.season || ""}.${d.split_number || i + 1}`}
+            </text>
+          );
+        })}
+
+        {/* Séparateurs verticaux entre splits */}
+        {data.map((d, i) => {
+          if (i === 0) return null;
+          const prev = data[i - 1];
+          if (prev.split_label === d.split_label) return null;
+          const x = (xOf(i - 1) + xOf(i)) / 2;
+          return (
+            <line
+              key={`sep-${i}`}
+              x1={x} x2={x}
+              y1={PAD_T} y2={H - PAD_B}
+              stroke="rgba(255,255,255,0.12)"
+              strokeWidth="1"
+              strokeDasharray="4 3"
+            />
+          );
+        })}
 
         {/* Aire sous la courbe */}
         <path d={areaPath} fill="url(#eloAreaGrad)" />
