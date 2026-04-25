@@ -1329,7 +1329,6 @@ export default function MiniMap({
 
       {/* Objectifs neutres UP — icône persistante sur la fosse */}
       {(() => {
-        const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2";
         const items = [];
         if (objectiveUp.heraldUp) items.push({
           key: "herald-up", x: POS.herald.x, y: POS.herald.y,
@@ -1341,9 +1340,7 @@ export default function MiniMap({
         });
         if (objectiveUp.drakeUp) items.push({
           key: "drake-up", x: POS.drake.x, y: POS.drake.y,
-          imgUrl: objectiveUp.drakeIsElder
-            ? `${CDRAGON}/icon_ux_minimap_dragon_elder.png`
-            : `${CDRAGON}/icon_ux_minimap_dragon.png`,
+          icon: objectiveUp.drakeIsElder ? "🟣" : "🐉",
           color: objectiveUp.drakeIsElder ? "#a855f7" : "#f97316",
         });
         return items.map(it => (
@@ -1359,16 +1356,7 @@ export default function MiniMap({
             filter: `drop-shadow(0 0 4px ${it.color}cc) drop-shadow(0 0 2px rgba(0,0,0,0.95))`,
             animation: "objUpPulse 2.4s ease-in-out infinite",
           }}>
-            {it.imgUrl ? (
-              <img
-                src={it.imgUrl}
-                alt=""
-                style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                onError={(e) => { e.currentTarget.style.display = "none"; }}
-              />
-            ) : (
-              <span style={{ fontSize: Math.round(iconSize * 0.8), lineHeight: 1 }}>{it.icon}</span>
-            )}
+            <span style={{ fontSize: Math.round(iconSize * 0.8), lineHeight: 1 }}>{it.icon}</span>
           </div>
         ));
       })()}
