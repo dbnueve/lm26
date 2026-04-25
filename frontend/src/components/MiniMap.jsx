@@ -787,7 +787,11 @@ export function ObjectiveTracker({ events = [], matchSec = 0 }) {
         dim={!heraldActive}
       />
       <Pill
-        icon={drakeTarget === "elder" ? "🟣" : "🐉"}
+        icon={
+          drakeTarget === "elder"
+            ? "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2/icon_ux_minimap_dragon_elder.png"
+            : "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2/icon_ux_minimap_dragon.png"
+        }
         label={drakeTarget === "elder" ? "Elder" : "Drake"}
         value={drakeNext}
         color={drakeTarget === "elder" ? "#a855f7" : "#f97316"}
