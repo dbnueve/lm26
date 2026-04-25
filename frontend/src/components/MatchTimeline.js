@@ -447,7 +447,7 @@ const MatchTimeline = ({
           }}>
             {goldDiff > 200 ? (
               <span>
-                <span style={{ fontWeight: 800, color: goldLeader === "left" ? "var(--success)" : "var(--danger)" }}>
+                <span style={{ fontWeight: 800, color: goldLeader === "left" ? "#3b82f6" : "var(--danger)" }}>
                   {goldLeader === "left" ? leftAbbr : rightAbbr}
                 </span>
                 {" "}+{(goldDiff / 1000).toFixed(1)}k gold
