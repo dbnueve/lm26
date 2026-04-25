@@ -216,16 +216,17 @@ const DRAKE_KINDS = ["infernal", "mountain", "ocean", "cloud", "hextech", "chemt
 
 /**
  * Détermine le type d'un drake selon son index dans la timeline.
- * - Drakes #1, #2, #3 : type aléatoire (déterministe par index dans la séquence)
- * - Drake #3 fixe le "soul type"
- * - Drakes #4 et + : tous du type du #3 (jusqu'à Elder à 35:00)
+ * - Drakes #0, #1, #2 : 3 types DIFFÉRENTS tirés sans remise parmi les 6 éléments.
+ * - Drake #2 fixe le "soul type".
+ * - Drakes #3+ jusqu'à Elder : tous du type du #2 (soul drake).
+ * Déterministe via PRNG seedé sur seedKey → stable au scrubbing.
  */
 export function getDrakeKind(drakeIndex, seedKey = "match") {
-  // PRNG seedé pour stabilité au scrubbing
   const seed = (typeof seedKey === "string"
     ? seedKey.split("").reduce((s, c) => ((s * 31) | 0) + c.charCodeAt(0), 0)
     : seedKey | 0);
-  let s = (seed + drakeIndex * 7919) | 0;
+  // Tirage sans remise parmi DRAKE_KINDS, ordre déterministe par seed
+  let s = seed | 0;
   const rng = () => {
     s = (s + 0x6D2B79F5) | 0;
     let t = s;
@@ -233,17 +234,15 @@ export function getDrakeKind(drakeIndex, seedKey = "match") {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  if (drakeIndex < 3) return DRAKE_KINDS[Math.floor(rng() * DRAKE_KINDS.length)];
-  // Le 3e drake fixe le soul → on calcule son kind avec un index 2
-  let s2 = (seed + 2 * 7919) | 0;
-  const rng2 = () => {
-    s2 = (s2 + 0x6D2B79F5) | 0;
-    let t = s2;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-  return DRAKE_KINDS[Math.floor(rng2() * DRAKE_KINDS.length)];
+  // Fisher-Yates shuffle déterministe
+  const shuffled = [...DRAKE_KINDS];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  if (drakeIndex < 3) return shuffled[drakeIndex];
+  // Le 3e drake (index 2) fixe le soul, tous les suivants reprennent ce type
+  return shuffled[2];
 }
 
 /**
