@@ -517,73 +517,9 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
         />
       </div>
 
-      {/* ─── Phases ────────────────────────────────────────────── */}
-      {(matchResult.match_details.phases || []).length > 0 && (
-        <section style={{ marginBottom: 20 }} aria-label="Phases du match">
-          <h3 style={{
-            fontFamily: FONT_HEADING, fontSize: 12, letterSpacing: 2,
-            color: "var(--text-2)", textTransform: "uppercase",
-            margin: "0 0 10px 0",
-          }}>
-            Phases du match
-          </h3>
-          <div className="grid-3" style={{ gap: 10 }}>
-            {(matchResult.match_details.phases || []).map((p, i) => {
-              const phaseColor = i === 0 ? "#4FC3F7" : i === 1 ? "#FFB800" : "#FF5252";
-              const userAdvantage = p.advantage === (isTeam1 ? 1 : 2);
-              return (
-                <div key={i} className="card" style={{
-                  padding: 14, position: "relative", overflow: "hidden",
-                  borderLeft: `3px solid ${phaseColor}`,
-                  background: `linear-gradient(180deg, ${phaseColor}10, transparent 60%)`,
-                }}>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-                    <h5 style={{
-                      margin: 0, fontFamily: FONT_HEADING, fontSize: 14,
-                      color: phaseColor, letterSpacing: 1,
-                    }}>{p.name}</h5>
-                    <span style={{ fontSize: 11, color: "var(--text-2)", fontFamily: FONT_STATS }}>
-                      {p.duration}
-                    </span>
-                  </div>
-                  <div style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    fontSize: 11, color: "var(--text-2)", marginBottom: 4,
-                    textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600,
-                  }}>
-                    <span>Avantage Gold</span>
-                    <span style={{
-                      fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
-                      color: userAdvantage ? ACCENT_WIN : ACCENT_LOSS,
-                      fontVariantNumeric: "tabular-nums",
-                    }}>
-                      {userAdvantage ? "+" : "−"}{Math.abs(p.gold_diff)}
-                    </span>
-                  </div>
-                  {/* Barre direction avantage */}
-                  <div style={{
-                    height: 4, borderRadius: 2, overflow: "hidden",
-                    background: "rgba(255,255,255,0.06)",
-                    display: "flex",
-                  }}>
-                    <div style={{
-                      width: userAdvantage ? "100%" : "0%",
-                      height: "100%",
-                      background: `linear-gradient(90deg, ${ACCENT_WIN}, transparent)`,
-                      transition: "width 360ms ease-out",
-                    }} />
-                    <div style={{
-                      width: !userAdvantage ? "100%" : "0%",
-                      height: "100%",
-                      background: `linear-gradient(270deg, ${ACCENT_LOSS}, transparent)`,
-                      transition: "width 360ms ease-out",
-                    }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+      {/* ─── Gold Timeline Graph ───────────────────────────────── */}
+      {goldTimeline.length > 1 && (
+        <GoldDiffChart goldTimeline={goldTimeline} duration={dur} />
       )}
 
       {/* ─── Autres résultats ──────────────────────────────────── */}
