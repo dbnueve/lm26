@@ -364,13 +364,13 @@ const MatchTimeline = ({
         {/* Logo + abbr gauche */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           <TeamLogo teamId={leftId} abbr={leftAbbr} size={32} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--success)", letterSpacing: 1 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#3b82f6", letterSpacing: 1 }}>
             {leftAbbr}
           </span>
         </div>
 
         {/* Kills gauche */}
-        <TimelineKillCounter value={leftKills} color="var(--success)" />
+        <TimelineKillCounter value={leftKills} color="#3b82f6" />
 
         {/* Scoreboard objectifs gauche (tours/drake) */}
         <ObjectiveScoreboard events={visibleEvents} teamNum={leftNum} side="left" />
