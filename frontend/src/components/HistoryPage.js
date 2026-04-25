@@ -209,16 +209,6 @@ function EloChart({ data }) {
           </linearGradient>
         </defs>
 
-        {/* Zones tiers (bandes horizontales colorées très subtiles) */}
-        {ELO_TIERS.filter(t => t.min >= minElo && t.min <= maxElo).map((t, i) => (
-          <line
-            key={`tier-${i}`}
-            x1={PAD_L} x2={W - PAD_R}
-            y1={yOf(t.min)} y2={yOf(t.min)}
-            stroke={t.color} strokeWidth="0.5" strokeDasharray="2 5" opacity="0.45"
-          />
-        ))}
-
         {/* Y ticks (grille principale) */}
         {yTicks.map((t, i) => (
           <g key={`y-${i}`}>
