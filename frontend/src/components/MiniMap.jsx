@@ -1304,6 +1304,23 @@ export default function MiniMap({
         />
       ))}
 
+      {/* Tours encore debout — disparaissent quand l'event tower tombe */}
+      {standingTowers.map(t => (
+        <div key={t.key} style={{
+          position: "absolute",
+          left: `${t.x}%`, top: `${t.y}%`,
+          transform: "translate(-50%, -50%)",
+          width: Math.round(iconSize * 0.55),
+          height: Math.round(iconSize * 0.55),
+          borderRadius: "50%",
+          background: t.side === "blue" ? "#3b82f6" : "#ef4444",
+          border: "1.5px solid rgba(255,255,255,0.85)",
+          boxShadow: `0 0 4px ${t.side === "blue" ? "#3b82f6" : "#ef4444"}cc, 0 0 2px rgba(0,0,0,0.9)`,
+          zIndex: 18,
+          pointerEvents: "none",
+        }} />
+      ))}
+
       {/* Objectifs neutres UP — icône persistante sur la fosse */}
       {(() => {
         const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2";
