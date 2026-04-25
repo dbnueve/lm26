@@ -303,36 +303,18 @@ function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration }) {
           </span>
         )}
         <div style={{ display: "flex", gap: 14, marginLeft: 4 }}>
-          <div
-            title="Gold total équipe"
-            style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.05 }}
-          >
-            <span style={{
-              fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
-              color: ACCENT_MVP, fontVariantNumeric: "tabular-nums",
-            }}>
-              {(totalGold / 1000).toFixed(1)}k
-            </span>
-            <span style={{
-              fontSize: 8, color: "var(--text-2)", letterSpacing: 0.8,
-              fontWeight: 700, textTransform: "uppercase",
-            }}>Gold</span>
-          </div>
-          <div
-            title={`KDA équipe : ${totalKills}/${totalDeaths}/${totalAssists}`}
-            style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.05 }}
-          >
-            <span style={{
-              fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
-              color: accent, fontVariantNumeric: "tabular-nums",
-            }}>
-              {teamKDA}
-            </span>
-            <span style={{
-              fontSize: 8, color: "var(--text-2)", letterSpacing: 0.8,
-              fontWeight: 700, textTransform: "uppercase",
-            }}>KDA</span>
-          </div>
+          <StatChip
+            value={`${(totalGold / 1000).toFixed(1)}k`}
+            label="Gold"
+            valueColor={ACCENT_MVP}
+            tooltip={`${totalGold.toLocaleString("fr-FR")} g · Gold total équipe`}
+          />
+          <StatChip
+            value={teamKDA}
+            label="KDA"
+            valueColor={accent}
+            tooltip={`${totalKills} / ${totalDeaths} / ${totalAssists}  ·  K/D/A équipe`}
+          />
         </div>
       </header>
 
