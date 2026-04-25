@@ -992,21 +992,6 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
     if (data.elder > 0) items.push({ type: "elder" });
     if (!items.length) return null;
 
-    // Community Dragon : icônes minimap officielles des drakes
-    const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons";
-    const drakeIconUrl = (kind) => {
-      switch (kind) {
-        case "elder":    return `${CDRAGON}/dragon_elder.png`;
-        case "infernal": return `${CDRAGON}/dragon_infernal.png`;
-        case "mountain": return `${CDRAGON}/dragon_mountain.png`;
-        case "ocean":    return `${CDRAGON}/dragon_ocean.png`;
-        case "cloud":    return `${CDRAGON}/dragon_cloud.png`;
-        case "hextech":  return `${CDRAGON}/dragon_hextech.png`;
-        case "chemtech": return `${CDRAGON}/dragon_chemtech.png`;
-        default:         return `${CDRAGON}/dragon.png`;
-      }
-    };
-
     return (
       <div style={{
         display: "flex", alignItems: "center", gap: 3,
@@ -1014,21 +999,15 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
         flexWrap: "wrap", maxWidth: 70,
       }}>
         {items.map((d, i) => {
-          const desc = (d.description || "").toLowerCase();
-          let kind = "drake";
-          if (d.type === "elder" || desc.includes("elder")) kind = "elder";
-          else if (desc.includes("infernal")) kind = "infernal";
-          else if (desc.includes("mountain")) kind = "mountain";
-          else if (desc.includes("ocean"))    kind = "ocean";
-          else if (desc.includes("cloud"))    kind = "cloud";
-          else if (desc.includes("hextech"))  kind = "hextech";
-          else if (desc.includes("chemtech")) kind = "chemtech";
+          // Index global : drakes neutres puis elder
+          const url = d.type === "elder"
+            ? CDRAGON_URLS.drake_elder
+            : CDRAGON_URLS[`drake_${getDrakeKind(i)}`];
           return (
             <img
               key={i}
-              src={drakeIconUrl(kind)}
-              alt={kind}
-              title={kind}
+              src={url}
+              alt={d.type}
               style={{
                 width: 16, height: 16,
                 filter: `drop-shadow(0 0 3px ${color}aa)`,
