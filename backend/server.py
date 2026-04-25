@@ -1579,8 +1579,14 @@ def simulate_match_phases(team1_power: float, team2_power: float):
 
     rift_team = mid_win if random.random() < 0.65 else (3 - mid_win)
     gold_mid = gold_early + abs(mid_p1 - mid_p2) * random.uniform(120, 220)
-    drakes_1 = min(4, random.randint(1 if early_win == 1 else 0, 3))
-    drakes_2 = min(4 - drakes_1, random.randint(1 if early_win == 2 else 0, 3))
+    # Drakes mid-game : une équipe peut atteindre 4 (soul) tandis que l'autre garde
+    # ses propres drakes — total max = 7 (4+3). L'équipe gagnante sécurise plus de drakes.
+    if mid_win == 1:
+        drakes_1 = random.randint(2, 4)
+        drakes_2 = random.randint(0, min(3, max(0, 4 - (drakes_1 - 2))))
+    else:
+        drakes_2 = random.randint(2, 4)
+        drakes_1 = random.randint(0, min(3, max(0, 4 - (drakes_2 - 2))))
 
     phases.append({
         "name": "Mid Game",
