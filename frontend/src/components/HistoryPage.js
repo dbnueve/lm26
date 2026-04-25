@@ -265,19 +265,68 @@ function EloChart({ data }) {
           />
         )}
 
+        {/* Marqueurs d'évolution : trait vertical entre Y(prev) et Y(curr) à xOf(i) */}
+        {data.map((d, i) => {
+          if (i === 0) return null;
+          const prev = data[i - 1];
+          const delta = d.elo - prev.elo;
+          if (delta === 0) return null;
+          const x = xOf(i);
+          const yPrev = yOf(prev.elo);
+          const yCurr = yOf(d.elo);
+          const color = eloDeltaColor(delta);
+          const labelY = (yPrev + yCurr) / 2;
+          const labelOffset = delta > 0 ? -10 : 14; // tag à droite du trait
+          const arrowY = yCurr + (delta > 0 ? 5 : -5); // pointe de la flèche au-dessus/dessous du point cible
+          return (
+            <g key={`delta-${i}`} aria-hidden="true">
+              {/* Trait vertical du niveau précédent au niveau actuel */}
+              <line
+                x1={x} x2={x}
+                y1={yPrev} y2={yCurr}
+                stroke={color} strokeWidth="1.5" strokeDasharray="3 3"
+                opacity="0.75"
+              />
+              {/* Triangle direction (pointe vers la valeur actuelle) */}
+              <polygon
+                points={
+                  delta > 0
+                    ? `${x - 4},${arrowY + 4} ${x + 4},${arrowY + 4} ${x},${arrowY - 2}`
+                    : `${x - 4},${arrowY - 4} ${x + 4},${arrowY - 4} ${x},${arrowY + 2}`
+                }
+                fill={color}
+                opacity="0.9"
+              />
+              {/* Label delta */}
+              <text
+                x={x + 8} y={labelY + labelOffset / 4}
+                fontSize="10"
+                fontFamily={FONT_STATS}
+                fontWeight="700"
+                fill={color}
+                style={{ fontVariantNumeric: "tabular-nums", textShadow: `0 0 6px ${color}66` }}
+              >
+                {delta > 0 ? "+" : ""}{delta.toFixed(0)}
+              </text>
+            </g>
+          );
+        })}
+
         {/* Points */}
         {data.map((d, i) => {
           const isHover = hoverIdx === i;
+          const delta = i > 0 ? d.elo - data[i - 1].elo : 0;
+          const ptColor = i === 0 ? ACCENT_WIN : eloDeltaColor(delta);
           return (
             <circle
               key={`pt-${i}`}
               cx={xOf(i)} cy={yOf(d.elo)}
               r={isHover ? 7 : 5}
               fill="var(--surface-1)"
-              stroke={getEloColor(d.elo)}
+              stroke={ptColor}
               strokeWidth={isHover ? 3 : 2.5}
               style={{
-                filter: isHover ? `drop-shadow(0 0 6px ${getEloColor(d.elo)})` : "none",
+                filter: isHover ? `drop-shadow(0 0 6px ${ptColor})` : "none",
                 transition: "r 160ms, stroke-width 160ms",
               }}
             />
