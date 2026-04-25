@@ -976,6 +976,22 @@ export default function MiniMap({
     [enrichedEvents]
   );
 
+  // Timeline complète des morts par champion (pour la simulation)
+  const deathTimelineByChamp = useMemo(() => {
+    const map = {};
+    [...visibleEvents]
+      .sort((a, b) => parseSec(a.time) - parseSec(b.time))
+      .forEach(ev => {
+        if (KILL_TYPES.has(ev.type) && ev.victim_champion) {
+          const deathSec    = parseSec(ev.time);
+          const respawnSec  = deathSec + calcDeathTimer(deathSec);
+          if (!map[ev.victim_champion]) map[ev.victim_champion] = [];
+          map[ev.victim_champion].push({ deathSec, respawnSec });
+        }
+      });
+    return map;
+  }, [visibleEvents]);
+
   // ── Reconstruction des participants à chaque kill ─────────────────
   // Backend ne fournit pas la liste des assistants. On la régénère
   // ici de façon déterministe (PRNG seedé sur le temps du kill) pour
