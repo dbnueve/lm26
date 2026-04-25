@@ -197,6 +197,8 @@ export const CDRAGON_URLS = {
   drake_chemtech: `${CDRAGON_ICONS_BASE}/dragon_chemtech.png`,
 };
 
+const CDRAGON_PINGS_BASE = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/pings";
+
 // Mapping event → URL CommunityDragon (priorité avant fallback emoji)
 export const EVENT_ICON_URLS = {
   baron:       CDRAGON_URLS.baron,
@@ -206,6 +208,8 @@ export const EVENT_ICON_URLS = {
   inhibitor:   CDRAGON_URLS.inhibitor,
   drake:       CDRAGON_URLS.drake,
   elder:       CDRAGON_URLS.drake_elder,
+  kill:        `${CDRAGON_PINGS_BASE}/all_in.png`,
+  first_blood: `${CDRAGON_PINGS_BASE}/all_in.png`,
 };
 
 const DRAKE_KINDS = ["infernal", "mountain", "ocean", "cloud", "hextech", "chemtech"];
