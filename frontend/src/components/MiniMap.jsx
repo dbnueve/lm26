@@ -1125,6 +1125,43 @@ export default function MiniMap({
     }[recent.type] || null;
   }, [enrichedEvents, matchSec]);
 
+  // ── Objectifs neutres UP : Herald / Drake / Elder / Baron ─────────
+  // Affichage persistant sur la fosse tant qu'aucun event ne les a pris.
+  const objectiveUp = useMemo(() => {
+    const last = { drake: null, elder: null, baron: null, herald: null };
+    const count = { drake: 0, elder: 0, baron: 0, herald: 0 };
+    [...visibleEvents]
+      .sort((a, b) => parseSec(a.time) - parseSec(b.time))
+      .forEach(ev => {
+        if (parseSec(ev.time) > matchSec) return;
+        if (ev.type in last) {
+          last[ev.type] = parseSec(ev.time);
+          count[ev.type] += 1;
+        }
+      });
+
+    const heraldActive = matchSec < HERALD_DESPAWN_SEC;
+    const heraldNext = heraldActive
+      ? nextRespawn(last.herald, DRAKE_RESPAWN_SEC, HERALD_SPAWN_SEC, matchSec)
+      : "GONE";
+    const heraldUp = heraldActive && heraldNext === null;
+
+    const totalDrakes = count.drake + count.elder;
+    const elderUnlocked = totalDrakes >= 4 && matchSec >= ELDER_SPAWN_SEC;
+    const drakeNext = elderUnlocked
+      ? nextRespawn(last.elder, DRAKE_RESPAWN_SEC, ELDER_SPAWN_SEC, matchSec)
+      : nextRespawn(last.drake, DRAKE_RESPAWN_SEC, DRAKE_FIRST_SEC, matchSec);
+    const drakeUp = drakeNext === null;
+
+    const baronAvail = matchSec >= BARON_SPAWN_SEC && !heraldActive;
+    const baronNext = baronAvail
+      ? nextRespawn(last.baron, BARON_RESPAWN_SEC, BARON_SPAWN_SEC, matchSec)
+      : null;
+    const baronUp = baronAvail && baronNext === null;
+
+    return { heraldUp, drakeUp, baronUp, elderUp: drakeUp && elderUnlocked, drakeIsElder: elderUnlocked };
+  }, [visibleEvents, matchSec]);
+
   return (
     <div style={{
       position: "relative",
