@@ -283,8 +283,7 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
   const oppScore  = isTeam1 ? totalKills2 : totalKills1;
 
   // Stats globales user team pour le hero
-  const userTotalDmg = userStats.reduce((a, p) => a + (p.damage || 0), 0);
-  const userTotalCs  = userStats.reduce((a, p) => a + (p.cs || 0), 0);
+  const userTotalGold = userStats.reduce((a, p) => a + (p.gold || 0), 0);
 
   const mvp = getMVP(matchResult, userTeam.id);
   const mvpKDA = mvp ? ((mvp.kills + mvp.assists) / Math.max(1, mvp.deaths)).toFixed(2) : "0";
