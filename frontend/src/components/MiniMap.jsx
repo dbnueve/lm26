@@ -1425,22 +1425,30 @@ export default function MiniMap({
 
       {/* Objectifs neutres UP — icône persistante sur la fosse */}
       {(() => {
-        const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons";
         const items = [];
         if (objectiveUp.heraldUp) items.push({
           key: "herald-up", x: POS.herald.x, y: POS.herald.y,
-          imgUrl: `${CDRAGON}/herald.png`, fallback: "🔮", color: "#6366f1",
+          imgUrl: CDRAGON_URLS.herald, fallback: "🔮", color: "#6366f1",
         });
         if (objectiveUp.baronUp) items.push({
           key: "baron-up", x: POS.baron.x, y: POS.baron.y,
-          imgUrl: `${CDRAGON}/baron.png`, fallback: "👑", color: "#eab308",
+          imgUrl: CDRAGON_URLS.baron, fallback: "👑", color: "#eab308",
         });
-        if (objectiveUp.drakeUp) items.push({
-          key: "drake-up", x: POS.drake.x, y: POS.drake.y,
-          imgUrl: objectiveUp.drakeIsElder ? `${CDRAGON}/dragon_elder.png` : `${CDRAGON}/dragon.png`,
-          fallback: objectiveUp.drakeIsElder ? "🟣" : "🐉",
-          color: objectiveUp.drakeIsElder ? "#a855f7" : "#f97316",
-        });
+        if (objectiveUp.drakeUp) {
+          // Index du prochain drake = nombre de drakes déjà tombés
+          const drakesTaken = visibleEvents.filter(e =>
+            e.type === "drake" && parseSec(e.time) <= matchSec
+          ).length;
+          const nextKind = objectiveUp.drakeIsElder
+            ? "elder"
+            : getDrakeKind(drakesTaken);
+          items.push({
+            key: "drake-up", x: POS.drake.x, y: POS.drake.y,
+            imgUrl: objectiveUp.drakeIsElder ? CDRAGON_URLS.drake_elder : CDRAGON_URLS[`drake_${nextKind}`],
+            fallback: objectiveUp.drakeIsElder ? "🟣" : "🐉",
+            color: objectiveUp.drakeIsElder ? "#a855f7" : "#f97316",
+          });
+        }
         return items.map(it => (
           <div key={it.key} style={{
             position: "absolute",
