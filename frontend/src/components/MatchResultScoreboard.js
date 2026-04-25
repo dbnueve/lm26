@@ -166,7 +166,7 @@ function StatRow({ p, duration, won, maxDamage }) {
   );
 }
 
-function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration }) {
+function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration, totalGold }) {
   const accent = won ? ACCENT_WIN : ACCENT_LOSS;
   const maxDamage = useMemo(
     () => Math.max(0, ...stats.map(p => p.damage || 0)),
@@ -175,7 +175,6 @@ function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration }) {
   const totalKills   = stats.reduce((a, p) => a + (p.kills || 0), 0);
   const totalDeaths  = stats.reduce((a, p) => a + (p.deaths || 0), 0);
   const totalAssists = stats.reduce((a, p) => a + (p.assists || 0), 0);
-  const totalGold    = stats.reduce((a, p) => a + (p.gold || 0), 0);
 
   return (
     <section
