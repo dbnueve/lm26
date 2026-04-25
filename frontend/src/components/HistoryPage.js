@@ -302,38 +302,42 @@ function EloChart({ data }) {
           const yCurr = yOf(d.elo);
           const color = eloDeltaColor(delta);
           const labelY = (yPrev + yCurr) / 2;
-          const labelOffset = delta > 0 ? -10 : 14; // tag à droite du trait
-          const arrowY = yCurr + (delta > 0 ? 5 : -5); // pointe de la flèche au-dessus/dessous du point cible
+          const arrowY = yCurr + (delta > 0 ? 5 : -5);
+          const showLabel = data.length <= 25;
+          const arrowSize = data.length > 50 ? 2 : data.length > 25 ? 3 : 4;
           return (
             <g key={`delta-${i}`} aria-hidden="true">
               {/* Trait vertical du niveau précédent au niveau actuel */}
               <line
                 x1={x} x2={x}
                 y1={yPrev} y2={yCurr}
-                stroke={color} strokeWidth="1.5" strokeDasharray="3 3"
-                opacity="0.75"
+                stroke={color} strokeWidth={data.length > 50 ? 1 : 1.5}
+                strokeDasharray={data.length > 50 ? "2 2" : "3 3"}
+                opacity={data.length > 50 ? 0.55 : 0.75}
               />
-              {/* Triangle direction (pointe vers la valeur actuelle) */}
+              {/* Triangle direction */}
               <polygon
                 points={
                   delta > 0
-                    ? `${x - 4},${arrowY + 4} ${x + 4},${arrowY + 4} ${x},${arrowY - 2}`
-                    : `${x - 4},${arrowY - 4} ${x + 4},${arrowY - 4} ${x},${arrowY + 2}`
+                    ? `${x - arrowSize},${arrowY + arrowSize} ${x + arrowSize},${arrowY + arrowSize} ${x},${arrowY - arrowSize / 2}`
+                    : `${x - arrowSize},${arrowY - arrowSize} ${x + arrowSize},${arrowY - arrowSize} ${x},${arrowY + arrowSize / 2}`
                 }
                 fill={color}
                 opacity="0.9"
               />
-              {/* Label delta */}
-              <text
-                x={x + 8} y={labelY + labelOffset / 4}
-                fontSize="10"
-                fontFamily={FONT_STATS}
-                fontWeight="700"
-                fill={color}
-                style={{ fontVariantNumeric: "tabular-nums", textShadow: `0 0 6px ${color}66` }}
-              >
-                {delta > 0 ? "+" : ""}{delta.toFixed(0)}
-              </text>
+              {/* Label delta — masqué si beaucoup de points */}
+              {showLabel && (
+                <text
+                  x={x + 8} y={labelY}
+                  fontSize="10"
+                  fontFamily={FONT_STATS}
+                  fontWeight="700"
+                  fill={color}
+                  style={{ fontVariantNumeric: "tabular-nums", textShadow: `0 0 6px ${color}66` }}
+                >
+                  {delta > 0 ? "+" : ""}{delta.toFixed(0)}
+                </text>
+              )}
             </g>
           );
         })}
