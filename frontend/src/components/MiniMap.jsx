@@ -897,17 +897,17 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
     if (!items.length) return null;
 
     // Community Dragon : icônes minimap officielles des drakes
-    const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2";
+    const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons";
     const drakeIconUrl = (kind) => {
       switch (kind) {
-        case "elder":    return `${CDRAGON}/icon_ux_minimap_dragon_elder.png`;
-        case "infernal": return `${CDRAGON}/icon_ux_minimap_dragon_infernal.png`;
-        case "mountain": return `${CDRAGON}/icon_ux_minimap_dragon_mountain.png`;
-        case "ocean":    return `${CDRAGON}/icon_ux_minimap_dragon_ocean.png`;
-        case "cloud":    return `${CDRAGON}/icon_ux_minimap_dragon_cloud.png`;
-        case "hextech":  return `${CDRAGON}/icon_ux_minimap_dragon_hextech.png`;
-        case "chemtech": return `${CDRAGON}/icon_ux_minimap_dragon_chemtech.png`;
-        default:         return `${CDRAGON}/icon_ux_minimap_dragon.png`;
+        case "elder":    return `${CDRAGON}/dragon_elder.png`;
+        case "infernal": return `${CDRAGON}/dragon_infernal.png`;
+        case "mountain": return `${CDRAGON}/dragon_mountain.png`;
+        case "ocean":    return `${CDRAGON}/dragon_ocean.png`;
+        case "cloud":    return `${CDRAGON}/dragon_cloud.png`;
+        case "hextech":  return `${CDRAGON}/dragon_hextech.png`;
+        case "chemtech": return `${CDRAGON}/dragon_chemtech.png`;
+        default:         return `${CDRAGON}/dragon.png`;
       }
     };
 
