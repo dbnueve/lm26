@@ -145,7 +145,7 @@ function ObjectivePips({ events, teamNum }) {
 /* ─── LiveScoreboard : KDA en temps réel ─────────────────────── */
 
 function LiveScoreboard({ leftStats, rightStats, leftAbbr, rightAbbr,
-                          visibleEvents, winnerTeam, leftNum, duration }) {
+                          visibleEvents, winnerTeam, leftNum, rightNum, duration }) {
   // Kills/deaths/assists live. Les events backend ne contiennent pas la liste
   // des assistants : on les distribue côté front sur les coéquipiers vivants
   // du killer, pondérés par rôle (SUPPORT/JUNGLE plus enclins, ADC moins).
