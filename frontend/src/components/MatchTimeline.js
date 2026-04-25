@@ -574,12 +574,21 @@ const MatchTimeline = ({
             }}
           >
             <AnimatePresence initial={false}>
-              {visibleEvents.map((item, i) => (
-                <TimelineEventRow
-                  key={`${item.type}-${item.time}-${i}`}
-                  item={item} tc={tc} tn={tn}
-                />
-              ))}
+              {visibleEvents.map((item, i) => {
+                // Index drake si applicable (pour choisir le bon kind d'icône)
+                let drakeIndex = null;
+                if (item.type === "drake") {
+                  drakeIndex = visibleEvents
+                    .slice(0, i + 1)
+                    .filter(e => e.type === "drake").length - 1;
+                }
+                return (
+                  <TimelineEventRow
+                    key={`${item.type}-${item.time}-${i}`}
+                    item={item} tc={tc} tn={tn} drakeIndex={drakeIndex}
+                  />
+                );
+              })}
             </AnimatePresence>
 
             {!done && playing && (
