@@ -973,7 +973,16 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
         justifyContent: align, flexDirection: side === "left" ? "row-reverse" : "row",
       }}
     >
-      <span style={{ fontSize: 11, lineHeight: 1 }}>{icon}</span>
+      {typeof icon === "string" && /^https?:/.test(icon) ? (
+        <img
+          src={icon}
+          alt=""
+          style={{ width: 13, height: 13, objectFit: "contain", filter: `drop-shadow(0 0 2px ${filledColor}aa)` }}
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
+        />
+      ) : (
+        <span style={{ fontSize: 11, lineHeight: 1 }}>{icon}</span>
+      )}
       <div style={{ display: "flex", gap: 2 }}>
         {Array.from({ length: max }).map((_, i) => (
           <div key={i} style={{
