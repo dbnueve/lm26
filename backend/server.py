@@ -5481,7 +5481,14 @@ async def start_international():
     # user_champ_id = user's team if qualified, else None (spectator mode)
     user_champ_id = user_team_id if user_qualified else None
 
-    GAME_STATE["international"] = _create_msi(user_league, user_champ_id) if split_num == 1 else _create_worlds(user_league, user_champ_id)
+    def _pick_fn(league: str, n: int) -> list:
+        return _intl_pick_top_n(league, n, user_league, user_champ_id)
+
+    GAME_STATE["international"] = (
+        _create_msi_impl(_pick_fn, user_league, user_champ_id)
+        if split_num == 1
+        else _create_worlds_impl(_pick_fn, user_league, user_champ_id)
+    )
     GAME_STATE["international"]["user_team_id"] = user_team_id
     GAME_STATE["international"]["user_qualified"] = user_qualified
     return GAME_STATE["international"]
