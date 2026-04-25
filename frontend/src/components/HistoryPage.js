@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  ChartLine, Trophy, Calendar, Swords, Target,
+  ChartLine, Trophy, Calendar, Sword, Target,
   CheckCircle, XCircle, ChartBar, TrendUp, TrendDown,
 } from "@phosphor-icons/react";
 import TeamLogo from "./TeamLogo";
@@ -516,7 +516,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
       <div role="tablist" style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
         <TabButton id="elo"        active={activeTab === "elo"}        onClick={() => setActiveTab("elo")}        icon={ChartLine} label="Évolution ELO" />
         <TabButton id="splits"     active={activeTab === "splits"}     onClick={() => setActiveTab("splits")}     icon={Calendar}  label="Stats par Split" />
-        <TabButton id="headtohead" active={activeTab === "headtohead"} onClick={() => setActiveTab("headtohead")} icon={Swords}    label="Head-to-Head" />
+        <TabButton id="headtohead" active={activeTab === "headtohead"} onClick={() => setActiveTab("headtohead")} icon={Sword}    label="Head-to-Head" />
       </div>
 
       {/* ─── Panel ELO ─────────────────────────────────────────── */}
@@ -718,7 +718,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
               color: "var(--text-2)",
               border: "1px dashed var(--border)", borderRadius: 6,
             }}>
-              <Swords size={48} style={{ opacity: 0.25, marginBottom: 12 }} />
+              <Sword size={48} style={{ opacity: 0.25, marginBottom: 12 }} />
               <p style={{ margin: 0, fontFamily: FONT_HEADING, fontSize: 12, letterSpacing: 1.2, textTransform: "uppercase" }}>
                 Choisissez un adversaire pour analyser les duels
               </p>
