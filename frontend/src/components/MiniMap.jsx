@@ -750,7 +750,16 @@ export function ObjectiveTracker({ events = [], matchSec = 0 }) {
       opacity: dim ? 0.45 : 1,
       minWidth: 62,
     }}>
-      <span style={{ fontSize: 13, lineHeight: 1, filter: dim ? "grayscale(1)" : "none" }}>{icon}</span>
+      {typeof icon === "string" && /^https?:/.test(icon) ? (
+        <img
+          src={icon}
+          alt={label}
+          style={{ width: 14, height: 14, objectFit: "contain", filter: dim ? "grayscale(1)" : "none" }}
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
+        />
+      ) : (
+        <span style={{ fontSize: 13, lineHeight: 1, filter: dim ? "grayscale(1)" : "none" }}>{icon}</span>
+      )}
       <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
         <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 0.8, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>{label}</span>
         <span style={{
