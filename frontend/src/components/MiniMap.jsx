@@ -103,36 +103,36 @@ const POS = {
 const TOWERS = {
   blue: {
     top: [
-      { x: 13, y: 35 },  // outer
-      { x: 13, y: 55 },  // inner
-      { x: 13, y: 70 },  // inhib
+      { x: 13, y: 40 },  // outer
+      { x: 13, y: 58 },  // inner
+      { x: 13, y: 75 },  // inhib
     ],
     mid: [
-      { x: 38, y: 62 },  // outer
-      { x: 28, y: 72 },  // inner
-      { x: 20, y: 80 },  // inhib
+      { x: 42, y: 60 },  // outer
+      { x: 32, y: 72 },  // inner
+      { x: 22, y: 82 },  // inhib
     ],
     bot: [
-      { x: 60, y: 87 },  // outer
-      { x: 38, y: 87 },  // inner
-      { x: 22, y: 87 },  // inhib
+      { x: 52, y: 90 },  // outer
+      { x: 38, y: 90 },  // inner
+      { x: 22, y: 90 },  // inhib
     ],
   },
   red: {
     top: [
-      { x: 45, y: 13 },  // outer
-      { x: 28, y: 13 },  // inner
-      { x: 15, y: 13 },  // inhib
+      { x: 50, y: 10 },  // outer
+      { x: 33, y: 10 },  // inner
+      { x: 15, y: 10 },  // inhib
     ],
     mid: [
-      { x: 62, y: 38 },  // outer
-      { x: 72, y: 28 },  // inner
-      { x: 80, y: 20 },  // inhib
+      { x: 60, y: 40 },  // outer
+      { x: 70, y: 28 },  // inner
+      { x: 78, y: 20 },  // inhib
     ],
     bot: [
-      { x: 87, y: 65 },  // outer
-      { x: 87, y: 45 },  // inner
-      { x: 87, y: 28 },  // inhib
+      { x: 88, y: 57 },  // outer
+      { x: 88, y: 42 },  // inner
+      { x: 88, y: 25 },  // inhib
     ],
   },
 };
