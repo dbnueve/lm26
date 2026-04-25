@@ -180,6 +180,102 @@ const EVENT_ICONS = {
   game_end:    "🏆",
 };
 
+// Community Dragon : icônes minimap LoL officielles
+const CDRAGON_ICONS_BASE = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons";
+export const CDRAGON_URLS = {
+  baron:        `${CDRAGON_ICONS_BASE}/baron.png`,
+  herald:       `${CDRAGON_ICONS_BASE}/riftherald.png`,
+  tower:        `${CDRAGON_ICONS_BASE}/tower.png`,
+  inhibitor:    `${CDRAGON_ICONS_BASE}/inhibitor.png`,
+  drake:        `${CDRAGON_ICONS_BASE}/dragon.png`,
+  drake_elder:  `${CDRAGON_ICONS_BASE}/dragon_elder.png`,
+  drake_infernal: `${CDRAGON_ICONS_BASE}/dragon_infernal.png`,
+  drake_mountain: `${CDRAGON_ICONS_BASE}/dragon_mountain.png`,
+  drake_ocean:    `${CDRAGON_ICONS_BASE}/dragon_ocean.png`,
+  drake_cloud:    `${CDRAGON_ICONS_BASE}/dragon_cloud.png`,
+  drake_hextech:  `${CDRAGON_ICONS_BASE}/dragon_hextech.png`,
+  drake_chemtech: `${CDRAGON_ICONS_BASE}/dragon_chemtech.png`,
+};
+
+// Mapping event → URL CommunityDragon (priorité avant fallback emoji)
+export const EVENT_ICON_URLS = {
+  baron:       CDRAGON_URLS.baron,
+  herald:      CDRAGON_URLS.herald,
+  tower:       CDRAGON_URLS.tower,
+  first_tower: CDRAGON_URLS.tower,
+  inhibitor:   CDRAGON_URLS.inhibitor,
+  drake:       CDRAGON_URLS.drake,
+  elder:       CDRAGON_URLS.drake_elder,
+};
+
+const DRAKE_KINDS = ["infernal", "mountain", "ocean", "cloud", "hextech", "chemtech"];
+
+/**
+ * Détermine le type d'un drake selon son index dans la timeline.
+ * - Drakes #1, #2, #3 : type aléatoire (déterministe par index dans la séquence)
+ * - Drake #3 fixe le "soul type"
+ * - Drakes #4 et + : tous du type du #3 (jusqu'à Elder à 35:00)
+ */
+export function getDrakeKind(drakeIndex, seedKey = "match") {
+  // PRNG seedé pour stabilité au scrubbing
+  const seed = (typeof seedKey === "string"
+    ? seedKey.split("").reduce((s, c) => ((s * 31) | 0) + c.charCodeAt(0), 0)
+    : seedKey | 0);
+  let s = (seed + drakeIndex * 7919) | 0;
+  const rng = () => {
+    s = (s + 0x6D2B79F5) | 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  if (drakeIndex < 3) return DRAKE_KINDS[Math.floor(rng() * DRAKE_KINDS.length)];
+  // Le 3e drake fixe le soul → on calcule son kind avec un index 2
+  let s2 = (seed + 2 * 7919) | 0;
+  const rng2 = () => {
+    s2 = (s2 + 0x6D2B79F5) | 0;
+    let t = s2;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return DRAKE_KINDS[Math.floor(rng2() * DRAKE_KINDS.length)];
+}
+
+/**
+ * Composant utilitaire : icône d'événement (image CommunityDragon
+ * avec fallback emoji si l'asset 404). Sortie en bloc <span> inline.
+ */
+export function EventIcon({ type, size = 14, drakeIndex = null, seedKey = "match", style = {} }) {
+  const isDrake = type === "drake" && drakeIndex != null;
+  const url = isDrake
+    ? CDRAGON_URLS[`drake_${getDrakeKind(drakeIndex, seedKey)}`]
+    : EVENT_ICON_URLS[type];
+  const fallback = EVENT_ICONS[type] || "•";
+
+  if (!url) {
+    return <span style={{ fontSize: size, ...style }}>{fallback}</span>;
+  }
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      width: size, height: size, ...style,
+    }}>
+      <img
+        src={url}
+        alt={type}
+        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+        onError={(e) => {
+          const span = document.createElement("span");
+          span.textContent = fallback;
+          span.style.fontSize = `${size}px`;
+          e.currentTarget.replaceWith(span);
+        }}
+      />
+    </span>
+  );
+}
+
 const EVENT_PING_COLOR = {
   kill:        "#ef4444",
   first_blood: "#dc2626",
