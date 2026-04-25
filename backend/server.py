@@ -1919,9 +1919,6 @@ async def load_save_slot(slot: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {e}")
 
-class NewGameRequest(BaseModel):
-    league: str = "LEC"
-
 @api_router.post("/saves/{slot}/new")
 async def new_game_slot(slot: int, body: Optional[NewGameRequest] = None):
     """Start a new game in a specific slot."""
@@ -2130,10 +2127,6 @@ async def get_all_scouting_players():
         cost_multiplier = 1.0 if scout_for == active_league else 2.0
         players.append({**p, "international": scout_for != active_league, "cost_multiplier": cost_multiplier})
     return players
-
-class SignERLPlayerRequest(BaseModel):
-    player_id: str = Field(min_length=1, max_length=100)
-    offered_salary: int = Field(ge=0, le=50_000_000)
 
 @api_router.post("/scouting/sign")
 async def sign_erl_player(request: SignERLPlayerRequest):
@@ -2622,10 +2615,6 @@ async def get_playoffs():
         "champion": champion_data,
     }
 
-class PlayoffsGameRequest(BaseModel):
-    match_id: str = Field(min_length=1, max_length=100)
-    user_draft: Optional[Dict] = None
-
 def _check_advance_after_match(bracket, match):
     """Trigger advance_playoffs if all matches in active rounds are now complete."""
     active_matches = [m for m in bracket["matches"] if m["round"] in bracket["active_rounds"]]
@@ -2838,10 +2827,6 @@ async def simulate_full_season():
     return {"success": True, "message": f"{len(remaining)} matchs simulés. Playoffs lancés!"}
 
 # ============ END PLAYOFFS SYSTEM ============
-
-class SimulateMatchRequest(BaseModel):
-    match_id: str = Field(min_length=1, max_length=100)
-    user_draft: Optional[Dict] = None
 
 @api_router.post("/match/simulate")
 async def simulate_match(request: SimulateMatchRequest, http_request: Request):
@@ -3106,14 +3091,6 @@ async def simulate_week():
     return {"results": results, "week_complete": not week_incomplete, "current_week": GAME_STATE["current_week"], "phase": GAME_STATE["phase"]}
 
 # Negotiations
-
-class NegotiationOffer(BaseModel):
-    player_id: str = Field(min_length=1, max_length=100)
-    offered_amount: int = Field(ge=0, le=50_000_000)
-    contract_years: int = Field(default=2, ge=1, le=5)
-    clauses: Optional[List[str]] = []
-    player_to_swap_id: Optional[str] = None  # joueur user remplacé par le nouveau
-    is_counter_offer: bool = False  # si True, acceptation directe sans aléatoire
 
 @api_router.get("/negotiations/available")
 async def get_available_players():
@@ -3529,10 +3506,6 @@ async def reject_pending_negotiation(negotiation_id: str):
     return {"success": True, "accepted": False}
 
 
-class CounterOfferBody(BaseModel):
-    counter_amount: int = Field(ge=0, le=50_000_000)
-
-
 @api_router.post("/negotiations/{negotiation_id}/counter")
 async def counter_pending_negotiation(negotiation_id: str, body: CounterOfferBody):
     """Target user proposes a new price. The offer flips direction:
@@ -3914,10 +3887,6 @@ async def draft_action(action: DraftAction):
 
 # Training
 
-class TrainingRequest(BaseModel):
-    player_id: str
-    training_type: str  # scrims, vod_review, bootcamp, rest
-
 @api_router.post("/training/apply")
 async def apply_training(request: TrainingRequest):
     """Apply training to a player — FM-style: 1 session/week, temp form_bonus + slow dev_xp"""
@@ -4009,11 +3978,6 @@ async def apply_training(request: TrainingRequest):
 
 
 
-class TrainingPlanRequest(BaseModel):
-    player_id: str
-    training_type: str  # scrims, vod_review, bootcamp, rest, or "" to clear
-
-
 @api_router.post("/training/set-plan")
 async def set_training_plan(request: TrainingPlanRequest):
     """Set a recurring training plan for a player. Applied automatically after each match."""
@@ -4037,10 +4001,6 @@ async def set_training_plan(request: TrainingPlanRequest):
 
     save_state()
     return {"success": True, "player": player, "applied_now": applied}
-
-
-class TeamTrainingPlanRequest(BaseModel):
-    training_type: str  # scrims, vod_review, bootcamp, rest, or "" to clear
 
 
 @api_router.post("/training/set-team-plan")
@@ -4078,10 +4038,6 @@ async def set_team_training_plan(request: TeamTrainingPlanRequest):
 
 
 # Roster Management
-
-class RosterSwapRequest(BaseModel):
-    player1_id: str
-    player2_id: str
 
 @api_router.post("/roster/swap")
 async def swap_roster(request: RosterSwapRequest):
@@ -5518,11 +5474,6 @@ async def get_international():
     return GAME_STATE["international"]
 
 
-class IntlSimRequest(BaseModel):
-    match_id: str
-    user_draft: Optional[dict] = None
-
-
 @api_router.post("/international/simulate")
 async def simulate_international(req: IntlSimRequest):
     intl = GAME_STATE.get("international")
@@ -5956,21 +5907,6 @@ from fastapi import WebSocket, WebSocketDisconnect
 # `use_session_state()` they let solo endpoints serve MP sessions transparently
 # via the `?session_id=...` query param.
 
-class _Mp2CreateBody(BaseModel):
-    league: str
-    username: str
-
-
-class _Mp2JoinBody(BaseModel):
-    code: str
-    username: str
-
-
-class _Mp2TeamBody(BaseModel):
-    token: str
-    team_id: str
-
-
 def _mp2_public_info(sess: "_sessions.Session", token: str | None = None) -> dict:
     """Shape a session for the client. Never leaks other players' tokens."""
     my_team = sess.players.get(token) if token else None
@@ -6095,13 +6031,6 @@ async def mp2_pick_team(sid: str, body: _Mp2TeamBody):
 # the ready set. A companion DELETE endpoint un-votes if the player changes
 # their mind before the action fires.
 
-class _Mp2ReadyBody(BaseModel):
-    token: str
-    action: str  # e.g. "season/simulate", "split/next", "match:<match_id>"
-
-
-# Keys the server recognises. Kept as a whitelist so clients cannot spam
-# arbitrary action names into the ready registry.
 _MP2_READY_ACTIONS = {
     "season/simulate",
     "season/start",
@@ -6266,21 +6195,6 @@ def mp2_list():
 # Reconnect: since `mp_draft` is persisted on the session, a dropped client
 # refetches via GET /mp2/{sid}/draft. No timeout — the draft just waits.
 
-class _Mp2DraftStartBody(BaseModel):
-    token: str
-    match_id: str
-
-
-class _Mp2DraftActionBody(BaseModel):
-    token: str
-    action: str  # "ban" | "pick"
-    champion: str
-    position: str | None = None
-
-
-# Reuse the solo DRAFT_SEQUENCE but remap actor strings to numeric sides:
-#   user  -> 1 (blue / team1)
-#   enemy -> 2 (red  / team2)
 def _mp_draft_sequence() -> list:
     return [[kind, 1 if actor == "user" else 2] for (actor, kind) in DRAFT_SEQUENCE]
 

@@ -31,7 +31,7 @@ class NegotiationOffer(BaseModel):
 
 
 class CounterOfferBody(BaseModel):
-    amount: int = Field(ge=0, le=50_000_000)
+    counter_amount: int = Field(ge=0, le=50_000_000)
 
 
 class DraftStartRequest(BaseModel):
