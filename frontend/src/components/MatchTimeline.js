@@ -614,6 +614,7 @@ const MatchTimeline = ({
             visibleEvents={visibleEvents}
             winnerTeam={winnerTeam}
             leftNum={leftNum}
+            rightNum={rightNum}
             duration={duration}
           />
         </div>
