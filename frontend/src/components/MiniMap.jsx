@@ -503,16 +503,16 @@ function PingEffect({ x, y, size, color, id }) {
 function ChampionAvatar({
   player, roleIndex, isBlue, matchSec,
   deathData, allDeaths, enrichedEvents, objectiveTimeline,
-  fightInvolvement = [], teamSide = "left",
+  fightInvolvement = [],
   size, iconSize,
 }) {
   const [hovered, setHovered] = useState(false);
 
   // Recalcul à 2 fps pour la perf (arrondi à 0.5s)
   const pos = useMemo(
-    () => simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement, teamSide),
+    () => simulatePos(roleIndex, matchSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [roleIndex, Math.round(matchSec * 2) / 2, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement, teamSide]
+    [roleIndex, Math.round(matchSec * 2) / 2, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement]
   );
 
   const ddKey     = toDDragonKey(player.champion || "");
