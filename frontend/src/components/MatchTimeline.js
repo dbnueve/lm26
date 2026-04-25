@@ -146,24 +146,67 @@ function ObjectivePips({ events, teamNum }) {
 
 function LiveScoreboard({ leftStats, rightStats, leftAbbr, rightAbbr,
                           visibleEvents, winnerTeam, leftNum, duration }) {
-  // Kills/deaths/assists live par champion à partir des events visibles
-  const liveKda = useMemo(() => {
-    const kda = {};
+  // Kills/deaths live par champion à partir des events visibles
+  const liveKd = useMemo(() => {
+    const kd = {};
     visibleEvents.forEach(ev => {
       if (!KILL_TYPES.has(ev.type)) return;
-      // Killer
       if (ev.killer_champion) {
-        if (!kda[ev.killer_champion]) kda[ev.killer_champion] = { k: 0, d: 0, a: 0 };
-        kda[ev.killer_champion].k += 1;
+        if (!kd[ev.killer_champion]) kd[ev.killer_champion] = { k: 0, d: 0 };
+        kd[ev.killer_champion].k += 1;
       }
-      // Victim
       if (ev.victim_champion) {
-        if (!kda[ev.victim_champion]) kda[ev.victim_champion] = { k: 0, d: 0, a: 0 };
-        kda[ev.victim_champion].d += 1;
+        if (!kd[ev.victim_champion]) kd[ev.victim_champion] = { k: 0, d: 0 };
+        kd[ev.victim_champion].d += 1;
       }
     });
-    return kda;
+    return kd;
   }, [visibleEvents]);
+
+  // Assists live : on n'a pas d'assist_champions dans les events,
+  // donc on scale les assists finaux par la progression des kills.
+  // À la fin du match (tous les kills révélés) → assists complets.
+  const liveAssists = useMemo(() => {
+    const totalKillsByTeam = { 1: 0, 2: 0 };
+    [...leftStats, ...rightStats].forEach(() => {});
+    const finalKillsByTeam = { 1: 0, 2: 0 };
+    leftStats.forEach(p => { finalKillsByTeam[leftNum] += p.kills || 0; });
+    rightStats.forEach(p => { finalKillsByTeam[rightNum] += p.kills || 0; });
+    visibleEvents.forEach(ev => {
+      if (!KILL_TYPES.has(ev.type)) return;
+      if (ev.team === 1 || ev.team === 2) totalKillsByTeam[ev.team] += 1;
+    });
+    const assistsByChamp = {};
+    const assignTeamAssists = (stats, teamNum) => {
+      const live = totalKillsByTeam[teamNum] || 0;
+      const final = finalKillsByTeam[teamNum] || 0;
+      const ratio = final > 0 ? Math.min(1, live / final) : 0;
+      stats.forEach(p => {
+        if (p.champion) assistsByChamp[p.champion] = Math.floor((p.assists || 0) * ratio);
+      });
+    };
+    assignTeamAssists(leftStats, leftNum);
+    assignTeamAssists(rightStats, rightNum);
+    return assistsByChamp;
+  }, [visibleEvents, leftStats, rightStats, leftNum, rightNum]);
+
+  const liveKda = useMemo(() => {
+    const kda = {};
+    const merge = (champ) => {
+      if (!champ) return;
+      if (!kda[champ]) kda[champ] = { k: 0, d: 0, a: 0 };
+    };
+    Object.entries(liveKd).forEach(([champ, v]) => {
+      merge(champ);
+      kda[champ].k = v.k;
+      kda[champ].d = v.d;
+    });
+    Object.entries(liveAssists).forEach(([champ, a]) => {
+      merge(champ);
+      kda[champ].a = a;
+    });
+    return kda;
+  }, [liveKd, liveAssists]);
 
   const renderTeam = (stats, abbr, isWinner) => (
     <div style={{ flex: 1, minWidth: 0 }}>
