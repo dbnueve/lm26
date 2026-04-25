@@ -404,8 +404,8 @@ const MatchTimeline = ({
           }}>
             <span style={{
               minWidth: 36, textAlign: "right",
-              color: goldLeader === "left" ? "var(--success)" : "var(--text-2)",
-              textShadow: goldLeader === "left" ? "0 0 6px rgba(34,197,94,0.6)" : "none",
+              color: goldLeader === "left" ? "#3b82f6" : "var(--text-2)",
+              textShadow: goldLeader === "left" ? "0 0 6px rgba(59,130,246,0.6)" : "none",
             }}>
               {leftWidth}%
             </span>
