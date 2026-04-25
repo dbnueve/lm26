@@ -480,8 +480,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
           icon={ChartLine}
           label="ELO Actuel"
           value={currentElo ? currentElo.toFixed(0) : "—"}
-          sub={currentElo ? getEloTier(currentElo).label : ""}
-          color={currentElo ? getEloColor(currentElo) : "var(--text-2)"}
+          color={ELO_COLOR_DEFAULT}
           highlight
         />
         <HeroStat
@@ -495,8 +494,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
           icon={Target}
           label="Pic ELO"
           value={peakElo ? peakElo.toFixed(0) : "—"}
-          sub={peakElo ? getEloTier(peakElo).label : ""}
-          color={peakElo ? getEloColor(peakElo) : "var(--text-2)"}
+          color={ACCENT_MVP}
         />
         <HeroStat
           icon={eloDelta >= 0 ? TrendUp : TrendDown}
