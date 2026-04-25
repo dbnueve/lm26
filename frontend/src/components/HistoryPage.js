@@ -428,14 +428,16 @@ const HistoryPage = ({ userTeam, showToast }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [eloRes, teamsRes, splitRes] = await Promise.all([
+      const [eloRes, teamsRes, splitRes, matchLogRes] = await Promise.all([
         API_CLIENT.get(`/career/elo-history`),
         API_CLIENT.get(`/teams`),
         API_CLIENT.get(`/career/split-stats`, { params: { split: selectedSplit } }),
+        API_CLIENT.get(`/career/elo-match-log`).catch(() => ({ data: { log: [] } })),
       ]);
       setEloHistory(eloRes.data);
       setTeams(teamsRes.data.filter(t => t.id !== userTeam.id));
       setSplitStats(splitRes.data);
+      setEloMatchLog(matchLogRes.data?.log || []);
     } catch (e) {
       showToast("Erreur lors du chargement des données", "error");
     } finally {
