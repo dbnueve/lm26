@@ -46,6 +46,25 @@ from inbox import (
     generate_match_inbox_messages as _generate_match_inbox_messages,
     generate_weekly_board_message as _generate_weekly_board_message,
 )
+from international import (
+    intl_make_match as _intl_make_match,
+    intl_set_slot as _intl_set_slot,
+    intl_sim as _intl_sim,
+    intl_sim_one_game as _intl_sim_one_game,
+    intl_apply_one_game as _intl_apply_one_game,
+    create_msi as _create_msi_impl,
+    MSI_BRACKET_FLOW, _MSI_ROUND_LABELS,
+    msi_setup_bracket as _msi_setup_bracket,
+    msi_update_play_in as _msi_update_play_in,
+    msi_update_bracket as _msi_update_bracket,
+    create_worlds as _create_worlds_impl,
+    intl_pair_no_rematch as _intl_pair_no_rematch,
+    worlds_gen_swiss_round as _worlds_gen_swiss_round,
+    worlds_update_swiss as _worlds_update_swiss,
+    worlds_start_knockout as _worlds_start_knockout,
+    WORLDS_KO_FLOW,
+    worlds_update_knockout as _worlds_update_knockout,
+)
 import uuid
 import random
 from datetime import datetime, timezone
