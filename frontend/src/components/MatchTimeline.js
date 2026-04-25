@@ -398,48 +398,28 @@ const MatchTimeline = ({
               }} />
             )}
           </div>
-          {/* Barre gold — vert à gauche, rouge à droite, proportions exactes */}
+          {/* Gold absolu — chiffres par équipe, sans barre */}
           <div style={{
-            display: "flex", alignItems: "center", gap: 6, width: "100%", maxWidth: 340,
-            fontFamily: "'Chakra Petch', monospace", fontSize: 11, fontWeight: 700,
+            display: "flex", alignItems: "baseline", justifyContent: "center", gap: 14,
+            fontFamily: "'Chakra Petch', monospace",
             fontVariantNumeric: "tabular-nums",
           }}>
             <span style={{
-              minWidth: 36, textAlign: "right",
+              fontSize: 16, fontWeight: 800,
               color: goldLeader === "left" ? "#3b82f6" : "var(--text-2)",
-              textShadow: goldLeader === "left" ? "0 0 6px rgba(59,130,246,0.6)" : "none",
+              textShadow: goldLeader === "left" ? "0 0 8px rgba(59,130,246,0.6)" : "none",
             }}>
-              {leftWidth}%
+              {fmtGold(leftG)}
             </span>
-            <div style={{
-              flex: 1, height: 7, borderRadius: 2, overflow: "hidden",
-              display: "flex",
-              background: "rgba(0,0,0,0.4)",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(0,0,0,0.6)",
-            }}>
-              <motion.div
-                animate={{ width: `${leftWidth}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                style={{
-                  height: "100%", background: "#3b82f6",
-                  boxShadow: "0 0 10px rgba(59,130,246,0.7)",
-                }}
-              />
-              <motion.div
-                animate={{ width: `${100 - leftWidth}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                style={{
-                  height: "100%", background: "var(--danger)",
-                  boxShadow: "0 0 10px rgba(239,68,68,0.7)",
-                }}
-              />
-            </div>
+            <span style={{ fontSize: 9, color: "var(--text-2)", letterSpacing: 1, textTransform: "uppercase" }}>
+              gold
+            </span>
             <span style={{
-              minWidth: 36, textAlign: "left",
+              fontSize: 16, fontWeight: 800,
               color: goldLeader === "right" ? "var(--danger)" : "var(--text-2)",
-              textShadow: goldLeader === "right" ? "0 0 6px rgba(239,68,68,0.6)" : "none",
+              textShadow: goldLeader === "right" ? "0 0 8px rgba(239,68,68,0.6)" : "none",
             }}>
-              {100 - leftWidth}%
+              {fmtGold(rightG)}
             </span>
           </div>
           {/* Label gold diff */}
