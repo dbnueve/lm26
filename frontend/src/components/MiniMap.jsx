@@ -258,7 +258,7 @@ function buildObjectiveTimeline(enrichedEvents) {
    DESTINATION CIBLE pour un rôle à un instant t
    Prend en compte l'anticipation des objectifs futurs proches.
 ═══════════════════════════════════════════════════════════════ */
-function getTargetPos(roleIndex, currentSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline) {
+function getTargetPos(roleIndex, currentSec, isBlue, enrichedEvents, allDeaths, objectiveTimeline, fightInvolvement) {
   const gameMin = currentSec / 60;
   const spawn   = isBlue ? POS.spawn_blue : POS.spawn_red;
 
@@ -269,6 +269,17 @@ function getTargetPos(roleIndex, currentSec, isBlue, enrichedEvents, allDeaths, 
   // ── Post-respawn : reste en base ~7s (animation de respawn + début déplacement) ──
   const freshRespawn = allDeaths.find(d => currentSec >= d.respawnSec && currentSec < d.respawnSec + 7);
   if (freshRespawn) return spawn;
+
+  // ── Clustering kill : si on participe à un fight (killer/victim/assist),
+  //    on converge vers le lieu du kill ~6s avant et on traîne ~3s après.
+  if (fightInvolvement && fightInvolvement.length > 0) {
+    // Fight imminent (à venir dans 6s)
+    const upcoming = fightInvolvement.find(f => f.sec > currentSec && f.sec - currentSec <= 6);
+    if (upcoming) return { x: upcoming.x, y: upcoming.y };
+    // Fight récent (dans les 3s passées) — sauf si on est la victime (déjà gérée par "dying")
+    const recent = [...fightInvolvement].reverse().find(f => f.sec <= currentSec && currentSec - f.sec <= 3 && f.role !== "victim");
+    if (recent) return { x: recent.x, y: recent.y };
+  }
 
   /* ──────────────────────────────────────────────────────────
      ANTICIPATION DES OBJECTIFS
