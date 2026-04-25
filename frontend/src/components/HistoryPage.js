@@ -173,7 +173,10 @@ function EloChart({ data }) {
   };
 
   const hoverPoint = hoverIdx != null ? data[hoverIdx] : null;
-  const hoverTier  = hoverPoint ? getEloTier(hoverPoint.elo) : null;
+  const hoverDelta = hoverPoint && hoverIdx > 0
+    ? hoverPoint.elo - data[hoverIdx - 1].elo
+    : 0;
+  const hoverColor = hoverIdx === 0 ? ACCENT_WIN : eloDeltaColor(hoverDelta);
 
   if (data.length === 0) {
     return (
