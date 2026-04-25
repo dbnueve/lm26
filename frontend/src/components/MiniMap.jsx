@@ -1042,14 +1042,14 @@ export function ObjectiveScoreboard({ events = [], teamNum = 1, side = "left" })
       alignItems: align,
     }}>
       <Row
-        icon="🏯"
+        icon={CDRAGON_URLS.tower}
         count={data.towers.length}
         max={11}
         filledColor={color}
         title={`${data.towers.length} / 11 tours`}
       />
       <Row
-        icon="💠"
+        icon={CDRAGON_URLS.inhibitor}
         count={data.inhibs.length}
         max={3}
         filledColor="#22d3ee"
