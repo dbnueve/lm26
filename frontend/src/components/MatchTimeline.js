@@ -7,22 +7,8 @@ import { _ddVersion, toDDragonKey } from "./ddHelpers";
 import TeamLogo from "./TeamLogo";
 import TimelineEventRow from "./TimelineEventRow";
 import TimelineKillCounter from "./TimelineKillCounter";
-import MiniMap, { ObjectiveTracker, ObjectiveScoreboard } from "./MiniMap";
+import MiniMap, { ObjectiveTracker, ObjectiveScoreboard, EventIcon, CDRAGON_URLS } from "./MiniMap";
 /* ─── Constantes ──────────────────────────────────────────────── */
-
-const DRAKE_ICONS = {
-  infernal: "🔥", mountain: "🪨", ocean: "🌊", cloud: "💨",
-  hextech: "⚡", chemtech: "☣️", elder: "🟣",
-};
-
-function getDrakeIcon(desc) {
-  if (!desc) return "🐉";
-  const lower = desc.toLowerCase();
-  for (const [key, icon] of Object.entries(DRAKE_ICONS)) {
-    if (lower.includes(key)) return icon;
-  }
-  return "🐉";
-}
 
 // Death timer LoL (BRT formula)
 function calcDeathTimer(deathSec) {
