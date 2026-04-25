@@ -852,18 +852,24 @@ export function ObjectiveTracker({ events = [], matchSec = 0 }) {
     const sorted = [...events].sort((a, b) => parseSec(a.time) - parseSec(b.time));
     const last = { drake: null, elder: null, baron: null, herald: null };
     const count = { drake: 0, elder: 0, baron: 0, herald: 0 };
+    // Drakes par équipe (Elder spawn quand UNE équipe a 4 drakes = soul)
+    const drakesByTeam = { 1: 0, 2: 0 };
     sorted.forEach(ev => {
       if (parseSec(ev.time) > matchSec) return;
       if (ev.type in last) {
         last[ev.type] = parseSec(ev.time);
         count[ev.type] += 1;
       }
+      if (ev.type === "drake" && (ev.team === 1 || ev.team === 2)) {
+        drakesByTeam[ev.team] += 1;
+      }
     });
-    return { last, count };
+    return { last, count, drakesByTeam };
   }, [events, matchSec]);
 
   const totalDrakes = state.count.drake + state.count.elder;
-  const elderUnlocked = totalDrakes >= 4 && matchSec >= ELDER_SPAWN_SEC;
+  const soulSecured = Math.max(state.drakesByTeam[1], state.drakesByTeam[2]) >= 4;
+  const elderUnlocked = soulSecured && matchSec >= ELDER_SPAWN_SEC;
   const drakeTarget = elderUnlocked ? "elder" : "drake";
   const drakeNext = drakeTarget === "elder"
     ? nextRespawn(state.last.elder, DRAKE_RESPAWN_SEC, ELDER_SPAWN_SEC, matchSec)
