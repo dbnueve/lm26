@@ -7725,6 +7725,23 @@ async def get_career_elo_history():
     }
 
 
+@api_router.get("/career/elo-match-log")
+async def get_career_elo_match_log():
+    """
+    Return per-match ELO log for the user team (one entry per match played).
+    Each entry contains: season, split_number, split_label, week, opponent_abbr,
+    won, elo_before, elo_after, delta, is_playoffs.
+    Ordered chronologically (oldest first).
+    """
+    if not GAME_STATE.get("initialized"):
+        return {"log": []}
+    user_team_id = GAME_STATE.get("user_team")
+    if not user_team_id:
+        return {"log": []}
+    log = list(GAME_STATE.get("user_elo_log", []))
+    return {"log": log}
+
+
 @api_router.get("/career/head-to-head/{team1_id}/{team2_id}")
 async def get_head_to_head(team1_id: str, team2_id: str):
     """
