@@ -1474,12 +1474,22 @@ export default function MiniMap({
       {mapIcons.map((ev, i) => {
         const evSec = parseSec(ev.time);
         const age   = matchSec - evSec;
+        // Index drake si applicable (pour choisir le bon kind)
+        let drakeIndex = null;
+        if (ev.type === "drake") {
+          drakeIndex = enrichedEvents.filter(e =>
+            e.type === "drake" && parseSec(e.time) <= evSec
+          ).length - 1;
+        }
+        const sz = Math.round(iconSize * 0.85);
         return (
           <div key={`ev-${i}-${evSec}`} style={{
             position: "absolute",
             left: `${ev.mapX}%`, top: `${ev.mapY}%`,
             transform: "translate(-50%, -50%)",
-            fontSize: Math.round(iconSize * 0.85),
+            width: sz, height: sz,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: sz,
             zIndex: 25,
             pointerEvents: "none",
             filter: "drop-shadow(0 0 4px rgba(0,0,0,0.95))",
@@ -1487,7 +1497,7 @@ export default function MiniMap({
             transition: "opacity 0.5s",
             animation: age < 0.5 ? "mapIconPop 0.35s cubic-bezier(0.34,1.56,0.64,1)" : "none",
           }}>
-            {EVENT_ICONS[ev.type]}
+            <EventIcon type={ev.type} size={sz} drakeIndex={drakeIndex} />
           </div>
         );
       })}
