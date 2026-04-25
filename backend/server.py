@@ -3877,11 +3877,11 @@ async def draft_action(action: DraftAction):
     while step < len(DRAFT_SEQUENCE) and DRAFT_SEQUENCE[step][0] == "enemy":
         _, enemy_action_type = DRAFT_SEQUENCE[step]
         if enemy_action_type == "ban":
-            champ = ai_select_ban(draft)
+            champ = _ai_select_ban(draft, get_meta_champions)
             if champ:
                 _draft_apply(draft, "enemy", "ban", champ)
         else:
-            champ, pos = ai_select_pick(draft, _needed_positions(draft, "enemy"))
+            champ, pos = _ai_select_pick(draft, _needed_positions(draft, "enemy"), get_meta_champions)
             if champ:
                 _draft_apply(draft, "enemy", "pick", champ, pos)
         step += 1
