@@ -172,8 +172,11 @@ function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration }) {
     () => Math.max(0, ...stats.map(p => p.damage || 0)),
     [stats]
   );
-  const totalKills = stats.reduce((a, p) => a + (p.kills || 0), 0);
-  const totalDmg   = stats.reduce((a, p) => a + (p.damage || 0), 0);
+  const totalKills   = stats.reduce((a, p) => a + (p.kills || 0), 0);
+  const totalDeaths  = stats.reduce((a, p) => a + (p.deaths || 0), 0);
+  const totalAssists = stats.reduce((a, p) => a + (p.assists || 0), 0);
+  const totalGold    = stats.reduce((a, p) => a + (p.gold || 0), 0);
+  const teamKDA = ((totalKills + totalAssists) / Math.max(1, totalDeaths)).toFixed(2);
 
   return (
     <section
