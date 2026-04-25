@@ -1329,18 +1329,20 @@ export default function MiniMap({
 
       {/* Objectifs neutres UP — icône persistante sur la fosse */}
       {(() => {
+        const CDRAGON = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons";
         const items = [];
         if (objectiveUp.heraldUp) items.push({
           key: "herald-up", x: POS.herald.x, y: POS.herald.y,
-          icon: "🔮", color: "#6366f1",
+          imgUrl: `${CDRAGON}/herald.png`, fallback: "🔮", color: "#6366f1",
         });
         if (objectiveUp.baronUp) items.push({
           key: "baron-up", x: POS.baron.x, y: POS.baron.y,
-          icon: "👑", color: "#eab308",
+          imgUrl: `${CDRAGON}/baron.png`, fallback: "👑", color: "#eab308",
         });
         if (objectiveUp.drakeUp) items.push({
           key: "drake-up", x: POS.drake.x, y: POS.drake.y,
-          icon: objectiveUp.drakeIsElder ? "🟣" : "🐉",
+          imgUrl: objectiveUp.drakeIsElder ? `${CDRAGON}/dragon_elder.png` : `${CDRAGON}/dragon.png`,
+          fallback: objectiveUp.drakeIsElder ? "🟣" : "🐉",
           color: objectiveUp.drakeIsElder ? "#a855f7" : "#f97316",
         });
         return items.map(it => (
@@ -1356,7 +1358,18 @@ export default function MiniMap({
             filter: `drop-shadow(0 0 4px ${it.color}cc) drop-shadow(0 0 2px rgba(0,0,0,0.95))`,
             animation: "objUpPulse 2.4s ease-in-out infinite",
           }}>
-            <span style={{ fontSize: Math.round(iconSize * 0.8), lineHeight: 1 }}>{it.icon}</span>
+            <img
+              src={it.imgUrl}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              onError={(e) => {
+                // fallback emoji si l'asset 404
+                const span = document.createElement("span");
+                span.textContent = it.fallback;
+                span.style.fontSize = `${Math.round(iconSize * 0.8)}px`;
+                e.currentTarget.replaceWith(span);
+              }}
+            />
           </div>
         ));
       })()}
