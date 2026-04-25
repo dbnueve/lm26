@@ -419,8 +419,8 @@ const MatchTimeline = ({
                 animate={{ width: `${leftWidth}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 style={{
-                  height: "100%", background: "var(--success)",
-                  boxShadow: "0 0 10px rgba(34,197,94,0.7)",
+                  height: "100%", background: "#3b82f6",
+                  boxShadow: "0 0 10px rgba(59,130,246,0.7)",
                 }}
               />
               <motion.div
