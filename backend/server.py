@@ -1636,36 +1636,6 @@ def update_champ_stats(team1_stats: list, team2_stats: list, winner_id: str, tea
             e["bans"] += 1
 
 
-def _player_performance_score(player_stats: dict, won: bool, game_duration: float) -> float:
-    """
-    Compute a 0–10 performance score for one player from a single game.
-
-    Inputs come from the stat dict returned by generate_player_stats().
-    Formula:
-      - KDA component (0–5): (K + A×0.5) / max(D, 1), normalised to max 5
-      - CS component  (0–3): cs/min vs role expectation, normalised to max 3
-      - Win  bonus    (0–2): +2 for a win, 0 for a loss
-    """
-    pos = player_stats.get("position", "MID")
-    k   = player_stats.get("kills",   0)
-    d   = player_stats.get("deaths",  1)
-    a   = player_stats.get("assists", 0)
-    cs  = player_stats.get("cs",      0)
-    dur = max(game_duration, 1)
-
-    kda_raw = (k + a * 0.5) / max(d, 1)
-    kda_score = min(5.0, kda_raw * 1.2)   # KDA 4+ → max component
-
-    # Role CS expectations (cs/min)
-    cs_expect = {"TOP": 9.0, "JUNGLE": 7.5, "MID": 9.0, "ADC": 9.5, "SUPPORT": 0.8}
-    cs_per_min = cs / dur
-    cs_ratio   = cs_per_min / max(cs_expect.get(pos, 8.0), 0.1)
-    cs_score   = min(3.0, cs_ratio * 3.0)
-
-    win_bonus = 2.0 if won else 0.0
-    return round(kda_score + cs_score + win_bonus, 2)
-
-
 def update_player_from_performance(
     team_id: str,
     player_stats_list: list,
