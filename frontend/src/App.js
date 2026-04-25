@@ -577,11 +577,11 @@ function App() {
   }, [mp2.sid, mp2.token, fetchMpDraft]);
 
   // Called by <DraftSystem> in MP mode. Posts the action; state arrives via WS.
-  const onMpDraftAction = useCallback(async (champion, action) => {
+  const onMpDraftAction = useCallback(async (champion, action, position = null) => {
     if (!mp2.sid || !mp2.token) return;
     try {
       const res = await axios.post(`${API}/mp2/${mp2.sid}/draft/action`, {
-        token: mp2.token, action, champion,
+        token: mp2.token, action, champion, position,
       });
       setMpDraftState(res.data || null);
     } catch (e) {
