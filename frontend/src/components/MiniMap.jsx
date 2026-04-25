@@ -99,41 +99,40 @@ const POS = {
 
 // Tours par lane (outer → inner → inhib), ordre de chute LoL.
 // 3 par lane × 2 côtés = 18 (les 2 nexus turrets ne sont pas affichées séparément).
+// Coordonnées calibrées sur la map LoL (blue = bas-gauche, red = haut-droit).
 const TOWERS = {
-  // Côté BLUE (bas-gauche)
   blue: {
     top: [
-      POS.blue_top_t1,           // outer
-      POS.blue_top_t2,           // inner
-      { x: 13, y: 78 },          // inhib (= blue_inhib_top)
+      { x: 13, y: 35 },  // outer
+      { x: 13, y: 55 },  // inner
+      { x: 13, y: 70 },  // inhib
     ],
     mid: [
-      POS.blue_mid_t1,           // outer
-      { x: 30, y: 70 },          // inner mid
-      { x: 22, y: 79 },          // inhib (= blue_inhib_mid)
+      { x: 38, y: 62 },  // outer
+      { x: 28, y: 72 },  // inner
+      { x: 20, y: 80 },  // inhib
     ],
     bot: [
-      POS.blue_bot_t1,           // outer
-      POS.blue_bot_t2,           // inner
-      { x: 23, y: 88 },          // inhib (= blue_inhib_bot)
+      { x: 60, y: 87 },  // outer
+      { x: 38, y: 87 },  // inner
+      { x: 22, y: 87 },  // inhib
     ],
   },
-  // Côté RED (haut-droit)
   red: {
     top: [
-      POS.red_top_t1,            // outer
-      POS.red_top_t2,            // inner
-      { x: 77, y: 13 },          // inhib (= red_inhib_top)
+      { x: 45, y: 13 },  // outer
+      { x: 28, y: 13 },  // inner
+      { x: 15, y: 13 },  // inhib
     ],
     mid: [
-      POS.red_mid_t1,            // outer
-      { x: 70, y: 30 },          // inner mid
-      { x: 78, y: 22 },          // inhib (= red_inhib_mid)
+      { x: 62, y: 38 },  // outer
+      { x: 72, y: 28 },  // inner
+      { x: 80, y: 20 },  // inhib
     ],
     bot: [
-      POS.red_bot_t1,            // outer
-      POS.red_bot_t2,            // inner
-      { x: 87, y: 23 },          // inhib (= red_inhib_bot)
+      { x: 87, y: 65 },  // outer
+      { x: 87, y: 45 },  // inner
+      { x: 87, y: 28 },  // inhib
     ],
   },
 };
