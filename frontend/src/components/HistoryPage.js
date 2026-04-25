@@ -605,7 +605,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
                 icon={ChartLine}
                 label="ELO du split"
                 value={splitStats.user_team?.elo ? splitStats.user_team.elo.toFixed(0) : "—"}
-                color={splitStats.user_team?.elo ? getEloColor(splitStats.user_team.elo) : "var(--text-2)"}
+                color={ELO_COLOR_DEFAULT}
               />
             </div>
           ) : (
