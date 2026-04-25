@@ -231,18 +231,36 @@ function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration }) {
           </span>
         )}
         <div style={{ display: "flex", gap: 14, marginLeft: 4 }}>
-          <span style={{
-            fontFamily: FONT_STATS, fontSize: 13, fontWeight: 800,
-            color: accent, fontVariantNumeric: "tabular-nums",
-          }} title="Total kills">
-            {totalKills}<span style={{ fontSize: 9, color: "var(--text-2)", marginLeft: 2 }}>K</span>
-          </span>
-          <span style={{
-            fontFamily: FONT_STATS, fontSize: 13, fontWeight: 800,
-            color: "var(--amber)", fontVariantNumeric: "tabular-nums",
-          }} title="Total dégâts">
-            {(totalDmg / 1000).toFixed(0)}k
-          </span>
+          <div
+            title="Gold total équipe"
+            style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.05 }}
+          >
+            <span style={{
+              fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
+              color: ACCENT_MVP, fontVariantNumeric: "tabular-nums",
+            }}>
+              {(totalGold / 1000).toFixed(1)}k
+            </span>
+            <span style={{
+              fontSize: 8, color: "var(--text-2)", letterSpacing: 0.8,
+              fontWeight: 700, textTransform: "uppercase",
+            }}>Gold</span>
+          </div>
+          <div
+            title={`KDA équipe : ${totalKills}/${totalDeaths}/${totalAssists}`}
+            style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.05 }}
+          >
+            <span style={{
+              fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
+              color: accent, fontVariantNumeric: "tabular-nums",
+            }}>
+              {teamKDA}
+            </span>
+            <span style={{
+              fontSize: 8, color: "var(--text-2)", letterSpacing: 0.8,
+              fontWeight: 700, textTransform: "uppercase",
+            }}>KDA</span>
+          </div>
         </div>
       </header>
 
