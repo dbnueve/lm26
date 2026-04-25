@@ -62,47 +62,106 @@ function getMVP(matchResult, userTeamId) {
   return mvp;
 }
 
-function StatRow({ p, duration, won }) {
+function StatRow({ p, duration, won, maxDamage }) {
   const note = calcNote(p, duration, won);
   const isGood = note >= 7, isBad = note <= 3;
   const dur = Math.max(duration || 1, 1);
+  const dmgPct = maxDamage > 0 ? Math.min(100, ((p.damage || 0) / maxDamage) * 100) : 0;
+  const noteColor = isGood ? "var(--success)" : isBad ? "var(--danger)" : "var(--accent)";
+
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "36px 1fr 80px 50px 65px 70px",
-      padding: "6px 12px",
-      borderTop: "1px solid var(--border)",
-      alignItems: "center",
-      gap: 4,
-    }}>
+    <div
+      role="row"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "32px 1fr 78px 44px 52px 96px",
+        padding: "8px 12px",
+        borderTop: "1px solid var(--border)",
+        alignItems: "center",
+        gap: 6,
+        transition: "background 180ms ease",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+    >
       {p.champion ? (
         <img loading="lazy"
           src={`https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${toDDragonKey(p.champion)}.png`}
-          alt={p.champion} title={p.champion}
-          style={{ width: 28, height: 28, borderRadius: 3 }}
+          alt={`Champion ${p.champion}`} title={p.champion}
+          style={{
+            width: 28, height: 28, borderRadius: 3,
+            border: `1px solid ${won ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.3)"}`,
+          }}
           onError={e => { e.currentTarget.style.display = "none"; }}
         />
-      ) : <span />}
-      <span style={{ fontWeight: 500, fontSize: 13 }}>{p.player_name || p.position}</span>
-      <span className="font-stats" style={{ textAlign: "center", fontWeight: 700 }}>
+      ) : <span aria-hidden="true" />}
+
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontWeight: 600, fontSize: 13, lineHeight: 1.2,
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>
+          {p.player_name || p.position}
+        </div>
+        <div style={{
+          fontSize: 9, color: "var(--text-2)", letterSpacing: 0.6,
+          textTransform: "uppercase", fontWeight: 700,
+        }}>
+          {p.position}
+        </div>
+      </div>
+
+      <span style={{
+        textAlign: "center", fontFamily: FONT_STATS, fontWeight: 700, fontSize: 13,
+        fontVariantNumeric: "tabular-nums",
+      }}>
         <span style={{ color: "var(--success)" }}>{p.kills}</span>
-        <span style={{ color: "var(--text-2)" }}>/</span>
+        <span style={{ color: "var(--text-2)", margin: "0 1px" }}>/</span>
         <span style={{ color: "var(--danger)" }}>{p.deaths}</span>
-        <span style={{ color: "var(--text-2)" }}>/</span>
+        <span style={{ color: "var(--text-2)", margin: "0 1px" }}>/</span>
         <span style={{ color: "var(--accent)" }}>{p.assists}</span>
       </span>
-      <span className="font-stats" style={{
-        textAlign: "center", fontWeight: 700,
-        color: isGood ? "var(--success)" : isBad ? "var(--danger)" : "var(--accent)",
+
+      <span style={{
+        textAlign: "center", fontFamily: FONT_STATS, fontWeight: 800, fontSize: 14,
+        color: noteColor,
+        textShadow: isGood ? `0 0 8px ${noteColor}55` : "none",
       }}>
         {note.toFixed(1)}
       </span>
-      <span className="font-stats" style={{ textAlign: "center" }}>
+
+      <span style={{
+        textAlign: "center", fontFamily: FONT_STATS, fontSize: 12,
+        color: "var(--text-1)", fontVariantNumeric: "tabular-nums",
+      }}>
         {((p.cs || 0) / dur).toFixed(1)}
       </span>
-      <span className="font-stats" style={{ textAlign: "right", color: "var(--amber)" }}>
-        {p.damage ? (p.damage / 1000).toFixed(1) + "k" : "-"}
-      </span>
+
+      {/* Barre DMG comparative */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+        <span style={{
+          fontFamily: FONT_STATS, fontSize: 11, fontWeight: 700, color: "var(--amber)",
+          textAlign: "right", fontVariantNumeric: "tabular-nums",
+        }}>
+          {p.damage ? (p.damage / 1000).toFixed(1) + "k" : "—"}
+        </span>
+        <div
+          role="presentation"
+          aria-label={`Dégâts ${p.damage || 0}`}
+          style={{
+            height: 3, borderRadius: 2,
+            background: "rgba(255,255,255,0.06)",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{
+            width: `${dmgPct}%`, height: "100%",
+            background: "linear-gradient(90deg, var(--amber), #f97316)",
+            boxShadow: "0 0 6px rgba(255,184,0,0.45)",
+            transition: "width 400ms ease-out",
+          }} />
+        </div>
+      </div>
     </div>
   );
 }
