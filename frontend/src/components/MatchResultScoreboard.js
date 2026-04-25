@@ -299,8 +299,13 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
   const userScore = isTeam1 ? totalKills1 : totalKills2;
   const oppScore  = isTeam1 ? totalKills2 : totalKills1;
 
-  // Stats globales user team pour le hero
-  const userTotalGold = userStats.reduce((a, p) => a + (p.gold || 0), 0);
+  // Gold total équipe : utiliser la dernière entrée du gold_timeline (cohérent avec gold_diff)
+  const goldTimeline = matchResult.match_details.gold_timeline || [];
+  const lastGold = goldTimeline.length > 0 ? goldTimeline[goldTimeline.length - 1] : { g1: 0, g2: 0 };
+  const team1Gold = lastGold.g1 || 0;
+  const team2Gold = lastGold.g2 || 0;
+  const userTotalGold = isTeam1 ? team1Gold : team2Gold;
+  const oppTotalGold  = isTeam1 ? team2Gold : team1Gold;
 
   const mvp = getMVP(matchResult, userTeam.id);
   const mvpKDA = mvp ? ((mvp.kills + mvp.assists) / Math.max(1, mvp.deaths)).toFixed(2) : "0";
