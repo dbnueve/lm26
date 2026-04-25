@@ -2,9 +2,11 @@ import React from "react";
 import { motion } from "framer-motion";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 import { EVENT_ICON, KILL_TYPES } from "./timelineHelpers";
+import { EventIcon, EVENT_ICON_URLS } from "./MiniMap";
 
-const TimelineEventRow = React.memo(function TimelineEventRow({ item, tc, tn }) {
+const TimelineEventRow = React.memo(function TimelineEventRow({ item, tc, tn, drakeIndex = null }) {
   const icon = EVENT_ICON[item.type] || "📌";
+  const hasUrlIcon = !!EVENT_ICON_URLS[item.type] || (item.type === "drake" && drakeIndex != null);
   const isBig = ["baron", "elder", "penta_kill", "quadra_kill", "game_end"].includes(item.type);
   const isMulti = ["double_kill", "triple_kill", "quadra_kill", "penta_kill"].includes(item.type);
   const isKill = KILL_TYPES.has(item.type);
