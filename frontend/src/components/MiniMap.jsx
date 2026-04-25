@@ -916,7 +916,7 @@ export function ObjectiveTracker({ events = [], matchSec = 0 }) {
       padding: "4px 0",
     }}>
       <Pill
-        icon="🔮"
+        icon={CDRAGON_URLS.herald}
         label="Herald"
         value={heraldActive ? heraldNext : "GONE"}
         color="#6366f1"
@@ -925,15 +925,15 @@ export function ObjectiveTracker({ events = [], matchSec = 0 }) {
       <Pill
         icon={
           drakeTarget === "elder"
-            ? "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/dragon_elder.png"
-            : "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/dragon.png"
+            ? CDRAGON_URLS.drake_elder
+            : CDRAGON_URLS[`drake_${getDrakeKind(totalDrakes)}`]
         }
         label={drakeTarget === "elder" ? "Elder" : "Drake"}
         value={drakeNext}
         color={drakeTarget === "elder" ? "#a855f7" : "#f97316"}
       />
       <Pill
-        icon="👑"
+        icon={CDRAGON_URLS.baron}
         label="Baron"
         value={matchSec < BARON_SPAWN_SEC ? BARON_SPAWN_SEC : baronNext}
         color="#eab308"
