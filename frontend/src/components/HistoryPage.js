@@ -411,6 +411,7 @@ const HistoryPage = ({ userTeam, showToast }) => {
   const reduceMotion = useReducedMotion();
 
   const [eloHistory, setEloHistory] = useState(null);
+  const [eloMatchLog, setEloMatchLog] = useState([]);
   const [splitStats, setSplitStats] = useState(null);
   const [headToHead, setHeadToHead] = useState(null);
   const [activeTab, setActiveTab] = useState("elo");
