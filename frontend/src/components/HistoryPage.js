@@ -15,18 +15,13 @@ const ACCENT_LOSS  = "var(--danger)";
 const ACCENT_MVP   = "var(--amber)";
 const ACCENT       = "var(--accent)";
 
-/* ─── Tier ELO (rangs) pour zones colorées ───────────────────── */
-const ELO_TIERS = [
-  { min: 1170, label: "Master",   color: "#22C55E" },
-  { min: 1120, label: "Diamond",  color: "#06B6D4" },
-  { min: 1070, label: "Platinum", color: "#3B82F6" },
-  { min: 1020, label: "Gold",     color: "#F59E0B" },
-  { min: 970,  label: "Silver",   color: "#94A3B8" },
-  { min: 0,    label: "Bronze",   color: "#A16207" },
-];
-
-const getEloTier = (elo) => ELO_TIERS.find(t => elo >= t.min) || ELO_TIERS[ELO_TIERS.length - 1];
-const getEloColor = (elo) => getEloTier(elo).color;
+/* ─── Couleurs ELO selon tendance ────────────────────────────── */
+const ELO_COLOR_DEFAULT = ACCENT_WIN;
+const eloDeltaColor = (delta) => {
+  if (delta > 0) return ACCENT_WIN;
+  if (delta < 0) return ACCENT_LOSS;
+  return "var(--text-2)";
+};
 
 /* ─── HeroStat : carte mini-stat hero ────────────────────────── */
 function HeroStat({ icon: Icon, label, value, sub, color = "var(--text-1)", highlight = false }) {
