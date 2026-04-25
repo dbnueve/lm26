@@ -14,6 +14,78 @@ const ACCENT_WIN   = "var(--success)";
 const ACCENT_LOSS  = "var(--danger)";
 const ACCENT_MVP   = "var(--amber)";
 
+/* ─── StatChip avec tooltip custom au survol ─────────────────── */
+function StatChip({ value, label, valueColor = "var(--text-1)", tooltip }) {
+  const [hover, setHover] = React.useState(false);
+  const [focus, setFocus] = React.useState(false);
+  const open = (hover || focus) && tooltip;
+
+  return (
+    <div
+      tabIndex={tooltip ? 0 : -1}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setFocus(true)}
+      onBlur={() => setFocus(false)}
+      style={{
+        position: "relative", display: "flex", flexDirection: "column",
+        alignItems: "flex-end", lineHeight: 1.05,
+        cursor: tooltip ? "help" : "default",
+        outline: "none",
+        borderRadius: 3,
+        boxShadow: focus ? "0 0 0 2px rgba(34,197,94,0.5)" : "none",
+        transition: "box-shadow 160ms ease",
+      }}
+    >
+      <span style={{
+        fontFamily: FONT_STATS, fontSize: 14, fontWeight: 800,
+        color: valueColor, fontVariantNumeric: "tabular-nums",
+      }}>{value}</span>
+      <span style={{
+        fontSize: 8, color: "var(--text-2)", letterSpacing: 0.8,
+        fontWeight: 700, textTransform: "uppercase",
+      }}>{label}</span>
+
+      {open && (
+        <div
+          role="tooltip"
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 6px)",
+            right: 0,
+            zIndex: 50,
+            padding: "6px 10px",
+            background: "rgba(2,6,23,0.96)",
+            border: "1px solid rgba(34,197,94,0.4)",
+            borderRadius: 4,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.6), 0 0 12px rgba(34,197,94,0.18)",
+            backdropFilter: "blur(8px)",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            animation: "tooltipFadeIn 140ms ease-out",
+          }}
+        >
+          <span style={{
+            fontFamily: FONT_STATS, fontSize: 11, fontWeight: 600,
+            color: "var(--text-1)", letterSpacing: 0.4,
+            fontVariantNumeric: "tabular-nums",
+          }}>
+            {tooltip}
+          </span>
+          {/* Petite flèche */}
+          <span aria-hidden="true" style={{
+            position: "absolute", top: "100%", right: 12,
+            width: 0, height: 0,
+            borderLeft: "5px solid transparent",
+            borderRight: "5px solid transparent",
+            borderTop: "5px solid rgba(34,197,94,0.4)",
+          }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Mini stat block (icône + label + valeur) ──────────────── */
 function MiniStat({ icon: Icon, label, value, color = "var(--text-1)" }) {
   return (
