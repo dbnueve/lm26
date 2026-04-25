@@ -1,9 +1,39 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Trophy, Shield, Star } from "@phosphor-icons/react";
+import React, { useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  Trophy, Star, ArrowLeft, Crosshair, Sword, Coins, Timer, Crown,
+} from "@phosphor-icons/react";
 import TeamLogo from "./TeamLogo";
 import { _ddVersion, toDDragonKey } from "./ddHelpers";
 import { calcNote } from "./timelineHelpers";
+
+/* ─── Tokens locaux (cohérent design system esports) ─────────── */
+const FONT_HEADING = "'Russo One', 'Chakra Petch', system-ui, sans-serif";
+const FONT_STATS   = "'Chakra Petch', 'Courier New', monospace";
+const ACCENT_WIN   = "var(--success)";
+const ACCENT_LOSS  = "var(--danger)";
+const ACCENT_MVP   = "var(--amber)";
+
+/* ─── Mini stat block (icône + label + valeur) ──────────────── */
+function MiniStat({ icon: Icon, label, value, color = "var(--text-1)" }) {
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+      minWidth: 64,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--text-2)" }}>
+        <Icon size={11} weight="fill" />
+        <span style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase",
+        }}>{label}</span>
+      </div>
+      <span style={{
+        fontFamily: FONT_STATS, fontSize: 18, fontWeight: 800, lineHeight: 1,
+        color, fontVariantNumeric: "tabular-nums",
+      }}>{value}</span>
+    </div>
+  );
+}
 
 function getMVP(matchResult, userTeamId) {
   if (!matchResult?.match_details) return null;
