@@ -2276,6 +2276,38 @@ def apply_match_result_updates(
         is_playoffs=is_playoffs,
     )
 
+    # ── Track per-match ELO history for the user team ─────────────────────
+    user_team_id = GAME_STATE.get("user_team")
+    if user_team_id and user_team_id in (winner_id, loser_id):
+        is_winner = (user_team_id == winner_id)
+        opp_id = loser_id if is_winner else winner_id
+        opp_team = GAME_STATE["teams"].get(opp_id, {})
+        elo_before = elo_summary["winner_elo_before"] if is_winner else elo_summary["loser_elo_before"]
+        elo_after  = elo_summary["winner_elo_after"]  if is_winner else elo_summary["loser_elo_after"]
+        delta      = elo_summary["winner_delta"]      if is_winner else elo_summary["loser_delta"]
+        match_elo_entry = {
+            "season": GAME_STATE.get("season", 2026),
+            "split_number": GAME_STATE.get("current_split", 1),
+            "split_label": (
+                f"{GAME_STATE.get('league', 'LEC')} "
+                f"{'Spring' if GAME_STATE.get('current_split', 1) == 1 else 'Summer'} "
+                f"{GAME_STATE.get('season', 2026)}"
+            ),
+            "week": week,
+            "opponent_abbr": opp_team.get("abbr"),
+            "opponent_id": opp_id,
+            "won": is_winner,
+            "is_playoffs": is_playoffs,
+            "elo_before": round(elo_before, 1),
+            "elo_after": round(elo_after, 1),
+            "delta": round(delta, 1),
+        }
+        user_elo_log = GAME_STATE.setdefault("user_elo_log", [])
+        user_elo_log.append(match_elo_entry)
+        # Cap defensively to avoid runaway growth (200 matchs ≈ ~10 splits réguliers)
+        if len(user_elo_log) > 500:
+            del user_elo_log[: len(user_elo_log) - 500]
+
     # Player performance evolution
     update_player_from_performance(winner_id, winner_stats, True,  duration, opponent_id=loser_id,  week=week)
     update_player_from_performance(loser_id,  loser_stats,  False, duration, opponent_id=winner_id, week=week)
