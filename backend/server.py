@@ -1815,6 +1815,26 @@ def apply_match_result_updates(
     return elo_summary
 
 
+def generate_player_stats(
+    team_id: str,
+    won: bool,
+    game_duration: int,
+    team_kills: int,
+    opp_kills: int,
+    draft_picks: list = None,
+    excluded: set = None,
+) -> list:
+    """Wrapper: delegates to simulation.generate_player_stats with GAME_STATE data."""
+    from simulation import generate_player_stats as _gen_player_stats
+    return _gen_player_stats(
+        GAME_STATE["teams"],
+        GAME_STATE["players"],
+        team_id, won, game_duration, team_kills, opp_kills,
+        get_meta_champions,
+        draft_picks=draft_picks,
+        excluded=excluded,
+    )
+
 
 # API Endpoints
 
