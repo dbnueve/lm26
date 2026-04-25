@@ -282,6 +282,286 @@ function TeamStatsCard({ stats, won, teamId, teamAbbr, teamName, duration, total
   );
 }
 
+/* ─── GoldDiffChart : graphe SVG gold diff (blue=team1, red=team2) ─ */
+const BLUE = "#3b82f6";
+const RED  = "#ef4444";
+
+function GoldDiffChart({ goldTimeline, duration }) {
+  const reduceMotion = useReducedMotion();
+  const [hoverIdx, setHoverIdx] = React.useState(null);
+  const svgRef = React.useRef(null);
+
+  // Dimensions logiques (viewBox)
+  const W = 800;
+  const H = 200;
+  const PAD_L = 48, PAD_R = 16, PAD_T = 16, PAD_B = 28;
+  const PLOT_W = W - PAD_L - PAD_R;
+  const PLOT_H = H - PAD_T - PAD_B;
+  const MID_Y  = PAD_T + PLOT_H / 2;
+
+  const data = useMemo(() => {
+    return goldTimeline.map((g, i) => ({
+      minute: g.minute != null ? g.minute : i,
+      diff: (g.g1 || 0) - (g.g2 || 0), // > 0 = blue advantage
+    }));
+  }, [goldTimeline]);
+
+  const maxAbs = useMemo(() => {
+    const m = data.reduce((acc, d) => Math.max(acc, Math.abs(d.diff)), 0);
+    return Math.max(1000, m); // floor pour pas écraser la courbe quand petit diff
+  }, [data]);
+
+  const lastMin = data.length ? data[data.length - 1].minute : Math.max(duration || 1, 1);
+  const xMax = Math.max(lastMin, 1);
+
+  const xOf = (m) => PAD_L + (m / xMax) * PLOT_W;
+  const yOf = (diff) => MID_Y - (diff / maxAbs) * (PLOT_H / 2);
+
+  // Path d'aire (top = blue advantage, bottom = red advantage)
+  const pathD = useMemo(() => {
+    if (data.length === 0) return "";
+    let d = `M ${xOf(data[0].minute)} ${MID_Y}`;
+    data.forEach(p => { d += ` L ${xOf(p.minute)} ${yOf(p.diff)}`; });
+    d += ` L ${xOf(data[data.length - 1].minute)} ${MID_Y} Z`;
+    return d;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, maxAbs, xMax]);
+
+  // Path de la ligne (sans fermeture)
+  const lineD = useMemo(() => {
+    if (data.length === 0) return "";
+    return data.map((p, i) =>
+      `${i === 0 ? "M" : "L"} ${xOf(p.minute)} ${yOf(p.diff)}`
+    ).join(" ");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, maxAbs, xMax]);
+
+  // Ticks Y (gold)
+  const yTicks = useMemo(() => {
+    const step = maxAbs / 2;
+    return [-maxAbs, -step, 0, step, maxAbs].map(v => ({
+      v,
+      y: yOf(v),
+      label: v === 0 ? "0" : `${v > 0 ? "+" : "−"}${(Math.abs(v) / 1000).toFixed(0)}k`,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxAbs]);
+
+  // Ticks X (toutes les 5 min)
+  const xTicks = useMemo(() => {
+    const ticks = [];
+    for (let m = 0; m <= xMax; m += 5) ticks.push(m);
+    if (ticks[ticks.length - 1] !== xMax) ticks.push(xMax);
+    return ticks;
+  }, [xMax]);
+
+  // Hover handler
+  const onMove = (e) => {
+    const svg = svgRef.current;
+    if (!svg || data.length === 0) return;
+    const rect = svg.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    const minute = ((px - PAD_L) / PLOT_W) * xMax;
+    // closest point
+    let bestIdx = 0, bestDist = Infinity;
+    data.forEach((p, i) => {
+      const d = Math.abs(p.minute - minute);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    });
+    setHoverIdx(bestIdx);
+  };
+
+  const hoverPoint = hoverIdx != null ? data[hoverIdx] : null;
+  const hoverLeader = hoverPoint ? (hoverPoint.diff > 0 ? "BLUE" : hoverPoint.diff < 0 ? "RED" : "—") : null;
+
+  return (
+    <section style={{ marginBottom: 20 }} aria-label="Évolution du gold diff dans le temps">
+      <div style={{
+        display: "flex", alignItems: "baseline", justifyContent: "space-between",
+        marginBottom: 10,
+      }}>
+        <h3 style={{
+          fontFamily: FONT_HEADING, fontSize: 12, letterSpacing: 2,
+          color: "var(--text-2)", textTransform: "uppercase",
+          margin: 0,
+        }}>
+          Évolution du gold
+        </h3>
+        <div style={{ display: "flex", gap: 14, fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: BLUE }}>
+            <span style={{ width: 10, height: 10, background: BLUE, borderRadius: 2, boxShadow: `0 0 6px ${BLUE}aa` }} />
+            Blue Side
+          </span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: RED }}>
+            <span style={{ width: 10, height: 10, background: RED, borderRadius: 2, boxShadow: `0 0 6px ${RED}aa` }} />
+            Red Side
+          </span>
+        </div>
+      </div>
+
+      <div className="card" style={{
+        padding: 12, position: "relative",
+        background: "linear-gradient(180deg, rgba(59,130,246,0.04) 0%, rgba(2,6,23,0) 50%, rgba(239,68,68,0.04) 100%)",
+        border: "1px solid var(--border)",
+      }}>
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          width="100%"
+          height={H}
+          preserveAspectRatio="none"
+          style={{ display: "block", overflow: "visible" }}
+          onMouseMove={onMove}
+          onMouseLeave={() => setHoverIdx(null)}
+          role="img"
+          aria-label={`Gold diff sur ${xMax} minutes`}
+        >
+          <defs>
+            <linearGradient id="goldGradBlue" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stopColor={BLUE} stopOpacity="0.55" />
+              <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="goldGradRed" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%"  stopColor={RED} stopOpacity="0.55" />
+              <stop offset="100%" stopColor={RED} stopOpacity="0" />
+            </linearGradient>
+            <clipPath id="clipBlue">
+              <rect x={PAD_L} y={PAD_T} width={PLOT_W} height={PLOT_H / 2} />
+            </clipPath>
+            <clipPath id="clipRed">
+              <rect x={PAD_L} y={MID_Y} width={PLOT_W} height={PLOT_H / 2} />
+            </clipPath>
+          </defs>
+
+          {/* Grid + Y ticks */}
+          {yTicks.map((t, i) => (
+            <g key={i}>
+              <line
+                x1={PAD_L} x2={W - PAD_R}
+                y1={t.y} y2={t.y}
+                stroke={t.v === 0 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.05)"}
+                strokeWidth={t.v === 0 ? 1.2 : 1}
+                strokeDasharray={t.v === 0 ? "none" : "3 4"}
+              />
+              <text
+                x={PAD_L - 8} y={t.y}
+                textAnchor="end"
+                dominantBaseline="middle"
+                fill="var(--text-2)"
+                fontSize="10"
+                fontFamily="'Chakra Petch', monospace"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {t.label}
+              </text>
+            </g>
+          ))}
+
+          {/* X ticks */}
+          {xTicks.map((m, i) => (
+            <g key={`x${i}`}>
+              <line
+                x1={xOf(m)} x2={xOf(m)}
+                y1={PAD_T} y2={H - PAD_B}
+                stroke="rgba(255,255,255,0.04)"
+                strokeWidth="1"
+              />
+              <text
+                x={xOf(m)} y={H - PAD_B + 16}
+                textAnchor="middle"
+                fill="var(--text-2)"
+                fontSize="10"
+                fontFamily="'Chakra Petch', monospace"
+              >
+                {m}′
+              </text>
+            </g>
+          ))}
+
+          {/* Aires bleue (au-dessus) et rouge (en dessous), clippées */}
+          <path d={pathD} fill="url(#goldGradBlue)" clipPath="url(#clipBlue)" />
+          <path d={pathD} fill="url(#goldGradRed)"  clipPath="url(#clipRed)" />
+
+          {/* Ligne principale animée */}
+          <path
+            d={lineD}
+            fill="none"
+            stroke="rgba(255,255,255,0.85)"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            style={reduceMotion ? {} : {
+              strokeDasharray: 2000,
+              strokeDashoffset: 2000,
+              animation: "goldLineDraw 900ms ease-out forwards",
+            }}
+          />
+
+          {/* Hover : ligne verticale + point + tooltip */}
+          {hoverPoint && (
+            <g style={{ pointerEvents: "none" }}>
+              <line
+                x1={xOf(hoverPoint.minute)} x2={xOf(hoverPoint.minute)}
+                y1={PAD_T} y2={H - PAD_B}
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="1"
+                strokeDasharray="3 3"
+              />
+              <circle
+                cx={xOf(hoverPoint.minute)}
+                cy={yOf(hoverPoint.diff)}
+                r="4"
+                fill={hoverPoint.diff >= 0 ? BLUE : RED}
+                stroke="white"
+                strokeWidth="1.5"
+              />
+            </g>
+          )}
+        </svg>
+
+        {/* Tooltip HTML (positionné au-dessus du SVG) */}
+        {hoverPoint && (
+          <div style={{
+            position: "absolute",
+            top: 8,
+            left: `calc(${(xOf(hoverPoint.minute) / W) * 100}% + 0px)`,
+            transform: "translateX(-50%)",
+            padding: "5px 9px",
+            background: "rgba(2,6,23,0.96)",
+            border: `1px solid ${hoverPoint.diff >= 0 ? BLUE : RED}66`,
+            borderRadius: 4,
+            boxShadow: "0 4px 14px rgba(0,0,0,0.6)",
+            backdropFilter: "blur(6px)",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+            zIndex: 5,
+          }}>
+            <div style={{
+              fontFamily: FONT_STATS, fontSize: 11, fontWeight: 800,
+              color: hoverPoint.diff >= 0 ? BLUE : RED,
+              fontVariantNumeric: "tabular-nums",
+            }}>
+              {hoverLeader === "—" ? "Égalité" : `${hoverLeader} +${(Math.abs(hoverPoint.diff) / 1000).toFixed(1)}k`}
+            </div>
+            <div style={{
+              fontSize: 9, color: "var(--text-2)", letterSpacing: 0.5,
+              textTransform: "uppercase", fontWeight: 700,
+            }}>
+              Min {hoverPoint.minute}
+            </div>
+          </div>
+        )}
+
+        <style>{`
+          @keyframes goldLineDraw {
+            to { stroke-dashoffset: 0; }
+          }
+        `}</style>
+      </div>
+    </section>
+  );
+}
+
 export default function MatchResultScoreboard({ matchResult, userTeam, opponentTeam, isTeam1, teams, onClose }) {
   const reduceMotion = useReducedMotion();
 
