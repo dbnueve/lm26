@@ -318,13 +318,6 @@ export default function MatchResultScoreboard({ matchResult, userTeam, opponentT
 
   return (
     <div>
-      <style>{`
-        @keyframes tooltipFadeIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
       {/* ─── HERO : Victory/Defeat + Score intégré ─────────────── */}
       <motion.section
         {...(reduceMotion ? {} : { initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 }, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } })}
