@@ -1856,8 +1856,8 @@ def generate_detailed_events(phases: list, team1_stats: list, team2_stats: list,
             for _ in range(int(n)):
                 add_obj(random.uniform(14, 24.6), tn, "tower", "Tour détruite")
 
-        # Drakes mid-game : respecter ≥ 4 min entre chaque spawn
-        DRAKE_MIN_GAP = 4.0  # minutes
+        # Drakes mid-game : respecter le respawn LoL de 5 min entre chaque spawn
+        DRAKE_MIN_GAP = 5.0  # minutes (cohérent avec DRAKE_RESPAWN_SEC frontend)
         drakes = ph2.get("drakes") or {}
         # Flatten en liste ordonnée (peu importe l'équipe) pour assigner les timestamps
         drake_entries: list[tuple[int, int]] = []  # (team_num, drake_index)
