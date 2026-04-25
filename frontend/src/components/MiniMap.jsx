@@ -829,8 +829,8 @@ export function ObjectiveTracker({ events = [], matchSec = 0 }) {
       <Pill
         icon={
           drakeTarget === "elder"
-            ? "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2/icon_ux_minimap_dragon_elder.png"
-            : "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons_v2/icon_ux_minimap_dragon.png"
+            ? "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/dragon_elder.png"
+            : "https://raw.communitydragon.org/latest/game/assets/ux/minimap/icons/dragon.png"
         }
         label={drakeTarget === "elder" ? "Elder" : "Drake"}
         value={drakeNext}
