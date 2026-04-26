@@ -476,11 +476,18 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
             textTransform: "uppercase" }}>
             {isUser && !played ? "★ " : ""}{m.round}
           </span>
-          <span style={{ fontSize: 9, fontWeight: 700, color: C.muted,
-            background: "rgba(255,255,255,.06)", padding: "2px 6px", borderRadius: 3,
-            letterSpacing: 1 }}>
-            BO{m.best_of}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            {played && (
+              <span style={{ fontSize: 9, color: C.muted, opacity: 0.6, fontStyle: "italic" }}>
+                Voir recap →
+              </span>
+            )}
+            <span style={{ fontSize: 9, fontWeight: 700, color: C.muted,
+              background: "rgba(255,255,255,.06)", padding: "2px 6px", borderRadius: 3,
+              letterSpacing: 1 }}>
+              BO{m.best_of}
+            </span>
+          </div>
         </div>
 
         {/* Teams + score */}
