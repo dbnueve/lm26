@@ -30,14 +30,14 @@ const POS = {
   spawn_red:  { x: 92, y: 10 },
 
   // ── Objectifs majeurs ──
-  baron:      { x: 28, y: 27 },  // fosse Baron (haut-gauche rivière)
-  herald:     { x: 28, y: 27 },  // même fosse avant 20min
-  drake:      { x: 72, y: 73 },  // fosse Drake (bas-droite rivière)
-  elder:      { x: 72, y: 73 },
+  baron:      { x: 34, y: 30 },  // fosse Baron (haut-gauche rivière)
+  herald:     { x: 34, y: 30 },  // même fosse avant 20min
+  drake:      { x: 67, y: 70 },  // fosse Drake (bas-droite rivière)
+  elder:      { x: 67, y: 70 },
 
   // ── Scuttles (rivière) ──
-  scuttle_top: { x: 38, y: 44 }, // crabe rivière top-mid
-  scuttle_bot: { x: 62, y: 56 }, // crabe rivière bot-mid
+  scuttle_top: { x: 30, y: 35 }, // crabe rivière top-mid
+  scuttle_bot: { x: 71, y: 65 }, // crabe rivière bot-mid
 
   // ── Top lane — jalons (côté blue = longe bord gauche vers haut) ──
   blue_top_base:   { x: 12, y: 80 }, // sortie de base vers top
@@ -77,20 +77,20 @@ const POS = {
   red_bot_push:    { x: 75, y: 82 }, // sous tour T1 bleue bot
 
   // ── Jungle Blue (quadrant bas-gauche) ──
-  blue_gromp:    { x: 16, y: 73 },
-  blue_bluebuff: { x: 24, y: 64 },
-  blue_wolves:   { x: 28, y: 55 },
-  blue_raptors:  { x: 33, y: 63 },
-  blue_redbuff:  { x: 31, y: 72 },
-  blue_krugs:    { x: 37, y: 79 },
+  blue_gromp:    { x: 16, y: 43 },
+  blue_bluebuff: { x: 27, y: 47 },
+  blue_wolves:   { x: 26, y: 56 },
+  blue_raptors:  { x: 47, y: 63 },
+  blue_redbuff:  { x: 53, y: 72 },
+  blue_krugs:    { x: 57, y: 81 },
 
   // ── Jungle Red (quadrant haut-droit) ──
-  red_gromp:    { x: 84, y: 27 },
-  red_bluebuff: { x: 76, y: 36 },
-  red_wolves:   { x: 72, y: 45 },
-  red_raptors:  { x: 67, y: 37 },
-  red_redbuff:  { x: 69, y: 28 },
-  red_krugs:    { x: 63, y: 21 },
+  red_gromp:    { x: 84, y: 57 },
+  red_bluebuff: { x: 74, y: 53 },
+  red_wolves:   { x: 73, y: 44 },
+  red_raptors:  { x: 53, y: 37 },
+  red_redbuff:  { x: 48, y: 28 },
+  red_krugs:    { x: 44, y: 21 },
 
   // ── Zones de regroupement ──
   mid_river_blue: { x: 44, y: 56 }, // rivière côté blue mid
@@ -104,35 +104,35 @@ const TOWERS = {
   blue: {
     top: [
       { x: 13, y: 30 },  // outer
-      { x: 13, y: 58 },  // inner
-      { x: 13, y: 75 },  // inhib
+      { x: 11, y: 55 },  // inner
+      { x: 8, y: 71 },  // inhib
     ],
     mid: [
-      { x: 42, y: 60 },  // outer
-      { x: 32, y: 72 },  // inner
-      { x: 22, y: 82 },  // inhib
+      { x: 40, y: 57 },  // outer
+      { x: 34, y: 68 },  // inner
+      { x: 25, y: 75 },  // inhib
     ],
     bot: [
-      { x: 52, y: 90 },  // outer
-      { x: 38, y: 90 },  // inner
-      { x: 22, y: 90 },  // inhib
+      { x: 71, y: 93 },  // outer
+      { x: 47, y: 90 },  // inner
+      { x: 29, y: 92 },  // inhib
     ],
   },
   red: {
     top: [
-      { x: 50, y: 10 },  // outer
-      { x: 33, y: 10 },  // inner
-      { x: 15, y: 10 },  // inhib
+      { x: 29, y: 7 },  // outer
+      { x: 54, y: 10 },  // inner
+      { x: 71, y: 9 },  // inhib
     ],
     mid: [
-      { x: 60, y: 40 },  // outer
-      { x: 70, y: 28 },  // inner
-      { x: 78, y: 20 },  // inhib
+      { x: 61, y: 43 },  // outer
+      { x: 66, y: 32 },  // inner
+      { x: 75, y: 25 },  // inhib
     ],
     bot: [
-      { x: 88, y: 57 },  // outer
-      { x: 88, y: 42 },  // inner
-      { x: 88, y: 25 },  // inhib
+      { x: 93, y: 69 },  // outer
+      { x: 89, y: 45 },  // inner
+      { x: 92, y: 29 },  // inhib
     ],
   },
 };
@@ -151,17 +151,17 @@ const EVENT_COORDS = {
   blue_tower_top_t2: POS.blue_top_t2,
   blue_tower_mid_t1: POS.blue_mid_t1,
   blue_tower_bot_t1: POS.blue_bot_t1,
-  blue_inhib_top:    { x: 13, y: 78 },
-  blue_inhib_mid:    { x: 22, y: 79 },
-  blue_inhib_bot:    { x: 23, y: 88 },
+  blue_inhib_top:   { x: 9, y: 76 },
+  blue_inhib_mid:    { x: 22, y: 78 },
+  blue_inhib_bot:    { x: 24, y: 91 },
 
   red_tower_top_t1:  POS.red_top_t1,
   red_tower_top_t2:  POS.red_top_t2,
   red_tower_mid_t1:  POS.red_mid_t1,
   red_tower_bot_t1:  POS.red_bot_t1,
-  red_inhib_top:     { x: 77, y: 13 },
+  red_inhib_top:    { x: 76, y: 9 },
   red_inhib_mid:     { x: 78, y: 22 },
-  red_inhib_bot:     { x: 87, y: 23 },
+  red_inhib_bot:     { x: 91, y: 25 },
 
   spawn_blue: POS.spawn_blue,
   spawn_red:  POS.spawn_red,
