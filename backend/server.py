@@ -6322,6 +6322,8 @@ async def _mp2_session_swap_middleware(request, call_next):
     path = request.url.path
     if any(path.startswith(p) for p in _MP2_SKIP_PATH_PREFIXES):
         return await call_next(request)
+    if path in _MP2_SKIP_PATHS_EXACT:
+        return await call_next(request)
 
     sid = request.query_params.get("session_id")
     if not sid:
