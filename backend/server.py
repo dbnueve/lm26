@@ -2197,6 +2197,27 @@ async def get_schedule():
         ensure_initialized()
     return GAME_STATE["schedule"]
 
+
+@api_router.get("/match/{match_id}")
+async def get_match_details(match_id: str):
+    """Return a single match (with match_details) by ID — schedule or playoffs."""
+    if not GAME_STATE["initialized"]:
+        ensure_initialized()
+
+    # Search regular schedule
+    for m in GAME_STATE.get("schedule", []):
+        if m.get("id") == match_id:
+            return m
+
+    # Search playoffs bracket
+    bracket = GAME_STATE.get("playoffs_bracket") or {}
+    for m in bracket.get("matches", []):
+        if m.get("id") == match_id:
+            return m
+
+    raise HTTPException(status_code=404, detail="Match not found")
+
+
 @api_router.get("/standings")
 async def get_standings():
     """Get current standings"""
