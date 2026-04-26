@@ -680,7 +680,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <DraftSystem
         champions={champions}
-        matchId={null}
+        matchId={draftMatchId}
         onComplete={(completed) => {
           setShowDraft(false);
           setPendingDraft({
