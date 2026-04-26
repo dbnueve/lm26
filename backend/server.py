@@ -2087,11 +2087,17 @@ async def select_team(team_id: str, request: Request):
             _sessions.assign_team(sess, token, team_id)
         except ValueError as exc:
             raise HTTPException(409, str(exc))
-        # In MP the shared state transitions to "regular" as soon as at least
-        # one player has picked. Individual teams still live per-player in
-        # session.players. current_week stays 0 until season actually starts.
-        if GAME_STATE.get("phase", "team_pick") in ("team_pick", "preseason"):
-            GAME_STATE["phase"] = "preseason"
+        # In MP the shared state must stay in "preseason" until the players
+        # explicitly start the season (season/start action). Individual teams
+        # live per-player in session.players; current_week stays 0 until the
+        # season actually starts.
+        GAME_STATE["phase"] = "preseason"
+        GAME_STATE["current_week"] = 0
+        # Persist phase + week into sess.state so /game/state returns
+        # "preseason" to every player after a team pick.
+        sess.state["phase"] = "preseason"
+        sess.state["current_week"] = 0
+        sess._dirty = True
         # Advance session-level phase so the UI can react.
         if sess.phase == "team_pick":
             # Only flip to "running" when every joined player has a team.
