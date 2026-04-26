@@ -981,6 +981,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
         onCancel={() => setShowDraft(false)}
       />
     </motion.div>
+    </>
   );
 
   // ── MAIN RENDER ──────────────────────────────────────────────────────────────
