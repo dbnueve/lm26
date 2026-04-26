@@ -959,7 +959,13 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
   if (!intl) return null;
 
   if (showDraft) return (
-    <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <>
+      <AnimatePresence>
+        {recapMatch && (
+          <MatchRecap m={recapMatch} onClose={() => setRecapMatch(null)} />
+        )}
+      </AnimatePresence>
+      <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <DraftSystem
         champions={champions}
         matchId={draftMatchId}
