@@ -157,6 +157,276 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     );
   };
 
+  // ── Match Recap Modal ────────────────────────────────────────────────────────
+  const MatchRecap = ({ m, onClose }) => {
+    if (!m) return null;
+    const t1win  = m.winner_id === m.team1?.id;
+    const t2win  = m.winner_id === m.team2?.id;
+    const games  = m.games || [];
+    const winner = t1win ? m.team1 : m.team2;
+    const loser  = t1win ? m.team2 : m.team1;
+    const isUser = m.team1?.id === uc || m.team2?.id === uc;
+    const wColor = isUser && winner?.id === uc ? C.gold
+                 : winner?.id === uc ? C.gold : C.success;
+
+    const fmtDur = (sec) => {
+      if (!sec) return "—";
+      const m2 = Math.floor(sec / 60);
+      const s2 = Math.round(sec % 60);
+      return `${m2}:${String(s2).padStart(2, "0")}`;
+    };
+
+    const totalDur = games.reduce((acc, g) => acc + (g.duration || 0), 0);
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0, zIndex: 999,
+          background: "rgba(0,0,0,.75)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.92, opacity: 0, y: 16 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.94, opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: "var(--bg)",
+            border: `1px solid ${C.border}`,
+            borderRadius: 10,
+            width: "100%", maxWidth: 520,
+            boxShadow: "0 32px 80px rgba(0,0,0,.8)",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            padding: "16px 20px 14px",
+            background: `linear-gradient(135deg, rgba(10,12,24,1) 0%, rgba(14,20,40,1) 100%)`,
+            borderBottom: `1px solid ${C.border}`,
+            display: "flex", alignItems: "flex-start", gap: 12,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2,
+                color: C.muted, textTransform: "uppercase", marginBottom: 4 }}>
+                {m.round} · BO{m.best_of}
+              </div>
+              {/* Score banner */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
+                  <TeamLogo teamId={m.team1?.id} abbr={m.team1?.abbr} size={32} noClick />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: t1win ? 800 : 600,
+                      color: t1win ? C.text : C.muted }}>
+                      {m.team1?.abbr}
+                    </div>
+                    <div style={{ fontSize: 9, color: LEAGUE_COLOR[m.team1?.league] || C.muted, fontWeight: 600 }}>
+                      {LEAGUE_FLAG[m.team1?.league]} {m.team1?.league}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: "center", flexShrink: 0 }}>
+                  <div className="font-stats" style={{ fontSize: 28, fontWeight: 900, letterSpacing: 3 }}>
+                    <span style={{ color: t1win ? C.success : C.danger }}>{m.score1}</span>
+                    <span style={{ color: C.muted, margin: "0 4px", fontSize: 18 }}>–</span>
+                    <span style={{ color: t2win ? C.success : C.danger }}>{m.score2}</span>
+                  </div>
+                  {totalDur > 0 && (
+                    <div style={{ fontSize: 9, color: C.muted, marginTop: 2, display: "flex",
+                      alignItems: "center", justifyContent: "center", gap: 3 }}>
+                      <Clock size={9} />
+                      {fmtDur(totalDur)} total
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, justifyContent: "flex-end" }}>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 14, fontWeight: t2win ? 800 : 600,
+                      color: t2win ? C.text : C.muted }}>
+                      {m.team2?.abbr}
+                    </div>
+                    <div style={{ fontSize: 9, color: LEAGUE_COLOR[m.team2?.league] || C.muted, fontWeight: 600 }}>
+                      {m.team2?.league} {LEAGUE_FLAG[m.team2?.league]}
+                    </div>
+                  </div>
+                  <TeamLogo teamId={m.team2?.id} abbr={m.team2?.abbr} size={32} noClick />
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose} style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: C.muted, padding: 4, flexShrink: 0, marginTop: -2,
+            }}>
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div style={{ padding: "16px 20px 20px" }}>
+
+            {/* Winner banner */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 14px", borderRadius: 7, marginBottom: 16,
+              background: `${wColor}10`,
+              border: `1px solid ${wColor}35`,
+            }}>
+              <Trophy size={18} weight="fill" style={{ color: wColor, flexShrink: 0 }} />
+              <TeamLogo teamId={winner?.id} abbr={winner?.abbr} size={24} noClick />
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 800, fontSize: 13, color: wColor }}>
+                  {winner?.name || winner?.abbr}
+                </span>
+                {winner?.id === uc && (
+                  <span style={{ marginLeft: 8, fontSize: 10, color: C.gold, fontWeight: 700 }}>
+                    ★ Votre équipe
+                  </span>
+                )}
+              </div>
+              <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>
+                remporte la série
+              </span>
+            </div>
+
+            {/* Game-by-game */}
+            {games.length > 0 && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2,
+                  color: C.muted, textTransform: "uppercase", marginBottom: 8 }}>
+                  Résultats game par game
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {games.map((g, i) => {
+                    const gWinner   = g.winner === m.team1?.id ? m.team1 : m.team2;
+                    const isT1      = g.winner === m.team1?.id;
+                    const barPct    = 50 + (isT1 ? 20 : -20);
+                    const lColor    = LEAGUE_COLOR[gWinner?.league] || C.muted;
+                    return (
+                      <div key={i} style={{
+                        display: "flex", alignItems: "center", gap: 8,
+                        padding: "7px 10px", borderRadius: 5,
+                        background: C.surface, border: `1px solid ${C.borderSub}`,
+                      }}>
+                        <span style={{ fontSize: 10, color: C.muted, width: 42,
+                          fontWeight: 700, flexShrink: 0 }}>
+                          Game {i + 1}
+                        </span>
+
+                        {/* Mini bar */}
+                        <div style={{ flex: 1, height: 4, borderRadius: 2,
+                          background: "rgba(255,255,255,.06)", overflow: "hidden" }}>
+                          <div style={{
+                            height: "100%", borderRadius: 2,
+                            width: `${barPct}%`,
+                            background: isT1 ? C.blue : C.danger,
+                            transition: "width .5s ease",
+                          }} />
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                          <TeamLogo teamId={gWinner?.id} abbr={gWinner?.abbr} size={16} noClick />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: lColor }}>
+                            {gWinner?.abbr}
+                          </span>
+                          {g.duration > 0 && (
+                            <span style={{ fontSize: 10, color: C.muted,
+                              display: "flex", alignItems: "center", gap: 3 }}>
+                              <Clock size={9} /> {fmtDur(g.duration)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Series dominance bar */}
+            {games.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2,
+                  color: C.muted, textTransform: "uppercase", marginBottom: 6 }}>
+                  Dominance de la série
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.text, width: 36, textAlign: "right" }}>
+                    {m.team1?.abbr}
+                  </span>
+                  <div style={{ flex: 1, height: 8, borderRadius: 4, overflow: "hidden",
+                    display: "flex", background: "rgba(255,255,255,.06)" }}>
+                    <div style={{
+                      width: `${(m.score1 / (m.score1 + m.score2)) * 100}%`,
+                      background: t1win
+                        ? `linear-gradient(90deg, ${C.success}, ${C.blue})`
+                        : `linear-gradient(90deg, ${C.danger}80, ${C.danger}40)`,
+                      transition: "width .6s ease",
+                    }} />
+                    <div style={{
+                      flex: 1,
+                      background: t2win
+                        ? `linear-gradient(90deg, ${C.blue}, ${C.success})`
+                        : `linear-gradient(90deg, ${C.danger}40, ${C.danger}80)`,
+                    }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.text, width: 36 }}>
+                    {m.team2?.abbr}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  marginTop: 4, padding: "0 44px" }}>
+                  <span style={{ fontSize: 10, fontWeight: 800,
+                    color: t1win ? C.success : C.danger }}>{m.score1} win{m.score1 > 1 ? "s" : ""}</span>
+                  <span style={{ fontSize: 10, fontWeight: 800,
+                    color: t2win ? C.success : C.danger }}>{m.score2} win{m.score2 > 1 ? "s" : ""}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Star performer — highest rated winner */}
+            {(() => {
+              const wTeam = t1win ? m.team1 : m.team2;
+              const lTeam = t1win ? m.team2 : m.team1;
+              if (!wTeam) return null;
+              return (
+                <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 7,
+                  background: "rgba(255,184,0,.06)", border: `1px solid ${C.goldBorder}`,
+                  display: "flex", alignItems: "center", gap: 10 }}>
+                  <Star size={16} weight="fill" style={{ color: C.gold, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: C.gold }}>
+                      MVP — {wTeam.abbr}
+                    </span>
+                    <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>
+                      Rating moyen : <span style={{ color: C.text, fontWeight: 700 }}>
+                        {wTeam.rating?.toFixed(0) ?? "—"}
+                      </span>
+                      {lTeam && (
+                        <span style={{ marginLeft: 8 }}>
+                          vs {lTeam.abbr} : <span style={{ color: C.muted }}>
+                            {lTeam.rating?.toFixed(0) ?? "—"}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
   // Match card — the main building block
   const MatchCard = ({ m, compact }) => {
     if (!m) return null;
