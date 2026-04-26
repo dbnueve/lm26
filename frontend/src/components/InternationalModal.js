@@ -17,6 +17,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
   const [showDraft,    setShowDraft]    = useState(false);
   const [draftMatchId, setDraftMatchId] = useState(null);
   const [pendingDraft, setPendingDraft] = useState(null);
+  const [recapMatch,   setRecapMatch]   = useState(null);
 
   // ── Data fetching ────────────────────────────────────────────────────────
   const fetchIntl = useCallback(async () => {
