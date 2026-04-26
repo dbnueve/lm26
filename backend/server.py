@@ -6305,7 +6305,16 @@ app.router.add_event_handler("shutdown", _mp2_shutdown)
 #
 # Paths that already own session routing (`/api/mp2/*` and WebSockets) are
 # skipped so their handlers can manage sessions directly.
+# Solo save-slot management routes must also be skipped: they write to the
+# solo JSON file and must never be swapped into an MP session, otherwise
+# creating/loading a solo slot while a session_id cookie is still present
+# would overwrite the MP session state with the freshly initialised solo data.
 _MP2_SKIP_PATH_PREFIXES = ("/api/mp2/", "/api/mp2", "/ws/")
+_MP2_SKIP_PATHS_EXACT = {
+    "/api/saves/1/new", "/api/saves/2/new", "/api/saves/3/new",
+    "/api/saves/1/load", "/api/saves/2/load", "/api/saves/3/load",
+    "/api/saves/1", "/api/saves/2", "/api/saves/3",
+}
 
 
 @app.middleware("http")
