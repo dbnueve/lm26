@@ -103,7 +103,7 @@ const POS = {
 const TOWERS = {
   blue: {
     top: [
-      { x: 13, y: 40 },  // outer
+      { x: 13, y: 30 },  // outer
       { x: 13, y: 58 },  // inner
       { x: 13, y: 75 },  // inhib
     ],

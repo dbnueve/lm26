@@ -56,12 +56,12 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
 
   const simulate = useCallback(async (matchId, userDraft = null) => {
     setSimming(matchId);
-    setPendingDraft(null);
-    setDraftMatchId(null);
     try {
       const payload = { match_id: matchId };
       if (userDraft) payload.user_draft = userDraft;
       const res = await API_CLIENT.post("/international/simulate", payload);
+      setPendingDraft(null);
+      setDraftMatchId(null);
       setIntl(res.data);
     } catch {
       const ref = await API_CLIENT.get("/international").catch(() => null);
