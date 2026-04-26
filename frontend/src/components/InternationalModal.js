@@ -1119,6 +1119,13 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
           100% { transform: translateX(100%); }
         }
       `}</style>
+
+      {/* Match Recap overlay */}
+      <AnimatePresence>
+        {recapMatch && (
+          <MatchRecap m={recapMatch} onClose={() => setRecapMatch(null)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
