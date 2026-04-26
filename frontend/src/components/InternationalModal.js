@@ -446,6 +446,7 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
     return (
       <motion.div
         layout
+        onClick={played ? () => setRecapMatch(m) : undefined}
         style={{
           background: isUser && !played ? C.goldDim : C.surface,
           border: `1px solid ${accentColor}`,
@@ -456,7 +457,10 @@ const InternationalModal = ({ userTeam, champions = {}, onComplete }) => {
           opacity: locked ? 0.4 : 1,
           position: "relative",
           overflow: "hidden",
+          cursor: played ? "pointer" : "default",
+          transition: "background .12s",
         }}
+        whileHover={played ? { background: isUser ? "rgba(255,184,0,.12)" : "rgba(255,255,255,.04)" } : {}}
       >
         {isSimming && (
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2,
